@@ -50,7 +50,7 @@ bool beginScanner() {
   scan->setScanCallbacks(&callbacks, true);
   scan->setDuplicateFilter(false);
   scan->setMaxResults(0); // callback-only: no growing library result history.
-  scan->setActiveScan(false); // passive observation; no GATT connections/advertising.
+  scan->setActiveScan(false); // passive candidate discovery alongside the GATT peripheral.
   scan->setInterval(160);
   scan->setWindow(80);
   lastAttempt = millis();

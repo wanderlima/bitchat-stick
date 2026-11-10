@@ -3,6 +3,9 @@
 #include "PeerTable.h"
 #include "Scanner.h"
 #include "Ui.h"
+#include "Mesh.h"
+#include "Transport.h"
+#include "Clock.h"
 
 stick::PeerTable peers;
 void setup() {
@@ -15,7 +18,7 @@ void setup() {
   cfg.internal_mic = false;
   cfg.internal_spk = false;
   cfg.internal_imu = false;
-  cfg.internal_rtc = false;
+  cfg.internal_rtc = true;
   M5.begin(cfg);
   if (M5.getBoard() != m5::board_t::board_M5StickCPlus2) {
     Serial.println("ERROR: detected board is not M5StickC Plus2; initialization stopped.");
@@ -29,13 +32,17 @@ void setup() {
     }
   }
   stick::beginUi();
-  Serial.println("Bitchat Stick 0.1.0 | passive scanner | relay and bot unavailable");
-  if (!stick::beginScanner()) Serial.println("BLE: initialization failed; check on-screen status.");
+  stick::beginClock();
+  Serial.println("Bitchat Stick 0.2.0 | signed BLE mesh | authenticated InfoBot");
+  if (!stick::beginScanner()) Serial.println("BLE: scanner initialization failed.");
+  else if (!stick::beginTransport()) Serial.println("BLE: transport/identity initialization failed.");
 }
 void loop() {
   M5.update();
   const uint32_t now = millis();
   stick::pollScanner(peers, now);
+  stick::mesh().tick(now, stick::clockMilliseconds());
+  stick::pollTransport(now);
   stick::updateUi(peers, now);
   if (M5.BtnPWR.pressedFor(6000)) M5.Power.powerOff();
   delay(10);
