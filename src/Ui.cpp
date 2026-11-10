@@ -146,7 +146,7 @@ void draw(const PeerTable& peers, uint32_t now) {
   const char* title = "Home";
   switch (screen) {
     case Screen::Peers: title = "Nearby"; break;
-    case Screen::Channels: title = "Channels"; break;
+    case Screen::Channels: title = "Inbox"; break;
     case Screen::Messages: title = "Messages"; break;
     case Screen::Bot: title = "InfoBot"; break;
     case Screen::Settings: title = "Settings"; break;
@@ -163,7 +163,7 @@ void draw(const PeerTable& peers, uint32_t now) {
       std::snprintf(value, sizeof(value), "Nearby: %u", unsigned(peers.candidates())); label(value, 57);
       std::snprintf(value, sizeof(value), "P:%u New:%u", unsigned(mesh().peerCount()), unsigned(mesh().unreadCount())); label(value, 79, green);
       label(transportReady() && mesh().ready() ? "Relay: ON" : "Relay: OFF", 101, transportReady() && mesh().ready() ? green : amber);
-      const char* options[] = {"Nearby", "Channels", "InfoBot", "Settings"};
+      const char* options[] = {"Nearby", "Inbox", "InfoBot", "Settings"};
       menu(options, 4, 129, 24);
       break;
     }

@@ -13,7 +13,7 @@ struct MeshPeer {
   bool botReplied=false;
 };
 enum class MessageScope {All, Public, Direct};
-struct ChatMessage {uint32_t sequence=0;bool unread=false; char name[25]{}, text[193]{}; bool outgoing=false, truncated=false, privateMessage=false; };
+struct ChatMessage {uint32_t sequence=0;bool unread=false,readReceiptSent=false;uint8_t senderId[8]{},messageId[64]{},messageIdLength=0; char name[25]{}, text[193]{}; bool outgoing=false, truncated=false, privateMessage=false; };
 struct MeshStats { uint32_t accepted=0,rejected=0,relayed=0,sent=0,dropped=0,botReplies=0; };
 // Single-owner loop model. Callbacks must enqueue before calling receive().
 class Mesh {
@@ -44,12 +44,13 @@ class Mesh {
   Session* session(const uint8_t* id,uint16_t link);
   bool duplicate(const wire::FrameView& frame);
   bool rememberDigest(const uint8_t digest[32]);
-  void store(const char* name,wire::Bytes text,bool outgoing,bool privateMessage=false);
+  ChatMessage* store(const char* name,wire::Bytes text,bool outgoing,bool privateMessage=false);
+  bool sendReadReceipt(ChatMessage& message);
   void startNoise(MeshPeer& peer,uint16_t link);
   void handleNoise(const wire::FrameView& frame,uint16_t link);
   void bot(MeshPeer& peer,wire::Bytes text);
   Identity* identity_=nullptr;Identity::Entropy entropy_=nullptr;Send send_=nullptr;
-  uint32_t now_=0,lastAnnounce_=0,lastBot_=0;uint64_t epoch_=0,lastStamp_=0;bool replied_=false,botEnabled_=true;
+  uint32_t now_=0,lastAnnounce_=0,lastBot_=0,lastReceiptAttempt_=0;uint64_t epoch_=0,lastStamp_=0;bool replied_=false,botEnabled_=true;
   std::array<MeshPeer,12> peers_{};std::array<Session,2> sessions_{};
   std::array<ChatMessage,12> messages_{};size_t messageCount_=0,messageNext_=0;uint32_t messageSequence_=0;
   std::array<std::array<uint8_t,16>,64> dedup_{};size_t dedupCount_=0,dedupNext_=0;

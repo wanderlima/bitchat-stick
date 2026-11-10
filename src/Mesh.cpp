@@ -25,6 +25,12 @@ void Mesh::begin(Identity& identity,Identity::Entropy entropy,Send send){identit
 void Mesh::tick(uint32_t now,uint64_t epochMs){now_=now;epoch_=epochMs;assembler_.expire(now);
   for(auto& s:sessions_)if(s.used && uint32_t(now-s.started)>(s.noise.ready()?3600000u:15000u)){auto* p=find(s.id);if(p)p->authenticated=false;s.noise.reset();s.used=false;}
   for(auto& p:peers_)if(p.used && uint32_t(now-p.seen)>900000){p=MeshPeer{};}
+  if(uint32_t(now-lastReceiptAttempt_)>=1000){
+    lastReceiptAttempt_=now;
+    for(auto& message:messages_)if(message.privateMessage&&!message.unread&&!message.readReceiptSent){
+      if(sendReadReceipt(message))break;
+    }
+  }
   if(ready() && (!lastAnnounce_ || uint32_t(now-lastAnnounce_)>=30000)){lastAnnounce_=now;announce();}
 }
 size_t Mesh::peerCount()const{size_t n=0;for(const auto& p:peers_)n+=p.used;return n;}
@@ -45,8 +51,21 @@ const ChatMessage* Mesh::message(size_t offset,MessageScope scope)const{
 size_t Mesh::unreadCount(MessageScope scope)const{
   size_t count=0;for(size_t i=0;i<messageCount_;++i){const auto& m=messages_[(messageNext_+messages_.size()-1-i)%messages_.size()];count+=m.unread&&inScope(m,scope);}return count;
 }
+// Return true when a live-session attempt was made, including a full queue.
+// The tick loop permits at most one encryption/enqueue attempt per second.
+bool Mesh::sendReadReceipt(ChatMessage& message){
+  if(!message.privateMessage||!message.messageIdLength||message.readReceiptSent||!ready())return false;
+  auto* peer=find(message.senderId);if(!peer||!peer->authenticated)return false;
+  for(auto& s:sessions_)if(s.used&&s.noise.ready()&&same(s.id,message.senderId)){
+    uint8_t payload[65],encrypted[85];payload[0]=0x02;std::memcpy(payload+1,message.messageId,message.messageIdLength);size_t n=0;
+    if(!s.noise.encrypt({payload,size_t(message.messageIdLength)+1},encrypted,sizeof(encrypted),n))return true;
+    wire::FrameView f;f.type=0x11;f.ttl=7;f.sender={identity_->id(),8};f.recipient={message.senderId,8};f.timestamp=epoch_;f.payload={encrypted,n};
+    message.readReceiptSent=emit(f,s.link,kAnyLink,false);return true;
+  }
+  return false;
+}
 void Mesh::markRead(uint32_t sequence){for(auto& m:messages_)if(m.sequence==sequence)m.unread=false;}
-void Mesh::store(const char* name,wire::Bytes text,bool outgoing,bool privateMessage){auto& m=messages_[messageNext_];m=ChatMessage{};if(!++messageSequence_)++messageSequence_;m.sequence=messageSequence_;m.unread=!outgoing;std::snprintf(m.name,sizeof(m.name),"%s",name);displayText(m.text,sizeof(m.text),text);m.outgoing=outgoing;m.privateMessage=privateMessage;m.truncated=text.size>=sizeof(m.text);messageNext_=(messageNext_+1)%messages_.size();if(messageCount_<messages_.size())++messageCount_;}
+ChatMessage* Mesh::store(const char* name,wire::Bytes text,bool outgoing,bool privateMessage){auto& m=messages_[messageNext_];m=ChatMessage{};if(!++messageSequence_)++messageSequence_;m.sequence=messageSequence_;m.unread=!outgoing;std::snprintf(m.name,sizeof(m.name),"%s",name);displayText(m.text,sizeof(m.text),text);m.outgoing=outgoing;m.privateMessage=privateMessage;m.truncated=text.size>=sizeof(m.text);messageNext_=(messageNext_+1)%messages_.size();if(messageCount_<messages_.size())++messageCount_;return &m;}
 bool Mesh::emit(wire::FrameView& frame,uint16_t target,uint16_t except,bool sign){
   if(!ready()||!send_)return false;
   uint8_t signature[64];
@@ -152,7 +171,11 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
       }
       if(!valid||!id.size||id.size>64||!content.size||!textValid(id)||!textValid(content)){++stats_.rejected;return;}
       uint8_t digest[32];crypto::hash({p->id,8},id,digest);
-      if(!rememberDigest(digest)){store(p->name,content,false,true);p->seen=now_;++stats_.accepted;}
+      if(!rememberDigest(digest)){
+        auto* message=store(p->name,content,false,true);std::memcpy(message->senderId,p->id,8);
+        std::memcpy(message->messageId,id.data,id.size);message->messageIdLength=uint8_t(id.size);
+        p->seen=now_;++stats_.accepted;
+      }
       // Delivery acknowledgement is encrypted and means stored, never read.
       uint8_t receipt[65],encrypted[85];receipt[0]=0x03;std::memcpy(receipt+1,id.data,id.size);size_t written=0;
       if(s->noise.encrypt({receipt,id.size+1},encrypted,sizeof(encrypted),written)){
