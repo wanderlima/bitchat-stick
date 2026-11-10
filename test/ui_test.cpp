@@ -1,10 +1,16 @@
 #include "../src/Ui.cpp"
 #include <cassert>
 #include <Preferences.h>
+#include "PacketSecurity.h"
 #include <cstdio>
 #include <cstring>
 namespace stick {
 bool active=true, faulted=false;
+bool transportReady() { return active && !faulted; }
+size_t transportLinks() { return 0; }
+uint32_t transportDrops() { return 0; }
+const char* transportStatus() { return "Advertising"; }
+bool clockRtc() { return true; }
 bool scannerActive() { return active; }
 bool scannerFault() { return faulted; }
 uint32_t drops=2, reports=123;
@@ -30,7 +36,7 @@ int main() {
   std::strcpy(obs.address,"AA:BB:CC:DD:EE:FF");std::strcpy(obs.name,"Test phone");
   obs.rssi=-64;obs.network=Network::Mainnet;table.observe(obs);
   beginUi();check();assert(has("BITCHAT") && has("A: START"));
-  press(0);assert(screen==Screen::Dashboard && has("Nearby: 1") && has("Unverified"));
+  press(0);assert(screen==Screen::Dashboard && has("Nearby: 1") && has("Peers: 0"));
   bool square=false;
   for(const auto& r:M5.Display.rects) if(r.x==6 && r.y==7 && r.w==5 && r.h==5 && r.color==green) square=true;
   assert(square);
@@ -55,7 +61,7 @@ int main() {
   press(1,true);press(2);press(0);assert(screen==Screen::About && has("Wander Lima") && !has("SOON"));
   press(1,true);press(2);press(0);assert(screen==Screen::Diagnostics && has("BLE 123") && has("Drop 2"));
   // Visit the remaining primary screens and detail states with the same controls.
-  screen=Screen::Channels;draw(table,tick);check();assert(has("No channels") && !has("#bluetooth"));press(0);assert(screen==Screen::Messages);
+  screen=Screen::Channels;draw(table,tick);check();assert(has("#bluetooth") && has("Public BLE"));press(0);assert(screen==Screen::Messages);
   press(1,true);assert(screen==Screen::Channels);
   screen=Screen::Bot;selection=0;draw(table,tick);check();press(0);assert(detail);press(1,true);assert(!detail);
   // Verify all presets, header error/idle states, and low/unknown battery rendering.
@@ -79,8 +85,8 @@ int main() {
   peerSelection.move(-1,full);draw(full,tick);check();assert(has("Device 32/32"));
   screen=Screen::Settings;draw(table,tick);check();assert(has("Diagnostics"));
   screen=Screen::Bot;
-  for(selection=0;selection<3;++selection) {detail=true;draw(table,tick);check();assert(has("Preview only"));}
-  detail=false;
+  for(selection=0;selection<3;++selection) {detail=true;draw(table,tick);check();assert(has("Public reply"));}
+  detail=false;selection=3;press(0);assert(!mesh().botEnabled());press(0);assert(mesh().botEnabled());
   // Applied brightness and focus are distinct; inspecting a row never changes PWM.
   const auto applied=brightnessIndex;const auto pwm=M5.Display.brightness;
   screen=Screen::Brightness;brightnessIndex=2;selection=3;draw(table,tick);check();
@@ -99,5 +105,22 @@ int main() {
   fake_preferences::writeSucceeds=true;
   screen=Screen::Brightness;selection=4;press(0);
   assert(settingsSaved && !has("Not saved") && fake_preferences::record==0xBC510104);
+  // Exercise live signed peer/message rendering, long-text scrolling and back behavior.
+  Identity identity;
+  auto entropy=[](void* out,size_t n){for(size_t i=0;i<n;++i)static_cast<uint8_t*>(out)[i]=uint8_t(i+41);};
+  assert(identity.begin(entropy));
+  mesh().begin(identity,entropy,[](wire::Bytes,uint16_t,uint16_t){return true;});
+  mesh().tick(tick,1800000000000ULL);
+  fake_preferences::identityExists=false;fake_preferences::identityLength=0;
+  Identity other;auto otherEntropy=[](void* out,size_t n){for(size_t i=0;i<n;++i)static_cast<uint8_t*>(out)[i]=uint8_t(i+72);};assert(other.begin(otherEntropy));
+  uint8_t packet[4096],scratch[4096],signature[64],announcement[80]={1,4,'L','i','v','e',2,32};
+  std::memcpy(announcement+8,other.dhPublic(),32);announcement[40]=3;announcement[41]=32;std::memcpy(announcement+42,other.signingPublic(),32);
+  auto inject=[&](uint8_t type,wire::Bytes payload){wire::FrameView f;f.type=type;f.ttl=7;f.timestamp=1800000000000ULL;f.sender={other.id(),8};f.payload=payload;
+    assert(wire::signPacket(f,other.signingSecret(),scratch,sizeof(scratch),signature));f.signature={signature,64};size_t n=0;assert(wire::encode(f,packet,sizeof(packet),n)==wire::Error::None);mesh().receive({packet,n},1);};
+  inject(1,{announcement,74});screen=Screen::Peers;selection=0;detail=false;draw(table,tick);check();assert(has("Live")&&has("Signed only"));
+  uint8_t longText[192];std::memset(longText,'x',sizeof(longText));inject(2,{longText,sizeof(longText)});
+  screen=Screen::Messages;messageOffset=0;textLine=0;detail=false;draw(table,tick);check();assert(has("Live"));
+  press(0);assert(detail);press(2);assert(textLine==1);press(1,true);assert(!detail&&screen==Screen::Messages);press(1,true);assert(screen==Screen::Channels);
+  assert(buffered && M5.Display.clears==0 && M5.Display.frames>10);
   std::puts("UI: navigation, presets, credits, live header/data, grouping and text bounds passed");
 }

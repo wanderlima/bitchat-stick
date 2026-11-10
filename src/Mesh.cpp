@@ -138,7 +138,7 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
 }
 void Mesh::disconnected(uint16_t link){for(auto& s:sessions_)if(s.used&&s.link==link){auto* p=find(s.id);if(p)p->authenticated=false;s.noise.reset();s.used=false;}}
 void Mesh::bot(MeshPeer& p,wire::Bytes text){
-  if(!p.authenticated || (p.botReplied&&uint32_t(now_-p.lastBot)<30000) || (replied_&&uint32_t(now_-lastBot_)<3000))return;
+  if(!botEnabled_ || !p.authenticated || (p.botReplied&&uint32_t(now_-p.lastBot)<30000) || (replied_&&uint32_t(now_-lastBot_)<3000))return;
   const char* reply=nullptr;
   auto is=[&](const char* command){return text.size==std::strlen(command)&&!std::memcmp(text.data,command,text.size);};
   if(is("!info"))reply="Bitchat Stick | M5StickC Plus2 | BLE local relay | github.com/wanderlima/bitchat-stick";

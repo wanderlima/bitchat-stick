@@ -30,6 +30,7 @@ struct FakeDisplay {
   int x=0,y=0;
   float textScale=1;
   bool boundsOk=true;
+  unsigned clears=0,frames=0;
   uint8_t brightness=0;
   void setFont(const lgfx::IFont* f) { font=f; }
   void setTextSize(float value) { textScale=value; }
@@ -53,7 +54,7 @@ struct FakeDisplay {
     ops.push_back("T "+std::to_string(x)+" "+std::to_string(y)+" "+std::to_string(font->kind)+" "+std::to_string(ink)+" "+std::to_string(textScale)+" "+s);
     if (x<0 || y<0 || x+textWidth(s)>135 || y+font->height*textScale>240) boundsOk=false;
   }
-  void fillScreen(uint16_t color) { texts.clear();rects.clear();ops.clear();boundsOk=true;fillRect(0,0,135,240,color); }
+  void fillScreen(uint16_t color) { ++clears; texts.clear();rects.clear();ops.clear();boundsOk=true;fillRect(0,0,135,240,color); }
   void startWrite() {}
   void endWrite() {}
   void fillRect(int a,int b,int w,int h,uint16_t c) {
@@ -65,6 +66,13 @@ struct FakeDisplay {
     fillRect(a,b,w,1,c);fillRect(a,b+h-1,w,1,c);fillRect(a,b,1,h,c);fillRect(a+w-1,b,1,h,c);
   }
   void drawFastHLine(int a,int b,int w,uint16_t c) { fillRect(a,b,w,1,c); }
+};
+namespace lgfx {using LGFXBase=FakeDisplay;}
+struct M5Canvas:FakeDisplay {
+ FakeDisplay* parent;explicit M5Canvas(FakeDisplay* value):parent(value){}
+ void setColorDepth(int){}
+ void* createSprite(int,int){return this;}
+ void pushSprite(int,int){parent->texts=texts;parent->rects=rects;parent->ops=ops;parent->boundsOk=boundsOk;++parent->frames;}
 };
 struct FakeButton { bool down=false; bool isPressed() const { return down; } };
 struct FakePower { int getBatteryVoltage() { return 4000; } int getBatteryLevel() { return 74; } };

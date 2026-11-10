@@ -28,19 +28,23 @@ Messages returns to Channels on hold-B. Splash only leaves on short-A. Short act
 
 ## Screens and data sources
 
-| Screen | Live behavior | Placeholder / mock behavior |
+| Screen | Live behavior | Limits / future scope |
 |---|---|---|
-| Start | A enters Home; scanner continues in the background | Static project name and controls; logo omitted to match the current Figma |
-| Home | Bitchat candidate count, unverified status, scanner/battery, four working destinations | Relay remains OFF |
-| Nearby | Name, RSSI, age, index/count; B/C cycle; A toggles address/type details | `Bitchat?` is only an advertised-service candidate; every device remains `Not verified` |
-| Channels | Honest availability state and reference to Nearby | `No channels / Chat is not ready / Scanner only`; A opens the Messages preview, without joining anything |
-| Messages | Hold-B returns to Channels | `No RX/TX / Messages not ready yet / Scanner`; no invented conversation |
-| InfoBot | B/C select `!info`, `!rules`, `!help`; A opens/closes a local preview | `Preview only` command examples; no sending, automated reply, or welcome detection; welcome bot OFF |
-| Settings | Brightness, Battery, About, Diagnostics destinations | None |
-| Brightness | 5%, 25%, 50%, 75%, 100%; A applies and returns, hold-B cancels | None; radio mark is the applied value, cream highlight is the current focus |
-| Battery | Actual voltage and estimated percentage, refreshed every five seconds | No remaining-runtime or charging claim |
-| About | Wander Lima credits and a real repository QR | No logo or QR placeholder |
-| Diagnostics | Advertisement-report count, queue drops, free heap, uptime, version | BLE counts reports, not chat messages |
+| Start | Name, shared controls, A enters Home | Final logo remains a design asset task |
+| Home | Advertisement candidates, signed-peer count, real relay/transport state | Counts do not prove channel membership |
+| Nearby | Signed peers take priority when available; otherwise filtered candidates; A opens ID/address details | Signed-only and Noise-authenticated statuses are distinct; RSSI belongs only to observations |
+| Channels | Public BLE `#bluetooth`, transport status; A opens Messages | No private groups or Nostr context |
+| Messages | Twelve-entry live history; B/C cycle messages; A opens text-scroll mode; B/C scroll; hold-B leaves detail, then returns to Channels | RAM-only, 192 displayed bytes, truncation indicated; no composer |
+| InfoBot | Command reference, authentication readiness, immediate Bot ON/OFF switch | Toggle is per boot; Welcome OFF |
+| Settings | Four working destinations | Additional configuration is future scope |
+| Brightness | Five presets, explicit apply, persistent value, visible save failure | Physical 5% readability remains to be checked |
+| Battery | Real voltage and approximate percentage | No calibrated runtime or unsupported charging claim |
+| About | Wander Lima credits and real repository QR | Camera reading still requires physical acceptance |
+| Diagnostics | Advertisement/drop counts, heap, uptime, accepted/rejected packets, RTC/build clock | Queued messages are not delivery acknowledgements |
+
+Screens are composed in a 16-bit 135 × 240 PSRAM-backed canvas and pushed after the full frame is ready. The physical display is not cleared between normal frames. If buffer allocation fails, rendering falls back to direct drawing; that degraded path may flicker.
+
+The original wireframes below document the approved layout direction. Their older unavailable labels are illustrative; the table above and current firmware define behavior.
 
 ## Nearby hierarchy
 

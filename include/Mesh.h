@@ -24,6 +24,8 @@ class Mesh {
   void disconnected(uint16_t link);
   bool announce(uint16_t target=kAnyLink);
   bool sendText(const char* text);
+  bool botEnabled() const {return botEnabled_;}
+  void setBotEnabled(bool enabled) {botEnabled_=enabled;}
   size_t peerCount() const;
   size_t authenticatedCount() const;
   const MeshPeer* peer(size_t ordinal) const;
@@ -43,7 +45,7 @@ class Mesh {
   void handleNoise(const wire::FrameView& frame,uint16_t link);
   void bot(MeshPeer& peer,wire::Bytes text);
   Identity* identity_=nullptr;Identity::Entropy entropy_=nullptr;Send send_=nullptr;
-  uint32_t now_=0,lastAnnounce_=0,lastBot_=0;uint64_t epoch_=0,lastStamp_=0;bool replied_=false;
+  uint32_t now_=0,lastAnnounce_=0,lastBot_=0;uint64_t epoch_=0,lastStamp_=0;bool replied_=false,botEnabled_=true;
   std::array<MeshPeer,12> peers_{};std::array<Session,2> sessions_{};
   std::array<ChatMessage,12> messages_{};size_t messageCount_=0,messageNext_=0;
   std::array<std::array<uint8_t,16>,64> dedup_{};size_t dedupCount_=0,dedupNext_=0;

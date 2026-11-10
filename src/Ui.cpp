@@ -1,5 +1,8 @@
 #include "Ui.h"
 #include "Scanner.h"
+#include "Mesh.h"
+#include "Transport.h"
+#include "Clock.h"
 #include "Settings.h"
 #include "PeerSelection.h"
 #include "NavigationInput.h"
@@ -25,15 +28,21 @@ constexpr unsigned brightnessPercent[] = {5, 25, 50, 75, 100};
 size_t brightnessIndex = 2;
 uint8_t brightness = brightnessLevels[brightnessIndex];
 bool sleeping = false, detail = false, settingsSaved = true;
+size_t messageOffset = 0, textLine = 0;
 uint32_t lastInput = 0, lastDraw = 0, lastBattery = 0;
 int battery = -1, voltage = 0;
 NavigationInput input;
+M5Canvas canvas(&M5.Display);
+bool buffered = false;
+lgfx::LGFXBase& surface() {
+  return buffered ? static_cast<lgfx::LGFXBase&>(canvas) : static_cast<lgfx::LGFXBase&>(M5.Display);
+}
 const lgfx::IFont* body = &assets::FreeMonoBody16;
 const lgfx::IFont* compact = &assets::FreeMonoCompact14;
 
 void label(const char* value, int y, uint16_t color = fg, int x = 12,
            int width = 111, const lgfx::IFont* font = nullptr) {
-  auto& d = M5.Display;
+  auto& d = surface();
   d.setFont(font ? font : body);
   d.setTextSize(1);
   char clipped[48]{};
@@ -52,7 +61,7 @@ void label(const char* value, int y, uint16_t color = fg, int x = 12,
   d.print(clipped);
 }
 void divider(int y, int x = 13, int width = 109) {
-  M5.Display.drawFastHLine(x, y, width, fg);
+  surface().drawFastHLine(x, y, width, fg);
 }
 void bitmap(const uint8_t* bits, int x, int y, int width, int height, uint16_t color) {
   const int stride = (width + 7) / 8;
@@ -62,23 +71,23 @@ void bitmap(const uint8_t* bits, int x, int y, int width, int height, uint16_t c
       const bool on = col < width && (bits[row * stride + col / 8] & (0x80 >> (col % 8)));
       if (on && start < 0) start = col;
       if (!on && start >= 0) {
-        M5.Display.fillRect(x + start, y + row, col - start, 1, color);
+        surface().fillRect(x + start, y + row, col - start, 1, color);
         start = -1;
       }
     }
   }
 }
 void item(const char* text, int top, bool selected, int height = 24, bool radio = false, bool checked = false) {
-  if (selected) M5.Display.fillRect(5, top, 125, height, fg);
-  else if (radio) M5.Display.fillRect(5, top, 125, height, bg);
+  if (selected) surface().fillRect(5, top, 125, height, fg);
+  else if (radio) surface().fillRect(5, top, 125, height, bg);
   if (radio) bitmap(checked ? assets::radioChecked : assets::radioUnchecked,
                     13, top + (height - 10) / 2, 10, 10, selected ? bg : fg);
   label(text, top + (height - 16) / 2, selected ? bg : fg, radio ? 29 : 13, radio ? 93 : 111);
 }
 void panel(int top, int height, bool peer = false) {
-  M5.Display.fillRect(4, top, 127, height, peer ? 0x0964 : 0x10A3);
-  M5.Display.drawRect(4, top, 127, height, peer ? green : fg);
-  if (peer) M5.Display.fillRect(4, top, 3, height, green);
+  surface().fillRect(4, top, 127, height, peer ? 0x0964 : 0x10A3);
+  surface().drawRect(4, top, 127, height, peer ? green : fg);
+  if (peer) surface().fillRect(4, top, 3, height, green);
 }
 void menu(const char* const* labels, size_t count, int top, int rowHeight) {
   panel(top, int(count) * rowHeight + int(count) - 1 + 10);
@@ -98,13 +107,13 @@ void drawSplash() {
   item("A: START", 210, true);
 }
 void draw(const PeerTable& peers, uint32_t now) {
-  auto& d = M5.Display;
+  auto& d = surface();
   d.startWrite();
   d.fillScreen(bg);
-  if (screen == Screen::Splash) { drawSplash(); d.endWrite(); return; }
-  const uint16_t radioColor = scannerFault() ? TFT_RED : scannerActive() ? green : amber;
+  if (screen == Screen::Splash) { drawSplash(); d.endWrite(); if(buffered) canvas.pushSprite(0,0); return; }
+  const uint16_t radioColor = transportReady() ? green : scannerFault() ? TFT_RED : amber;
   d.fillRect(6, 7, 5, 5, radioColor);
-  label(scannerFault() ? "ERR" : scannerActive() ? "BLE" : "IDLE", 2,
+  label(transportReady() ? "BLE" : scannerFault() ? "ERR" : "IDLE", 2,
         fg, 16, 59, compact);
   char value[48];
   const bool batteryKnown = battery >= 0 && battery <= 100;
@@ -135,13 +144,32 @@ void draw(const PeerTable& peers, uint32_t now) {
     case Screen::Dashboard: {
       panel(54, 69);
       std::snprintf(value, sizeof(value), "Nearby: %u", unsigned(peers.candidates())); label(value, 57);
-      label("Unverified", 79, amber);
-      label("Relay: OFF", 101, amber);
+      std::snprintf(value, sizeof(value), "Peers: %u", unsigned(mesh().peerCount())); label(value, 79, green);
+      label(transportReady() && mesh().ready() ? "Relay: ON" : "Relay: OFF", 101, transportReady() && mesh().ready() ? green : amber);
       const char* options[] = {"Nearby", "Channels", "InfoBot", "Settings"};
       menu(options, 4, 129, 24);
       break;
     }
     case Screen::Peers: {
+      if (mesh().peerCount()) {
+        selection %= mesh().peerCount();
+        const auto* peer = mesh().peer(selection);
+        std::snprintf(value, sizeof(value), "Peer %u/%u", unsigned(selection+1), unsigned(mesh().peerCount()));
+        label(value, 56, fg, 4, 127);
+        panel(80, 147, true);
+        label(peer->name[0] ? peer->name : "Unnamed", 89, fg, 15, 111);
+        if (detail) {
+          std::snprintf(value, sizeof(value), "%02x%02x%02x%02x",peer->id[0],peer->id[1],peer->id[2],peer->id[3]); label(value, 115, fg, 15, 111);
+          std::snprintf(value, sizeof(value), "%02x%02x%02x%02x",peer->id[4],peer->id[5],peer->id[6],peer->id[7]); label(value, 141, fg, 15, 111);
+        } else {
+          label("Signed peer", 115, fg, 15, 111, compact);
+          std::snprintf(value, sizeof(value), "Seen %lus", (unsigned long)((now-peer->seen)/1000));label(value, 141, muted, 15, 111, compact);
+        }
+        divider(162,15,111);
+        label(peer->authenticated ? "Noise auth" : "Signed only", 173, peer->authenticated ? green : amber,15,111,compact);
+        label("BLE local",199,muted,15,111,compact);
+        break;
+      }
       if (peerSelection.sync(peers)) detail = false;
       const auto peerIndex = peerSelection.index();
       const auto n = peers.candidates();
@@ -175,42 +203,54 @@ void draw(const PeerTable& peers, uint32_t now) {
       break;
     }
     case Screen::Channels:
-      panel(54, 110);
-      label("No channels", 63, fg, 12, 111);
-      label("Chat is", 93, fg, 13, 109, compact);
-      label("not ready", 111, fg, 13, 109, compact);
-      label("Scanner only", 137, muted, 13, 109, compact);
-      panel(172, 64);
-      label("BLE devices", 181, muted, 12, 111);
-      label("See Nearby", 211, muted, 13, 109, compact);
+      panel(54, 93);
+      item("#bluetooth", 60, true, 28);
+      divider(94);
+      label("Public BLE", 105, fg, 13, 109, compact);
+      label(transportStatus(), 126, transportReady() ? green : amber, 13, 109, compact);
+      panel(158, 78);
+      label("Local mesh", 167);
+      label("No private", 194, muted, 13,109,compact);
+      label("groups yet", 214, muted, 13,109,compact);
       break;
-    case Screen::Messages:
-      panel(54, 154);
-      label("No RX/TX", 63, amber);
-      divider(91);
-      label("Messages", 102); label("not ready", 124); label("yet", 146);
-      divider(173);
-      label("Scanner", 184, muted, 13, 109, compact);
+    case Screen::Messages: {
+      const auto count = mesh().messageCount();
+      if (!count) {
+        panel(54, 117); label("No messages", 64); divider(92);
+        label("#bluetooth",103,green,13,109,compact);
+        label(transportStatus(),127,muted,13,109,compact);
+        label("Waiting...",149,muted,13,109,compact);
+      } else {
+        if(messageOffset>=count) messageOffset=count-1;
+        const auto* message=mesh().message(messageOffset);
+        std::snprintf(value,sizeof(value),"%u/%u %s",unsigned(messageOffset+1),unsigned(count),message->outgoing?"You":"Peer");label(value,55,muted,4,127,compact);
+        panel(77, 159);label(message->name,84,green,13,109,compact);divider(106);
+        const size_t length=std::strlen(message->text), lines=(length+11)/12;
+        if(textLine>=lines) textLine=lines?lines-1:0;
+        for(size_t line=0;line<5;++line){const size_t start=(textLine+line)*12;if(start>=length)break;char part[13]{};std::memcpy(part,message->text+start,length-start>12?12:length-start);label(part,115+int(line)*20,fg,13,109,compact);}
+        if(detail)label("Scroll text",218,green,13,109,compact);
+        else if(message->truncated)label("Truncated",218,amber,13,109,compact);
+      }
       break;
+    }
     case Screen::Bot: {
       panel(54, 31);
-      label("No RX/TX", 61, amber);
+      label(!mesh().botEnabled() ? "Bot OFF" : mesh().authenticatedCount() ? "Bot ready" : "Needs auth", 61, mesh().botEnabled() && mesh().authenticatedCount() ? green : amber);
       const char* commands[] = {"!info", "!rules", "!help"};
       if (detail) {
         panel(93, 139);
         label(commands[selection], 102, green);
         divider(129);
-        label("Preview only", 140, amber, 13, 109, compact);
-        const char* lines[][3] = {{"Stick info", "BLE scanner", "Relay: OFF"},
+        label("Public reply", 140, green, 13, 109, compact);
+        const char* lines[][3] = {{"Stick info", "BLE mesh", "Open-source"},
                                  {"Respect all", "No spam", "No welcomes"},
-                                 {"!info !rules", "!help", "No sending"}};
+                                 {"!info !rules", "!help", "30s cooldown"}};
         for (int i = 0; i < 3; ++i) label(lines[selection][i], 166 + i * 20, fg, 13, 109, compact);
       } else {
-        panel(93, 88);
+        panel(93, 114);
         for (size_t i = 0; i < 3; ++i) item(commands[i], 98 + i * 26, i == selection, 22);
-        panel(189, 48);
-        label("Welcome bot", 196, muted, 7, 123, compact);
-        label("OFF", 218, amber, 7, 123, compact);
+        item(mesh().botEnabled() ? "Bot: ON" : "Bot: OFF",176,selection==3,22);
+        label("Welcome: OFF", 218, amber, 7, 123, compact);
       }
       break;
     }
@@ -247,8 +287,8 @@ void draw(const PeerTable& peers, uint32_t now) {
       label("test yet", 181, muted, 13, 109, compact);
       break;
     case Screen::About:
-      M5.Display.fillRect(4, 54, 127, 74, 0x0964);
-      M5.Display.fillRect(4, 54, 3, 74, green);
+      surface().fillRect(4, 54, 127, 74, 0x0964);
+      surface().fillRect(4, 54, 3, 74, green);
       label("Wander Lima", 60, fg, 13, 112);
       label("Open-source", 86, muted, 13, 112, compact);
       label("Bitchat app", 108, muted, 13, 112, compact);
@@ -263,20 +303,29 @@ void draw(const PeerTable& peers, uint32_t now) {
       std::snprintf(value, sizeof(value), "RAM %u", unsigned(ESP.getFreeHeap())); label(value, 126, fg, 13, 109, compact);
       std::snprintf(value, sizeof(value), "Up %lus", (unsigned long)(now / 1000)); label(value, 152, fg, 13, 109, compact);
       divider(176);
-      label("v0.1.0", 187, green, 13, 109, compact);
+      std::snprintf(value, sizeof(value), "OK %lu Err%lu", (unsigned long)mesh().stats().accepted, (unsigned long)mesh().stats().rejected); label(value, 187, green, 13, 109, compact);
+      label(clockRtc() ? "RTC / v0.2" : "Build clock", 216, clockRtc() ? muted : amber, 13,109,compact);
       break;
     default: break;
   }
   d.endWrite();
+  if(buffered) canvas.pushSprite(0,0);
 }
 void move(int direction, const PeerTable& peers) {
+  if (screen == Screen::Messages) {
+    if(detail) { const auto* message=mesh().message(messageOffset);const size_t lines=message?(std::strlen(message->text)+11)/12:0;
+      if(direction<0 && textLine) --textLine; else if(direction>0 && textLine+5<lines) ++textLine;
+    } else if(mesh().messageCount()){messageOffset=(messageOffset+mesh().messageCount()+direction)%mesh().messageCount();textLine=0;}
+    return;
+  }
   if (screen == Screen::Peers) {
-    peerSelection.move(direction, peers);
+    if(mesh().peerCount()) selection=(selection+mesh().peerCount()+direction)%mesh().peerCount();
+    else peerSelection.move(direction, peers);
     detail = false;
     return;
   }
   const size_t count = screen == Screen::Dashboard || screen == Screen::Settings ? 4 :
-                       screen == Screen::Bot ? 3 : screen == Screen::Brightness ? 5 : 0;
+                       screen == Screen::Bot ? 4 : screen == Screen::Brightness ? 5 : 0;
   if (count) selection = (selection + count + direction) % count;
   detail = false;
 }
@@ -286,9 +335,11 @@ void beginUi() {
   brightness = brightnessLevels[brightnessIndex];
   M5.Display.setRotation(0);
   M5.Display.setBrightness(brightness);
-  M5.Display.setFont(body);
-  M5.Display.setTextSize(1);
-  M5.Display.setTextWrap(false);
+  canvas.setColorDepth(16);
+  buffered = canvas.createSprite(135,240) != nullptr;
+  surface().setFont(body);
+  surface().setTextSize(1);
+  surface().setTextWrap(false);
   lastInput = millis();
   draw(PeerTable{}, lastInput);
 }
@@ -305,7 +356,7 @@ void updateUi(const PeerTable& peers, uint32_t now) {
   } else if (action == NavigationAction::Up) move(-1, peers);
   else if (action == NavigationAction::Down) move(1, peers);
   else if (action == NavigationAction::Back) {
-    if (detail && (screen == Screen::Peers || screen == Screen::Bot)) detail = false;
+    if (detail && (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages)) detail = false;
     else if (screen == Screen::Brightness || screen == Screen::Battery || screen == Screen::About || screen == Screen::Diagnostics) {
       selection = screen == Screen::Brightness ? 0 : screen == Screen::Battery ? 1 : screen == Screen::About ? 2 : 3;
       screen = Screen::Settings;
@@ -319,8 +370,9 @@ void updateUi(const PeerTable& peers, uint32_t now) {
     else if (screen == Screen::Dashboard) {
       const Screen destinations[] = {Screen::Peers, Screen::Channels, Screen::Bot, Screen::Settings};
       screen = destinations[selection]; selection = 0;
-    } else if (screen == Screen::Channels) screen = Screen::Messages;
-    else if (screen == Screen::Peers || screen == Screen::Bot) detail = !detail;
+    } else if (screen == Screen::Channels) { screen = Screen::Messages; messageOffset=textLine=0; detail=false; }
+    else if (screen == Screen::Bot && selection==3) mesh().setBotEnabled(!mesh().botEnabled());
+    else if (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages) { detail = !detail; textLine=0; }
     else if (screen == Screen::Settings) {
       const Screen destinations[] = {Screen::Brightness, Screen::Battery, Screen::About, Screen::Diagnostics};
       screen = destinations[selection];

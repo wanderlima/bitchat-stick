@@ -45,5 +45,13 @@ void loop() {
   stick::pollTransport(now);
   stick::updateUi(peers, now);
   if (M5.BtnPWR.pressedFor(6000)) M5.Power.powerOff();
+  static uint32_t lastReport=0;
+  if(uint32_t(now-lastReport)>=10000){
+    lastReport=now;const auto& stats=stick::mesh().stats();
+    Serial.printf("mesh links=%u peers=%u auth=%u accepted=%lu rejected=%lu queued=%lu relay=%lu bot=%lu drops=%lu heap=%u clock=%s\n",
+      unsigned(stick::transportLinks()),unsigned(stick::mesh().peerCount()),unsigned(stick::mesh().authenticatedCount()),
+      (unsigned long)stats.accepted,(unsigned long)stats.rejected,(unsigned long)stats.sent,(unsigned long)stats.relayed,
+      (unsigned long)stats.botReplies,(unsigned long)(stats.dropped+stick::transportDrops()),unsigned(ESP.getFreeHeap()),stick::clockRtc()?"RTC":"build");
+  }
   delay(10);
 }
