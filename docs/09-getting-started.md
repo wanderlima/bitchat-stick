@@ -56,7 +56,7 @@ The first build downloads dependencies. Generated `.pio/build/m5stickc-plus2/fir
 
 ## Native tests
 
-Run all ten host suites, including the actual scanner callback with NimBLE/queue fakes:
+The full cryptographic suite uses macOS system SHA-256, Swift/CryptoKit and installed pinned PlatformIO dependencies. Run all eleven host suites, including the actual scanner callback with NimBLE/queue fakes:
 
 ```sh
 sh tools/test-native.sh

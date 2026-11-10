@@ -15,12 +15,13 @@ struct Bytes {
 struct FrameView {
   uint8_t version = 1, type = 0, ttl = 0;
   uint64_t timestamp = 0;
-  bool isRsr = false;
+  bool isRsr = false, compressed = false;
+  uint32_t decodedPayloadSize = 0;
   Bytes sender, recipient, route, payload, signature;
   size_t encodedSize = 0; // Without optional padding.
 };
 enum class Error { None, Truncated, TooLarge, Version, Flags, Compression, Padding, InvalidField, Capacity };
 Error decode(Bytes input, FrameView& result);
-// Uncompressed, unpadded output. Source views and output must not overlap.
+// Unpadded output; compressed payload views retain their exact wire preamble/bytes. Source views and output must not overlap.
 Error encode(const FrameView& frame, uint8_t* output, size_t capacity, size_t& written);
 } } // namespace stick::wire

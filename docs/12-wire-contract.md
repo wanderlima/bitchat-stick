@@ -30,15 +30,15 @@ Date: **2026-11-10**. This document records source/host evidence, not a complete
 7. Optional v2 route: one-byte hop count followed by eight bytes per hop.
 8. Payload, followed by an optional 64-byte signature.
 
-Supported flags: recipient `0x01`, signature `0x02`, route `0x08`, RSR `0x10`. Compression `0x04` returns a distinct unsupported error. The embedded subset caps the complete input at **4096 bytes** and payload at **2048 bytes**, below upstream media/text limits. Oversized input is explicitly rejected, never silently truncated.
+Supported flags: recipient `0x01`, signature `0x02`, route `0x08`, RSR `0x10`. Compression `0x04` is parsed with a bounded declared output size; raw DEFLATE is expanded only into a caller-provided buffer. The embedded subset caps the complete input at **4096 bytes** and payload at **2048 bytes**, below upstream media/text limits. Oversized input is explicitly rejected, never silently truncated.
 
-The decoder validates all reads before accessing bytes and publishes views only after success. It accepts exact frames or PKCS#7-style tails of 1–255 equal-valued bytes. Unlike the permissive upstream decoder, arbitrary trailing bytes, unknown flag bits, a v1 route flag and zero-hop route fields are rejected. The encoder outputs uncompressed, unpadded frames and checks capacity/field sizes before writing. Input views must remain alive; encoder source and destination buffers must not overlap.
+The decoder validates all reads before accessing bytes and publishes views only after success. It accepts exact frames or PKCS#7-style tails of 1–255 equal-valued bytes. Unlike the permissive upstream decoder, arbitrary trailing bytes, unknown flag bits, a v1 route flag and zero-hop route fields are rejected. The encoder outputs unpadded frames and preserves exact compressed wire preambles/bytes when present and checks capacity/field sizes before writing. Input views must remain alive; encoder source and destination buffers must not overlap.
 
 ## Bounded fragment reassembly
 
 `FragmentAssembler` implements the upstream 13-byte fragment prefix: 8-byte stream ID, 2-byte big-endian index, 2-byte big-endian count and original type. It holds at most **two assemblies**, **32 fragments per assembly**, **1024 bytes per fragment chunk** and **4096 reassembled bytes**. Storage is fixed; no allocation or unbounded map is used.
 
-Out-of-order fragments are accepted. Exact duplicates do not consume space or extend the 30-second lifetime; conflicting duplicate data or metadata invalidates the assembly. Full capacity rejects new streams. Expiry is wrap-safe. Completion validates the recovered wire frame and requires its sender/type to match the assembly envelope. This is consistency checking, not cryptographic sender authentication. Nested fragments and unsupported recovered compression are rejected.
+Out-of-order fragments are accepted. Exact duplicates do not consume space or extend the 30-second lifetime; conflicting duplicate data or metadata invalidates the assembly. Full capacity rejects new streams. Expiry is wrap-safe. Completion validates the recovered wire frame and requires its sender/type to match the assembly envelope. This is consistency checking, not cryptographic sender authentication. Nested fragments are rejected; recovered compressed frames still pass declared-size and bounded expansion checks.
 
 The current limits intentionally exclude large media streams. The assembler is not yet connected to GATT or Messages; a complete frame still needs cryptographic/session validation before delivery. Tests cover ordering, conflicts, resource limits, insufficient output capacity/retry, expiry/wrap and inner-sender mismatch.
 
@@ -62,7 +62,7 @@ No new public/private message, welcome, forwarding, or channel claim is enabled 
 
 The C++ test decodes each frame, verifies fields, re-encodes the unpadded prefix byte-for-byte, rejects every truncated prefix, checks invalid flags/lengths/padding and runs 10,000 deterministic hostile frames under AddressSanitizer/UndefinedBehaviorSanitizer. This is independent serializer evidence for the stated subset, not Android-radio or cryptographic certification.
 
-Run all ten host suites from the root:
+Run all eleven host suites from the root:
 
 ```sh
 sh tools/test-native.sh
@@ -92,3 +92,9 @@ Host tests cover RFC 4231 HMAC, RFC 8032 Ed25519, RFC 7748 X25519, all-zero shar
 Transport uses the Bitchat four-byte big-endian nonce prefix, with the Noise nonce encoded little-endian inside the IETF cipher nonce. A 1024-message replay window accepts authenticated out-of-order delivery; invalid tags do not consume a nonce. Sessions refuse sends/receives at the 10,000-message bound so the integration must rekey. Handshake/transport secrets are wiped on reset, destruction or failure. Connection lifecycle, one-hour rekey and timeout scheduling are integration responsibilities, not reasons to accept an unbound key.
 
 Run `tools/GenerateNoiseVectors.java` against the pinned Android `noise/southernstorm` sources to regenerate `test/fixtures/noise-java-vectors.txt`. Fixture private keys are deterministic synthetic test data only. Host tests cover identity mismatch, ciphertext changes, replay, out-of-order delivery and successful retry after a failed tag. Live app interoperability remains a separate device check.
+
+## Packet signatures and compressed payloads
+
+`PacketSecurity` constructs the actual upstream signing preimage: TTL zero, signature absent, RSR removed, exact wire payload/route, then the serializer's bucket/padding policy. Compressed wire bytes are retained, avoiding compressor-dependent re-encoding. Three additional fixtures were generated by the official Swift serializer and signed by Apple CryptoKit: short, compressed and routed messages. The C++ verifier accepts them, their canonical bytes match exactly, and CryptoKit independently accepts signatures generated locally. CryptoKit signatures can be randomized; equality of signature bytes is deliberately not used as a verification test.
+
+Raw DEFLATE expansion uses the existing pinned M5GFX miniz implementation, with at most 2048 output bytes and exact declared-length checking. Invalid or oversized streams never publish partial plaintext. `verifyPacket` proves a signature only against the supplied key; the integration must still validate peer-ID/key binding, pinned keys, freshness and replay before delivering messages.
