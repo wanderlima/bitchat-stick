@@ -12,6 +12,7 @@ run_test() {
 }
 run_test peers test/peer_table_test.cpp src/PeerTable.cpp
 run_test navigation test/navigation_input_test.cpp
+run_test joyc-navigation test/joyc_navigation_test.cpp
 run_test settings test/settings_test.cpp src/Settings.cpp
 run_test selection test/peer_selection_test.cpp src/PeerTable.cpp src/PeerSelection.cpp
 run_test scanner test/scanner_test.cpp src/Scanner.cpp src/PeerTable.cpp
