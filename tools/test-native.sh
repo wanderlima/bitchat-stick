@@ -35,3 +35,5 @@ run_crypto_test() {
   "$test_dir/$name"
 }
 run_crypto_test crypto test/crypto_primitives_test.cpp src/CryptoPrimitives.cpp
+
+run_crypto_test noise test/noise_session_test.cpp src/NoiseSession.cpp src/CryptoPrimitives.cpp
