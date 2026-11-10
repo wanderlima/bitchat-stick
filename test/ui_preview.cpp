@@ -2,6 +2,11 @@
 #include <cassert>
 #include <fstream>
 namespace stick {
+bool transportReady(){return true;}
+size_t transportLinks(){return 1;}
+uint32_t transportDrops(){return 0;}
+const char* transportStatus(){return "Connected";}
+bool clockRtc(){return true;}
 bool scannerActive() { return true; }
 bool scannerFault() { return false; }
 uint32_t scannerDrops() { return 2; }
@@ -14,6 +19,10 @@ int main(int argc, char** argv) {
   Observation value{};
   std::strcpy(value.address,"AA:BB:CC:DD:EE:FF");std::strcpy(value.name,"Test phone");
   value.rssi=-64;value.network=Network::Mainnet;value.seenAt=1000;peers.observe(value);
+  Identity identity;
+  auto entropy=[](void* out,size_t n){for(size_t i=0;i<n;++i)static_cast<uint8_t*>(out)[i]=uint8_t(i+17);};
+  assert(identity.begin(entropy));mesh().begin(identity,entropy,[](wire::Bytes,uint16_t,uint16_t){return true;});
+  mesh().tick(3000,1800000000000ULL);assert(mesh().sendText("Hello from the Stick"));
   beginUi();battery=72;voltage=4000;
   const Screen pages[]={Screen::Dashboard,Screen::Peers,Screen::Channels,Screen::Messages,Screen::Bot,Screen::Settings,Screen::Splash,Screen::Brightness,Screen::About,Screen::Battery,Screen::Diagnostics};
   const char* names[]={"01-dashboard","02-nearby-peers","03-channels","04-channel-messages","05-infobot","06-settings","07-splash","08-brightness","09-about","10-battery","11-diagnostics"};
