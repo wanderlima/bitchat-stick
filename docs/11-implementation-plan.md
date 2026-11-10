@@ -87,7 +87,7 @@ Status: **Done** = implemented in source; **Mock** = local preview/unavailable s
 
 - **Mock · S:** unavailable state, No RX/TX warning, separators and return to Channels. No invented conversation is shown.
 - **Pending · S–M:** define connection/loading/empty/error states, paged reading and long/unsupported-text behavior.
-- **Foundation · L:** bounded uncompressed v1/v2 framing codec tested against five vectors emitted by the official pinned Swift serializer. Truncation, flags, routes, signatures-as-bytes, padding and hostile inputs have host coverage. Compression, fragment reassembly, cryptographic verification and radio interoperability remain pending.
+- **Foundation · L:** bounded uncompressed v1/v2 framing codec tested against five vectors emitted by the official pinned Swift serializer. Truncation, flags, routes, signatures-as-bytes, padding and hostile inputs have host coverage. Bounded fragment assembly also has host coverage (2 streams, 32 chunks, 4096 bytes, timeout/conflict checks). Compression, cryptographic verification and radio integration/interoperability remain pending.
 - **Pending · L:** establish GATT discovery, connection lifecycle, notification/write handling and bounded queues.
 - **Pending · XL:** validate identity, signatures and Noise/session requirements before presenting protected messages as readable/authenticated.
 - **Pending · XL:** receive/send real messages and prove two-phone interoperability. Preserve reading position as traffic arrives.

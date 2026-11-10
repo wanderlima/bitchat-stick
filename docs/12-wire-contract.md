@@ -34,11 +34,19 @@ Supported flags: recipient `0x01`, signature `0x02`, route `0x08`, RSR `0x10`. C
 
 The decoder validates all reads before accessing bytes and publishes views only after success. It accepts exact frames or PKCS#7-style tails of 1–255 equal-valued bytes. Unlike the permissive upstream decoder, arbitrary trailing bytes, unknown flag bits, a v1 route flag and zero-hop route fields are rejected. The encoder outputs uncompressed, unpadded frames and checks capacity/field sizes before writing. Input views must remain alive; encoder source and destination buffers must not overlap.
 
+## Bounded fragment reassembly
+
+`FragmentAssembler` implements the upstream 13-byte fragment prefix: 8-byte stream ID, 2-byte big-endian index, 2-byte big-endian count and original type. It holds at most **two assemblies**, **32 fragments per assembly**, **1024 bytes per fragment chunk** and **4096 reassembled bytes**. Storage is fixed; no allocation or unbounded map is used.
+
+Out-of-order fragments are accepted. Exact duplicates do not consume space or extend the 30-second lifetime; conflicting duplicate data or metadata invalidates the assembly. Full capacity rejects new streams. Expiry is wrap-safe. Completion validates the recovered wire frame and requires its sender/type to match the assembly envelope. This is consistency checking, not cryptographic sender authentication. Nested fragments and unsupported recovered compression are rejected.
+
+The current limits intentionally exclude large media streams. The assembler is not yet connected to GATT or Messages; a complete frame still needs cryptographic/session validation before delivery. Tests cover ordering, conflicts, resource limits, insufficient output capacity/retry, expiry/wrap and inner-sender mismatch.
+
 ## Security boundary
 
 A parsed frame is **not an authenticated packet**. The codec only exposes signature bytes; it never validates them or creates a verified peer. Synthetic signature fixtures are intentionally not cryptographically valid.
 
-The pinned Swift public-message handler requires a valid sender signature. Signing also has its own canonicalization: TTL zero, signature omitted, mutable RSR removed, serializer compression/padding policy applied. Raw unpadded encoding is therefore not a drop-in signing preimage. Identity-key binding, signing/verification, Noise XX, replay/freshness checks, compression and bounded fragment reassembly must be implemented/tested before any untrusted frame can feed real Messages or InfoBot.
+The pinned Swift public-message handler requires a valid sender signature. Signing also has its own canonicalization: TTL zero, signature omitted, mutable RSR removed, serializer compression/padding policy applied. Raw unpadded encoding is therefore not a drop-in signing preimage. Identity-key binding, signing/verification, Noise XX, replay/freshness checks, compression and radio-integrated fragment handling must be implemented/tested before any untrusted frame can feed real Messages or InfoBot.
 
 No new public/private message, welcome, forwarding, or channel claim is enabled by the codec. Traffic stays disabled until the relevant gates in [the two-phone plan](06-testing.md) pass.
 
@@ -54,7 +62,7 @@ No new public/private message, welcome, forwarding, or channel claim is enabled 
 
 The C++ test decodes each frame, verifies fields, re-encodes the unpadded prefix byte-for-byte, rejects every truncated prefix, checks invalid flags/lengths/padding and runs 10,000 deterministic hostile frames under AddressSanitizer/UndefinedBehaviorSanitizer. This is independent serializer evidence for the stated subset, not Android-radio or cryptographic certification.
 
-Run all seven host suites from the root:
+Run all eight host suites from the root:
 
 ```sh
 sh tools/test-native.sh
