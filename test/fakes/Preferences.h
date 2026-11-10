@@ -6,6 +6,9 @@
 namespace fake_preferences {
 inline bool readable = true, writable = true, writeSucceeds = true;
 inline uint32_t record = 0;
+inline uint8_t identity[65]{};
+inline size_t identityLength=0;
+inline bool identityExists=false;
 inline unsigned writes = 0, closes = 0;
 }
 class Preferences {
@@ -24,6 +27,14 @@ class Preferences {
     if (!fake_preferences::writeSucceeds) return 0;
     fake_preferences::record = value;
     return sizeof(value);
+  }
+  bool isKey(const char*) { return fake_preferences::identityExists; }
+  size_t getBytesLength(const char*) { return fake_preferences::identityLength; }
+  size_t getBytes(const char*, void* out, size_t n) { std::memcpy(out,fake_preferences::identity,n);return n; }
+  size_t putBytes(const char*, const void* data, size_t n) {
+    if (!fake_preferences::writeSucceeds) return 0;
+    assert(n==65);std::memcpy(fake_preferences::identity,data,n);
+    fake_preferences::identityLength=n;fake_preferences::identityExists=true;return n;
   }
   void end() { ++fake_preferences::closes; }
 };

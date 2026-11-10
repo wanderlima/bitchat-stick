@@ -45,3 +45,5 @@ ${CC:-cc} -std=c99 -fsanitize=address,undefined -c .pio/libdeps/m5stickc-plus2/M
 run_crypto_test packets test/packet_security_test.cpp src/PacketSecurity.cpp src/WireCodec.cpp src/CryptoPrimitives.cpp "$test_dir/miniz.o"
 
 swift -module-cache-path "$test_dir/swift-cache" tools/VerifyPacketSignatures.swift "$test_dir/local-signatures.txt"
+
+run_crypto_test identity test/identity_test.cpp src/Identity.cpp src/CryptoPrimitives.cpp -I test/fakes
