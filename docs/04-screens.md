@@ -96,6 +96,6 @@ The [eleven JPEG previews](screens/README.md) are generated from current drawing
 
 ## Inbox and read state
 
-**Mesh** is a label for the apps' existing public local mesh (`#bluetooth`), not a new room created by the Stick. Multiple nearby participants share it. **Direct DMs** filters private messages addressed to the Stick. The header envelope appears whenever a retained incoming message is unread; Home and each inbox show counts. Viewing one message marks only that entry read. Incoming messages do not replace the message currently being read.
+**Mesh** is a label for the apps' existing public local mesh (`#bluetooth`), not a new room created by the Stick. Multiple nearby participants share it. **Direct DMs** filters private messages addressed to the Stick. The shared header, including Start, shows an envelope whenever a retained incoming message is unread; Home and each inbox show counts. Viewing one message marks only that entry read. Incoming messages do not replace the message currently being read.
 
 For DMs, a local read schedules the official encrypted Noise read receipt (`0x02` plus the original message ID). Unopened DMs produce only delivered receipts (`0x03`). Pending read receipts retry with bounded work when a suitable authenticated session is available. A queued receipt is not guaranteed radio delivery, and read state is not persisted across reboot.

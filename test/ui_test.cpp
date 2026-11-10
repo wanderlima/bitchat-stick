@@ -122,6 +122,10 @@ int main() {
   screen=Screen::Dashboard;draw(table,tick);check();assert(mesh().unreadCount()==1&&has("P:1 New:1"));
   auto unreadIcon=[](){for(const auto& r:M5.Display.rects)if(r.x==56&&r.y==6&&r.w==10&&r.color==green)return true;return false;};
   assert(unreadIcon());battery=100;draw(table,tick);check();assert(has("100%")&&unreadIcon());
+  const Screen notificationScreens[]={Screen::Splash,Screen::Dashboard,Screen::Peers,Screen::Channels,Screen::Messages,Screen::Bot,Screen::Settings,Screen::Brightness,Screen::Battery,Screen::About,Screen::Diagnostics};
+  messageScope=MessageScope::Direct; // Viewing an empty other inbox must not read the public message.
+  for(auto page:notificationScreens){screen=page;selection=0;detail=false;draw(table,tick);check();assert(unreadIcon()&&mesh().unreadCount()==1);}
+
   screen=Screen::Channels;selection=1;detail=false;draw(table,tick);check();assert(has("Mesh")&&has("Direct DMs"));
   press(0);assert(screen==Screen::Messages&&messageScope==MessageScope::Direct&&has("No messages")&&mesh().unreadCount()==1);
   press(1,true);assert(screen==Screen::Channels&&selection==1);press(1);assert(selection==0);press(0);

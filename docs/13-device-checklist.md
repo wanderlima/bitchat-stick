@@ -58,7 +58,7 @@ Use your own test phones and synthetic content. Public BLE messages are visible 
 - [ ] Before opening the DM on the Stick, Android should show delivered only. Opening it sends the encrypted read receipt; verify Android changes to read within a few seconds while connected.
 - [ ] Repeat from iPhone; test long text and reconnect. Earlier DMs sent before the update are not automatically recovered.
 - [ ] Send `!info` as a DM: it is displayed privately and never produces a public InfoBot reply.
-- [ ] A new incoming message shows the envelope and increments unread counts. Reading one entry clears only that entry; opening Mesh must not clear unread DMs.
+- [ ] A new incoming message shows the envelope on every screen, including Start, and increments unread counts. Reading one entry clears only that entry; opening Mesh must not clear unread DMs.
 - [ ] While reading an older message, a new arrival preserves focus and remains unread.
 - [ ] Repeat the delivered → read transition on iPhone; test reconnect before opening the DM.
 

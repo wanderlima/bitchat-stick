@@ -122,7 +122,6 @@ void draw(const PeerTable& peers, uint32_t now) {
   auto& d = surface();
   d.startWrite();
   d.fillScreen(bg);
-  if (screen == Screen::Splash) { drawSplash(); d.endWrite(); if(buffered) canvas.pushSprite(0,0); return; }
   const uint16_t radioColor = transportReady() ? green : scannerFault() ? TFT_RED : amber;
   d.fillRect(6, 7, 5, 5, radioColor);
   label(transportReady() ? "BLE" : scannerFault() ? "ERR" : "IDLE", 2,
@@ -143,6 +142,7 @@ void draw(const PeerTable& peers, uint32_t now) {
   d.fillRect(130, 8, 2, 3, batteryColor);
   if (batteryKnown && battery > 0) d.fillRect(121, 7, (7 * battery + 99) / 100, 5, batteryColor);
   d.drawRect(0, 0, 135, 20, headerBorder);
+  if (screen == Screen::Splash) { drawSplash(); d.endWrite(); if(buffered) canvas.pushSprite(0,0); return; }
   const char* title = "Home";
   switch (screen) {
     case Screen::Peers: title = "Nearby"; break;
