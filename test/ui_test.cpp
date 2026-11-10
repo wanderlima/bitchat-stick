@@ -6,8 +6,9 @@ namespace stick {
 bool active=true, faulted=false;
 bool scannerActive() { return active; }
 bool scannerFault() { return faulted; }
-uint32_t scannerDrops() { return 2; }
-uint32_t scannerReports() { return 123; }
+uint32_t drops=2, reports=123;
+uint32_t scannerDrops() { return drops; }
+uint32_t scannerReports() { return reports; }
 }
 using namespace stick;
 uint32_t tick=100;
@@ -28,11 +29,15 @@ int main() {
   std::strcpy(obs.address,"AA:BB:CC:DD:EE:FF");std::strcpy(obs.name,"Test phone");
   obs.rssi=-64;obs.network=Network::Mainnet;table.observe(obs);
   beginUi();check();assert(has("BITCHAT") && has("A: START"));
-  press(0);assert(screen==Screen::Dashboard && has("BLE: 1") && has("Cand. 1"));
+  press(0);assert(screen==Screen::Dashboard && has("Nearby: 1") && has("Unverified"));
   bool square=false;
   for(const auto& r:M5.Display.rects) if(r.x==6 && r.y==7 && r.w==5 && r.h==5 && r.color==green) square=true;
   assert(square);
-  press(0);assert(screen==Screen::Peers && has("Test phone") && has("-64 dBm"));
+  bool divider=false;
+  for(const auto& r:M5.Display.rects)
+    if(r.x==5 && r.y==158 && r.w==125 && r.h==1 && r.color==fg) divider=true;
+  assert(divider); // Shared separators between Home menu items.
+  press(0);assert(screen==Screen::Peers && has("Test phone") && has("-64 dBm") && has("Bitchat?") && has("Not verified") && !has("Mainnet?"));
   bool greenCard=false;
   for(const auto& r:M5.Display.rects) if(r.x==4 && r.w==3 && r.color==green) greenCard=true;
   assert(greenCard);
@@ -44,18 +49,46 @@ int main() {
   press(2);press(0);assert(brightness==191 && brightnessIndex==3 && screen==Screen::Settings);
   press(0);press(2);press(1,true);assert(screen==Screen::Settings && brightnessIndex==3); // cancel without applying
   press(2);press(0);assert(screen==Screen::Battery && has("4000 mV"));
-  press(1,true);press(2);press(0);assert(screen==Screen::About && has("Wander Lima") && has("wanderlima") && has("QR"));
+  press(1,true);press(2);press(0);assert(screen==Screen::About && has("Wander Lima") && !has("SOON"));
   press(1,true);press(2);press(0);assert(screen==Screen::Diagnostics && has("BLE 123") && has("Drop 2"));
   // Visit the remaining primary screens and detail states with the same controls.
-  screen=Screen::Channels;draw(table,tick);check();press(0);assert(screen==Screen::Messages);
+  screen=Screen::Channels;draw(table,tick);check();assert(has("No channels") && !has("#bluetooth"));press(0);assert(screen==Screen::Messages);
   press(1,true);assert(screen==Screen::Channels);
   screen=Screen::Bot;selection=0;draw(table,tick);check();press(0);assert(detail);press(1,true);assert(!detail);
   // Verify all presets, header error/idle states, and low/unknown battery rendering.
   screen=Screen::Brightness;
   for(size_t i=0;i<5;++i) { selection=i;draw(table,tick);check(); }
-  screen=Screen::Dashboard;active=false;draw(table,tick);check();assert(has("BLE idle"));
-  faulted=true;draw(table,tick);check();assert(has("BLE err"));
+  screen=Screen::Dashboard;active=false;draw(table,tick);check();assert(has("IDLE"));
+  faulted=true;draw(table,tick);check();assert(has("ERR"));
   battery=-1;draw(table,tick);check();assert(has("--%"));
   battery=5;draw(table,tick);check();assert(has("5%"));
+  // Nearby excludes ordinary BLE and never invents peers when no candidate is present.
+  screen=Screen::Peers;detail=false;peerIndex=0;
+  draw(PeerTable{},tick);check();assert(has("No Bitchat") && !has("Test phone"));
+  PeerTable ordinary;obs.network=Network::Other;ordinary.observe(obs);
+  draw(ordinary,tick);check();assert(has("No Bitchat") && !has("Test phone") && !has("Other BLE"));
+  obs.network=Network::Mainnet;
+  PeerTable full;
+  for(unsigned i=0;i<kPeerCapacity;++i) {
+    std::snprintf(obs.address,sizeof(obs.address),"AA:BB:CC:DD:EE:%02X",i);
+    std::strcpy(obs.name,"A name that is too long");full.observe(obs);
+  }
+  peerIndex=31;draw(full,tick);check();assert(has("Device 32/32"));
+  screen=Screen::Settings;draw(table,tick);check();assert(has("Diagnostics"));
+  screen=Screen::Bot;
+  for(selection=0;selection<3;++selection) {detail=true;draw(table,tick);check();assert(has("Preview only"));}
+  detail=false;
+  // Applied brightness and focus are distinct; inspecting a row never changes PWM.
+  const auto applied=brightnessIndex;const auto pwm=M5.Display.brightness;
+  screen=Screen::Brightness;brightnessIndex=2;selection=3;draw(table,tick);check();
+  auto pixel=[](int x,int y) {
+    uint16_t color=0;
+    for(const auto& r:M5.Display.rects) if(x>=r.x && x<r.x+r.w && y>=r.y && y<r.y+r.h) color=r.color;
+    return color;
+  };
+  assert(pixel(18,136)==fg); // Filled radio on the applied 50% row, outside focus.
+  assert(pixel(18,167)==fg); // Unfilled center retains the focused 75% cream background.
+  assert(M5.Display.brightness==pwm);brightnessIndex=applied;
+  screen=Screen::Diagnostics;reports=0xffffffff;drops=0xffffffff;draw(table,0xffffffff);check();
   std::puts("UI: navigation, presets, credits, live header/data, grouping and text bounds passed");
 }

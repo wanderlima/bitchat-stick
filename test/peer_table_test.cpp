@@ -20,6 +20,10 @@ int main() {
   assert(table.at(0)->observation.rssi == -71);
   table.observe(observation(0, 3, 1)); // same address, different BLE type.
   assert(table.count() == 2);
+  assert(table.candidateAt(0)->observation.network == Network::Mainnet);
+  assert(table.candidateAt(1) == nullptr);
+  auto testnet = observation(42, 4);testnet.network = Network::Testnet;table.observe(testnet);
+  assert(table.candidates() == 2 && table.candidateAt(1)->observation.network == Network::Testnet);
   for (unsigned i = 1; i <= 40; ++i) table.observe(observation(i, 10 + i));
   assert(table.count() == kPeerCapacity);
   assert(table.candidates() == 0); // least recently observed candidate evicted.

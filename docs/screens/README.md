@@ -1,10 +1,10 @@
 # Screen previews — Bitchat Stick
 
-Default language: **English (en-US)**. These software renders come from the current UI drawing calls, pinned font bitmaps, and simulated observations/battery values. They are not photographs, device screenshots, or evidence of Bitchat messaging compatibility. The lightweight display fake approximates hardware rendering; confirm the final appearance on the Plus2.
+Default language: **English (en-US)**. These software renders come from the current UI drawing calls, pinned FreeMono font bitmaps, and simulated observations/battery values. They are not photographs, device screenshots, or evidence of Bitchat messaging compatibility. The lightweight display fake approximates hardware rendering; confirm the final appearance on the Plus2.
 
-Individual JPEGs: 540 × 960 pixels, a 4× nearest-neighbor enlargement of the 135 × 240 layout. The overview is 1880 × 1110 pixels. Text intentionally retains the pixel grid.
+Individual JPEGs: 540 × 960 pixels, a 4× nearest-neighbor enlargement of the 135 × 240 layout. The overview is 2240 × 1110 pixels. Text intentionally retains the pixel grid.
 
-The current revision restores grouped panels, the green Nearby card and left border, a live-state header square and battery icon, larger bold text, and high-contrast selection. Regular-screen navigation footers have been removed. Controls appear only on Start: A confirm, B up, C down, hold B back. C-long retains power behavior.
+The current revision restores grouped panels, the green Nearby card and left border, a live-state header square and battery icon, native 16px bold/14px compact FreeMono text, and high-contrast selection. Regular-screen navigation footers have been removed. Controls appear only on Start: A confirm, B up, C down, hold B back. C-long retains power behavior.
 
 ## Overview
 
@@ -44,6 +44,32 @@ The current revision restores grouped panels, the green Nearby card and left bor
 
 ## About
 
-![Author credits and QR placeholder](09-about.jpg)
+![Author credits and repository QR](09-about.jpg)
 
-The QR box is deliberately a placeholder, not a scannable code. The GitHub address identifies the author's profile, not a verified repository location.
+The QR points to https://github.com/wanderlima/bitchat-stick. It is generated from the local Figma SVG and has been decoded successfully from the software render. Physical-display camera reading remains to be checked.
+
+Firmware uses FreeMono Regular/Bold. Primary cream is #EBDCBA (RGB565 0xEEF7 on the display). The Figma file uses editable Courier Prime because FreeMono is not available through its font service.
+
+## Battery
+
+![Live battery measurements](10-battery.jpg)
+
+## Diagnostics
+
+![Scanner and device diagnostics](11-diagnostics.jpg)
+
+## Reproduce the renders
+
+Build once with PlatformIO to install the pinned M5GFX font sources. From the root, on macOS with Python 3, a C++ compiler and Swift:
+
+```sh
+python3 tools/generate-ui-bitmaps.py
+python3 tools/generate-ui-fonts.py
+mkdir -p /tmp/bitchat-ui-previews
+c++ -std=c++17 -Wall -Wextra -Werror -I test/fakes -I include test/ui_preview.cpp src/PeerTable.cpp -o /tmp/bitchat-ui-preview
+/tmp/bitchat-ui-preview /tmp/bitchat-ui-previews
+python3 tools/render-previews.py /tmp/bitchat-ui-previews
+swift -module-cache-path /tmp/bitchat-swift-cache tools/export-preview-jpegs.swift /tmp/bitchat-ui-previews docs/screens
+```
+
+All eleven views use the actual drawing code. Simulated measurements are confined to the host harness; the firmware never seeds its observation table with mock peers.

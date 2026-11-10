@@ -27,6 +27,7 @@ class PeerTable {
   size_t count() const;
   size_t candidates() const;
   const Peer* at(size_t ordinal) const;
+  const Peer* candidateAt(size_t ordinal) const;
  private:
   std::array<Peer, kPeerCapacity> peers_{};
 };

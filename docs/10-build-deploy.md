@@ -115,9 +115,9 @@ If the monitor starts after this line, it may not appear until the next boot. Th
 
 ## 7. Validate on the device
 
-1. Confirm the English splash/name/logo placeholder and A entering Home.
+1. Confirm the English splash/name and controls and A entering Home.
 2. Check A confirm, B up, C down, hold-B back, and hold-C power behavior.
-3. Verify font readability, white/black selection, grouped panels, green Nearby card, and no regular navigation footers.
+3. Verify font readability, cream/black selection, grouped panels, green Nearby card, and no regular navigation footers.
 4. Check actual advertisement observations/RSSI/age in Nearby. Matching UUIDs remain unverified candidates.
 5. Exercise brightness presets, screen-off, and wake-only first press.
 6. Compare voltage/estimate on USB and battery; no measured autonomy is established.
@@ -166,3 +166,5 @@ The [Plus2 vendor guide](https://docs.m5stack.com/en/core/StickC-Plus2) describe
 Build and native tests have passed during foundation development. The owner has used an earlier device build. Latest UI/language changes require another upload and physical verification; no upload is performed just by updating these documents.
 
 CLI references: [pio run](https://docs.platformio.org/en/latest/core/userguide/cmd_run.html), [device list](https://docs.platformio.org/en/latest/core/userguide/device/cmd_list.html), [device monitor](https://docs.platformio.org/en/latest/core/userguide/device/cmd_monitor.html).
+
+The current eleven-screen Figma sync also passed the full firmware build (42,496 bytes static RAM; 858,801 bytes application flash), all three native suites with sanitizers, software bounds checks and repository-QR decoding. This is software evidence; the revision has not been flashed by the agent.

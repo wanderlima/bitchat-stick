@@ -49,7 +49,7 @@ For battery life, measure three cycles per profile: scanner, future two-link rel
 
 ## UI regression checklist
 
-- Splash: centered name/logo placeholder and English controls; A enters Home.
+- Splash: Figma-aligned name and controls and English controls; A enters Home.
 - Every screen: A confirms, B moves up, C moves down, holding B returns consistently.
 - B-long never also moves up; C-long never moves down after release.
 - Wake with A/B/C consumes that interaction without hidden navigation.

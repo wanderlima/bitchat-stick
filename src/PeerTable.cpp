@@ -48,4 +48,9 @@ const Peer* PeerTable::at(size_t ordinal) const {
   for (const auto& peer : peers_) if (peer.used && ordinal-- == 0) return &peer;
   return nullptr;
 }
+const Peer* PeerTable::candidateAt(size_t ordinal) const {
+  for (const auto& peer : peers_)
+    if (peer.used && peer.observation.network != Network::Other && ordinal-- == 0) return &peer;
+  return nullptr;
+}
 } // namespace stick

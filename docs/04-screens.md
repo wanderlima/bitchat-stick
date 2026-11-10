@@ -1,135 +1,91 @@
 # Screens, layout, and controls
 
-Target display: **135 × 240 pixels, portrait**. Default language: **en-US**. Screens and previews are design/implementation references, not proof of Bitchat messaging compatibility.
+Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All eleven screens are present in the firmware. Live device information is never replaced with sample peers or chat.
 
 ## Shared visual system
 
-- Black page background, white primary text, light-gray secondary text, mint/green accents, yellow availability warnings.
-- Bold body/headings: `FreeSansBold9pt7b` with a 22-pixel line advance. Brand name: `FreeSansBold12pt7b`. Status and compact secondary information: `Font2`, 16 pixels. The original 8-pixel Font0 has been removed.
-- High-contrast selection: a white row with black text. Do not rely on color alone; show state labels.
-- Group related information inside outlined panels. Nearby and the BLE channel card use a dark-green fill and bright-green left border, retaining the original visual grouping.
-- A live square precedes BLE status: green while scanning, yellow during the scheduled idle period, red on scanner failure. The header also shows the measured battery estimate and a fill-level icon, or `--%` when unavailable.
-- Main screen status occupies roughly y=0–20; title y=26–47; content y=51–234. Four-pixel outer panel margins, with text inset to clear borders.
-- **No navigation footer on regular screens.** Reuse its area for content. Show navigation instructions only on the splash screen.
-- Measure text with the active font. External names may be clipped in the list; address details use two lines rather than a smaller font. Current radio-name rendering sanitizes non-ASCII bytes to `?`; full Unicode names remain future work.
+- Black background; warm cream `#EBDCBA` (`0xEEF7` in RGB565); light-gray secondary text; green accents; yellow warnings.
+- Native FreeMono bitmaps: bold 16px body, regular 14px compact text, existing `FreeMonoBold9pt7b` for 18px titles, and `FreeMonoBold12pt7b` for the 24px brand/battery number. Body/compact glyphs are generated from the pinned M5GFX 0.3.0 fonts with area sampling, preserving thin strokes instead of fractional runtime scaling. See `tools/generate-ui-fonts.py`.
+- Figma uses Courier Prime because FreeMono is unavailable in its font service. Glyphs are consequently not identical. Integer device advances are 10px body and 9px compact; a few insets compensate for that difference.
+- Header: 20px high, subtle outline, live status square, scanner status, measured battery estimate and fill icon. Green means scanning, yellow scheduled idle, red scanner failure. Unknown battery is `--%`; below 20% the battery indication becomes yellow.
+- Title region: y=20–50. Four-pixel outer panel margins; content starts at y=54. No regular-screen navigation footer.
+- Home, Settings and Brightness use cream selection and 1px separators between rows. Battery, Messages, Diagnostics and Nearby separate distinct groups with an internal divider.
+- Nearby retains its green fill and bright left border; this is visual grouping, not authenticated peer status. Channels uses a neutral availability panel.
+- External names are measured and clipped with an ellipsis. Non-ASCII radio-name bytes are sanitized to `?`. Full Unicode remains future work.
 
 ## Consistent physical controls
 
 | Control | Behavior |
 |---|---|
-| A short press | Confirm/open the selected item; show/close details; adjust selected brightness |
-| B short press | Move up / previous observation |
-| C short press | Move down / next observation |
-| Hold B for 700 ms | Return; Messages → Channels, other screens → Home; Home → Settings |
-| Hold A | Reserved; do not also confirm on release |
-| Hold C | Reserved for power; never also move down on release |
+| A short | Confirm/open, toggle local details, apply selected brightness |
+| B short | Up / previous observation |
+| C short (`M5.BtnPWR`) | Down / next observation |
+| B held ≥700ms | Back once; details → parent, Settings child → Settings, other pages → Home, Home → Settings |
+| A held ≥700ms | Reserved; no confirmation on release |
+| C held ≥700ms | No down action on release; six-second hold retains power off |
 
-C is the Plus2 power button, exposed as `M5.BtnPWR`, not a separate generic button object. The firmware retains the 6-second power-off call. Check USB/battery behavior on hardware. The [M5Stack hardware guide](https://docs.m5stack.com/en/core/StickC-Plus2) documents power and HOLD behavior.
+Messages returns to Channels on hold-B. Splash only leaves on short-A. Short actions occur on release, with no auto-repeat. The first press after the 30-second screen timeout only wakes the display; navigation stays suppressed until all buttons are released. Scanning continues on its normal schedule. Brightness settings remain in RAM and reset on reboot.
 
-Short actions occur on release before 700 ms. B-long fires once while held and does not produce an up action when released. No auto-repeat is implemented. In Home, B/C select a destination and A opens it. Screens with no list do not invent a B/C action. The first A/B/C press after screen-off only wakes it; suppress all navigation until every button is released.
+## Screens and data sources
 
-## Splash screen
+| Screen | Live behavior | Placeholder / mock behavior |
+|---|---|---|
+| Start | A enters Home; scanner continues in the background | Static project name and controls; logo omitted to match the current Figma |
+| Home | Bitchat candidate count, unverified status, scanner/battery, four working destinations | Relay remains OFF |
+| Nearby | Name, RSSI, age, index/count; B/C cycle; A toggles address/type details | `Bitchat?` is only an advertised-service candidate; every device remains `Not verified` |
+| Channels | Honest availability state and reference to Nearby | `No channels / Chat is not ready / Scanner only`; A opens the Messages preview, without joining anything |
+| Messages | Hold-B returns to Channels | `No RX/TX / Messages not ready yet / Scanner`; no invented conversation |
+| InfoBot | B/C select `!info`, `!rules`, `!help`; A opens/closes a local preview | `Preview only` command examples; no sending, automated reply, or welcome detection; welcome bot OFF |
+| Settings | Brightness, Battery, About, Diagnostics destinations | None |
+| Brightness | 5%, 25%, 50%, 75%, 100%; A applies and returns, hold-B cancels | None; radio mark is the applied value, cream highlight is the current focus |
+| Battery | Actual voltage and estimated percentage, refreshed every five seconds | No remaining-runtime or charging claim |
+| About | Wander Lima credits and a real repository QR | No logo or QR placeholder |
+| Diagnostics | Advertisement-report count, queue drops, free heap, uptime, version | BLE counts reports, not chat messages |
 
-Centered logo placeholder above the centered BITCHAT / STICK name. Controls below, followed by a high-contrast start action. A enters Home; B/C do not select anything on this informational screen. Holding B does not leave the splash screen. No timed auto-dismiss and no blocking delay: scanning may continue while it is visible. Normal 30-second screen-off still applies.
-
-```text
-+-------------------+
-|      [ LOGO ]     |
-|                   |
-|      BITCHAT      |
-|       STICK       |
-|                   |
-|    A: confirm     |
-|      B: up        |
-|     C: down       |
-|   Hold B: back    |
-|                   |
-|    [ A: START ]   |
-+-------------------+
-```
-
-## 1. Home / Dashboard
-
-A summary panel displays BLE observations, candidate count, and relay availability. A separate menu panel contains Nearby, Channels, InfoBot, and Settings. B/C navigate these four items; A opens one. Counts are observations rather than verified people, and candidates must not be added to the total as a separate population.
+## Nearby hierarchy
 
 ```text
-+-------------------+
-| BLE scan     ~72% |
-| Home              |
-|-------------------|
-| +---------------+ |
-| | BLE: 3        | |
-| | Candidates 0  | |
-| | Relay: OFF    | |
-| +---------------+ |
-| +---------------+ |
-| | > Nearby      | |
-| |   Channels    | |
-| |   InfoBot     | |
-| |   Settings    | |
-| +---------------+ |
-+-------------------+
+[status square] BLE       battery
+Nearby
+Device 1/3
+┌─────────────────────────┐
+│ Test phone              │
+│ -64 dBm                 │
+│ Seen 2s ago             │
+│ ─────────────────────── │
+│ Bitchat?                │
+│ Not verified            │
+└─────────────────────────┘
 ```
 
-## 2. Nearby Peers
+The first group contains observed radio data; the second explicitly separates identity uncertainty. Ordinary BLE advertisements are excluded from Nearby; only matching Bitchat service UUID advertisements are listed. Mainnet/testnet filtering remains in the observation model but is not presented as confirmed network membership. An empty list displays `No Bitchat` with a waiting or scan-error state. Diagnostics still counts all received BLE advertisement reports. Discovery is limited to received advertisements; do not infer distance, people, multi-hop neighbors, or reliable arrival from an RSSI/name.
 
-One readable observation card at a time, with index/count above it. **Dark-green background, bright-green left border**, white name/RSSI, candidate classification, last-seen age, and an explicit unverified label. B/C select observations. A toggles address/type details. A complete MAC is split into two readable groups; it is not an authenticated identity.
+A opens two readable MAC groups and the BLE address type. These are radio identifiers, not authenticated identities. Hold-B closes details before returning Home.
+
+## Channels hierarchy
 
 ```text
-+-------------------+
-| BLE scan     ~72% |
-| Nearby            |
-|-------------------|
-| 1 / 3             |
-| +---------------+ |
-| || ana          | |
-| || -64 dBm      | |
-| || Candidate    | |
-| || Mainnet?     | |
-| || 2s ago       | |
-| || Unverified   | |
-| +---------------+ |
-+-------------------+
+Channels
+┌─────────────────────────┐
+│ No channels             │
+│ Chat is                 │
+│ not ready               │
+│ Scanner only            │
+└─────────────────────────┘
+┌─────────────────────────┐
+│ BLE devices             │
+│ See Nearby              │
+└─────────────────────────┘
 ```
 
-Empty state: “No BLE seen / yet / Scanning...” Do not show fabricated peers. Discovery is limited to received advertisements. Do not convert RSSI to meters or imply that multi-hop peers are direct neighbors.
+There is no fake `#bluetooth` entry, active channel styling, membership count, or channel creation. The lower panel is explanatory text; it is not a selectable Nearby shortcut. A retains access to the Messages status preview for this foundation build.
 
-## 3. Channels
+## About assets
 
-A green BLE-context card groups `#bluetooth`, “Local BLE,” and “No RX/TX.” A separate panel explains that Nostr is unsupported. A opens the message-status screen. This is a proposed context represented in the UI, not a joined channel. No arbitrary-channel creation or membership count is offered.
+The **95 × 95px** QR points to **https://github.com/wanderlima/bitchat-stick**. It uses cream/black and the actual SVG exported from Figma, with a generated local bitmap. The rendered code has been decoded successfully in software; scanning the physical Plus2 display still needs validation. No remote image is fetched at runtime.
 
-## 4. Messages
+`src/assets/` contains the QR and 10 × 10px radio SVGs, `UiBitmaps.h`, and native `UiFonts.h`. `tools/generate-ui-bitmaps.py` reproduces the exact mask geometry. The checked-in SVG root dimensions define their display slots.
 
-A grouped empty/unavailable state explains “No RX/TX / Messages not available yet / Scanner only.” No invented chat appears. Holding B returns to Channels. Future live messages should page at this font size, preserve reading position when new traffic arrives, and show encrypted/unavailable payloads honestly.
+## Verification and previews
 
-## 5. InfoBot
-
-Three groups: unavailable RX/TX status, selectable `!info` / `!rules` / `!help` commands, and welcome-bot OFF status. A shows a local explanation; it does not send anything. Keep command examples separate from operational status. The future bot must remain gated by transport and context validation.
-
-## 6. Settings
-
-A grouped menu opens Brightness, Battery, About, and Diagnostics. B/C choose the item; A opens it; holding B returns to Home.
-
-### Brightness
-
-Five explicit choices: **5%, 25%, 50%, 75%, 100%**. B/C choose, A applies and returns to Settings, holding B cancels. An asterisk marks the applied preset. Default is 50%. Hardware PWM values are rounded to 13/64/128/191/255; labels retain the intended preset percentages.
-
-### Battery
-
-Shows actual voltage when available, an approximate percentage, and explicit estimate/runtime limitations. No invented charging state or remaining hours.
-
-### About
-
-Credits **Wander Lima**, identifies an open-source Bitchat-inspired companion, displays **github.com/wanderlima**, and reserves a box labeled **QR / SOON**. The box is a placeholder, not a scannable QR code. It links to the author's profile, not an unverified project repository or official Bitchat affiliation.
-
-### Diagnostics
-
-Live scanner-report count, queue drops, free heap, uptime, and firmware version/profile. “BLE” counts advertisement reports, not received chat messages. Holding B returns to Settings from each sub-screen.
-
-## Battery and common states
-
-Show an approximate percentage only when available; otherwise `--%`. Do not invent remaining hours or infer charging state without a supported measurement. The firmware defaults to 50% brightness, offers the five explicit presets above, and turns off the display after 30 seconds. The scanner remains scheduled while the display is off.
-
-Low-battery policies originally proposed at 20%/10%, calibrated hysteresis, and richer charging UI are future work; do not describe them as implemented. Initial firmware only changes battery text color below 20%. Real autonomy has not been measured.
-
-Test long names, accents/unsupported glyphs, duplicate names, 0/32 observations, unavailable voltage, large counters, and one-handed operation. The [JPEG previews](screens/README.md) are illustrative and use simulated data. Physical readability must be checked after uploading this revision.
+The [eleven JPEG previews](screens/README.md) are generated from current drawing calls and pinned font bitmaps, using simulated measurements. They are not hardware screenshots or protocol evidence. The host UI regression checks controls, applied-versus-focused brightness, all screens, live status, ordinary/candidate/empty peers, large counters and text/rectangle bounds. Physical readability, battery behavior, radio scanning, and QR camera reading need a device pass after upload.

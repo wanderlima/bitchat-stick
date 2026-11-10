@@ -20,7 +20,12 @@ uint32_t lastAttempt = 0;
 bool fault = true;
 class Callbacks : public NimBLEScanCallbacks {
   void onResult(const NimBLEAdvertisedDevice* device) override {
+    ++reports; // All advertisements remain visible in Diagnostics.
+    const auto network = device->isAdvertisingService(mainnet) ? Network::Mainnet :
+                         device->isAdvertisingService(testnet) ? Network::Testnet : Network::Other;
+    if (network == Network::Other) return; // Keep unrelated BLE traffic out of the queue/table.
     Observation value{};
+    value.network = network;
     const auto address = device->getAddress();
     std::snprintf(value.address, sizeof(value.address), "%s", address.toString().c_str());
     value.addressType = address.getType();
@@ -33,9 +38,6 @@ class Callbacks : public NimBLEScanCallbacks {
     }
     value.rssi = device->getRSSI();
     value.seenAt = millis();
-    if (device->isAdvertisingService(mainnet)) value.network = Network::Mainnet;
-    else if (device->isAdvertisingService(testnet)) value.network = Network::Testnet;
-    ++reports;
     if (xQueueSend(queue, &value, 0) != pdTRUE) ++dropped;
   }
 } callbacks;

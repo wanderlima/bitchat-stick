@@ -6,13 +6,14 @@ Firmware foundation v0.1.0. English (en-US) is the default. The design documents
 
 - C++/Arduino/PlatformIO target for the Plus2 ESP32-PICO-V3-02, 8 MB flash, PSRAM enabled.
 - Early GPIO4 HOLD assertion, M5Unified initialization, portrait display, voltage and battery estimate.
-- Centered splash name, logo placeholder, and consistent navigation instructions. A enters Home without a timed auto-dismiss or blocking scan delay.
+- Figma-aligned splash name and consistent navigation instructions. A enters Home without a timed auto-dismiss or blocking scan delay.
 - Home, Nearby, Channels, Messages, InfoBot, and Settings screens. Unimplemented messaging features show their actual unavailable state rather than sample chat.
 - Passive BLE observation: no advertising, GATT links, or chat transmission. Five-second scan periods with approximately two seconds between them; 80 ms windows every 160 ms during a scan.
 - Real advertisement fields when running on hardware: sanitized name, address/type, RSSI, age, and mainnet/testnet candidate classification.
+- Bitchat mainnet/testnet service UUID filter before enqueueing; unrelated BLE devices do not appear in Nearby. Matching advertisements remain unverified candidates. Diagnostics counts all received reports.
 - Bounded 32-event queue and 32-observation table; expire after 60 seconds and replace the oldest observation when full.
 - Shared input handling, screen-off after 30 seconds, wake-only first press, 5/25/50/75/100% brightness presets (50% default), and RAM-only settings.
-- Live header status square/battery icon; dedicated Battery, About, and Diagnostics views. About credits Wander Lima and github.com/wanderlima with a clearly labeled QR placeholder.
+- Live header status square/battery icon; dedicated Battery, About, and Diagnostics views. About credits Wander Lima and includes a real QR linking to github.com/wanderlima/bitchat-stick.
 - Larger bold text, strong contrast, grouped panels, and a green Nearby card/left border. No regular-screen navigation footer.
 
 Current screenshots are illustrative previews. This revision still needs physical UI, power, and scan validation after upload.
@@ -93,7 +94,7 @@ The table test covers updates, address-type distinction, bounds/oldest replaceme
 
 On the splash screen, only A enters Home; B/C and long-B do not change pages. Short actions occur on release. After screen-off, the first A/B/C press only wakes it; suppress navigation until all buttons are released. Settings are volatile. Real USB/battery power-off behavior must be checked on the Plus2.
 
-The UI uses FreeSansBold9pt7b (22-pixel line advance), FreeSansBold12pt7b for the brand, and Font2 at 16 pixels for compact information. Text is English; non-ASCII radio-name bytes still render as `?`. Current JPEG previews are not pixel-identical hardware screenshots.
+The UI uses native FreeMono body/compact bitmaps at 16/14px, generated from pinned M5GFX glyphs to preserve strokes without fractional scaling. Titles use FreeMonoBold9pt7b and the brand uses FreeMonoBold12pt7b. Primary cream is #EBDCBA, quantized to RGB565 0xEEF7. The 20px BLE header has a subtle outline. Text is English; non-ASCII radio-name bytes still render as `?`. Current JPEG previews are not pixel-identical hardware screenshots. InfoBot command examples explicitly say `Preview only` and never send a message.
 
 ## Source structure
 
@@ -102,6 +103,8 @@ The UI uses FreeSansBold9pt7b (22-pixel line advance), FreeSansBold12pt7b for th
 - `src/PeerTable.cpp`, `include/PeerTable.h`: hardware-independent observation model.
 - `src/Ui.cpp`: display, common screen layout, navigation, power-display settings.
 - `src/NavigationInput.h`: shared input semantics.
+- `src/assets/`: local Figma SVGs and generated QR/radio/font bitmaps.
+- `tools/`: deterministic asset/font generation and host preview rendering.
 - `test/peer_table_test.cpp`, `test/navigation_input_test.cpp`, `test/ui_test.cpp`, `test/fakes/M5Unified.h`: host regressions and hardware fake.
 - `platformio.ini`, `partitions.csv`: build target and flash layout.
 
@@ -109,12 +112,12 @@ Only the loop mutates PeerTable. BLE callbacks enqueue fixed-size observations w
 
 ## Evidence and hardware checklist
 
-The initial firmware compiled successfully. Initial static RAM: 42,480 bytes; initial application flash: 846,013 bytes. A later navigation/typography/splash build also compiled (42,496 bytes static RAM, 856,077 bytes application flash). These are build snapshots, not runtime heap or battery measurements. The final en-US/header/settings revision compiled successfully with 42,496 bytes of static RAM and 857,181 bytes of application flash. All three native suites passed with sanitizers. The owner reported using an earlier build on the Plus2. No new firmware was uploaded by the agent during these edits.
+The initial firmware compiled successfully. Initial static RAM: 42,480 bytes; initial application flash: 846,013 bytes. A later navigation/typography/splash build also compiled (42,496 bytes static RAM, 856,077 bytes application flash). These are build snapshots, not runtime heap or battery measurements. The final en-US/header/settings revision compiled successfully with 42,496 bytes of static RAM and 857,181 bytes of application flash. All three native suites passed with sanitizers. The FreeMono/cream revision also passed the firmware build (42,496 bytes static RAM; 855,421 bytes application flash) and UI regressions with sanitizers. The owner reported using an earlier build on the Plus2. No new firmware was uploaded by the agent during these edits.
 
 After uploading the latest revision:
 
 1. Verify USB and battery-only boot, Plus2 identification, and HOLD behavior.
-2. Check centered splash/placeholder, English controls, and A entering Home.
+2. Check the Figma-aligned splash, English controls, and A entering Home.
 3. Exercise A/B/C and long presses on all screens; ensure no accidental action after wake/long press.
 4. Check larger text, panel boundaries, high-contrast selection, green Nearby card, and lack of regular navigation footers.
 5. Compare voltage/estimate on USB/battery; do not infer remaining hours.
@@ -122,3 +125,5 @@ After uploading the latest revision:
 7. Observe heap/queue drops for 60 minutes in an owned test environment.
 8. Confirm screen-off leaves scanning scheduled and holding C behaves correctly with/without USB.
 9. Keep messages, relay, and bot disabled until the [protocol test gates](06-testing.md) pass.
+
+The eleven-screen Figma sync passed all three native suites with sanitizers and the firmware build (42,496 bytes static RAM; 858,801 bytes application flash). The repository QR decoded to the expected URL from the software render. Upload and physical validation remain separate steps.

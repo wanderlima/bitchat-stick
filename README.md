@@ -33,11 +33,15 @@ Exit the monitor with `Ctrl+C` before uploading again. Deployment currently mean
 - **Hold B for 700 ms:** go back; from Home, open Settings.
 - **Hold C for 6 seconds:** retain the power-off behavior. A long C press never becomes a down action on release.
 
-The splash screen shows the centered project name, a logo placeholder, and these controls. Press A to enter Home. Navigation instructions are shown only on the splash screen, freeing space on the other screens. The first press after the screen turns off only wakes it.
+The splash screen shows the project name and controls, aligned to the current Figma design. Press A to enter Home. Navigation instructions are shown only on the splash screen, freeing space on the other screens. The first press after the screen turns off only wakes it.
 
-Settings offers 5%, 25%, 50%, 75%, and 100% brightness, with 50% as the default. About credits **Wander Lima** and [github.com/wanderlima](https://github.com/wanderlima), with a labeled QR-code placeholder.
+Settings offers 5%, 25%, 50%, 75%, and 100% brightness, with 50% as the default. About credits **Wander Lima** and includes a real QR code for [the project repository](https://github.com/wanderlima/bitchat-stick). A radio mark shows the applied brightness; the cream highlight shows the focused option.
 
-The interface uses larger bold fonts, high-contrast selection, and grouped information panels. Nearby retains a dark-green peer card and a bright-green left border. The [screen previews](docs/screens/README.md) illustrate the current direction; they are concept renders, not photographs or hardware captures.
+The interface uses FreeMono Regular/Bold, warm cream `#EBDCBA` instead of pure white, an outlined BLE header, high-contrast selection, grouped panels, and dividers between menu items and information groups. Nearby retains a dark-green peer card and a bright-green left border. The [screen previews](docs/screens/README.md) illustrate the current direction; they are software renders of all eleven screens, not photographs or hardware captures.
+
+## Live features and previews
+
+Home, Nearby, the BLE header, battery, diagnostics, navigation and brightness use real device data/controls. Nearby separates observations from the unverified Bitchat candidate status. Channels and Messages show unavailable states. InfoBot commands open local examples labeled **Preview only**; nothing is transmitted. Relay and welcome bot remain OFF. See the [screen behavior matrix](docs/04-screens.md#screens-and-data-sources).
 
 ## Planned progression
 
@@ -61,6 +65,7 @@ The official project distinguishes the offline BLE `#bluetooth` context from geo
 - [Limitations and risks](docs/08-limitations-risks.md)
 - [Implementation status and getting started](docs/09-getting-started.md)
 - [Build and USB deployment](docs/10-build-deploy.md)
+- [Implementation plan by screen and complexity](docs/11-implementation-plan.md)
 
 ## Hardware and evidence
 
