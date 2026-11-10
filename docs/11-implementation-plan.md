@@ -77,7 +77,7 @@ Status: **Done** = implemented in source; **Mock** = local preview/unavailable s
 
 - **Done · S:** device name, RSSI, last-seen age, paging and address/type details.
 - **Done · M:** list only advertisements matching the configured Bitchat mainnet/testnet service UUIDs; exclude unrelated BLE observations from the queue/table and from UI paging. Keep raw advertisement counts in Diagnostics.
-- **Done · M:** bounded 32-entry table, 60-second expiry, sanitization and candidate-only indexing.
+- **Done · M:** bounded 32-entry table, 60-second expiry, sanitization and candidate-only indexing. Host tests exercise the real scanner callback for both UUIDs, unrelated advertisements, queue overflow and scan restart. Physical discovery checks remain pending.
 - **Pending · M:** verify the filter using the owner's Bitchat phone alongside unrelated BLE devices; confirm both supported UUID contexts with pinned mobile versions.
 - **Pending · M:** investigate passive-scan misses, including service UUIDs available only in scan responses. Evaluate active scanning separately; it is not enabled by this filter.
 - **Done · M:** preserve selection by address/type across expiry, insertion and slot reuse. Replaced/expired selections close details and choose a valid fallback. Rotating radio addresses still cannot establish a stable authenticated user.

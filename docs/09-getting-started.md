@@ -56,6 +56,14 @@ The first build downloads dependencies. Generated `.pio/build/m5stickc-plus2/fir
 
 ## Native tests
 
+Run all six host suites, including the actual scanner callback with NimBLE/queue fakes:
+
+```sh
+sh tools/test-native.sh
+```
+
+This covers filter decisions, sanitization, bounded queue/drop counters and retry behavior; it does not emulate radio discovery or prove mobile interoperability.
+
 From the root, using a C++ compiler:
 
 ```sh
