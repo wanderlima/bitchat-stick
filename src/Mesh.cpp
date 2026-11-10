@@ -80,27 +80,41 @@ void Mesh::process(wire::FrameView& f,uint16_t link){
     if(!p){for(auto& slot:peers_)if(!slot.used){p=&slot;break;}}
     if(!p){++stats_.dropped;return;}
     p->used=true;std::memcpy(p->id,f.sender.data,8);std::memcpy(p->noiseKey,key.data,32);std::memcpy(p->signingKey,signing.data,32);displayText(p->name,sizeof(p->name),name);p->seen=now_;
+    startNoise(*p,link);
   }else{
     if(!p||!wire::verifyPacket(f,p->signingKey,scratch_,sizeof(scratch_))){++stats_.rejected;return;}
     if(f.type==2 && (!size||!textValid({plain_,size}))){++stats_.rejected;return;}
     if(duplicate(f))return;p->seen=now_;
-    if(f.type==2){store(p->name,{plain_,size},false);if(f.timestamp+30000>=epoch_)bot(*p,{plain_,size});}
+    if(f.type==2){store(p->name,{plain_,size},false);if(f.timestamp+30000>=epoch_ && f.timestamp<=epoch_+5000)bot(*p,{plain_,size});}
     else {p->authenticated=false;}
   }
   ++stats_.accepted;
   if(f.ttl>1){--f.ttl;if(emit(f,kAnyLink,link,false))++stats_.relayed;}
 }
 Mesh::Session* Mesh::session(const uint8_t* id,uint16_t link){for(auto& s:sessions_)if(s.used&&same(s.id,id)&&s.link==link)return &s;return nullptr;}
+void Mesh::startNoise(MeshPeer& p,uint16_t link){
+  if(session(p.id,link))return;
+  Session* s=nullptr;for(auto& slot:sessions_)if(!slot.used){s=&slot;break;}if(!s)return;
+  uint8_t ephemeral[32],response[128];size_t n=0;entropy_(ephemeral,32);
+  s->noise.reset();s->used=true;s->initiator=true;s->link=link;s->started=now_;std::memcpy(s->id,p.id,8);
+  bool ok=s->noise.begin(true,identity_->dhSecret(),ephemeral,p.id,response,sizeof(response),n);crypto::wipe(ephemeral,sizeof(ephemeral));
+  if(!ok){s->used=false;return;}
+  wire::FrameView f;f.type=0x10;f.ttl=7;f.sender={identity_->id(),8};f.recipient={p.id,8};f.timestamp=epoch_;f.payload={response,n};
+  if(!emit(f,link,kAnyLink,false)){s->noise.reset();s->used=false;}
+}
 void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
   if(f.recipient.size!=8||!same(f.recipient.data,identity_->id())||f.compressed){++stats_.rejected;return;}
   auto* p=find(f.sender.data);if(!p){++stats_.rejected;return;}
   auto* s=session(f.sender.data,link);uint8_t response[128];size_t n=0;
   if(f.type==0x10){
     if(f.payload.size==32){
-      if(s && uint32_t(now_-s->started)<5000){++stats_.rejected;return;}
+      if(s && s->initiator && s->noise.state()==NoiseSession::State::Second){
+        // Resolve crossed initiations deterministically; the smaller peer ID stays initiator.
+        if(std::memcmp(identity_->id(),p->id,8)<0)return;
+      } else if(s && uint32_t(now_-s->started)<5000){++stats_.rejected;return;}
       if(!s){for(auto& slot:sessions_)if(!slot.used){s=&slot;break;}}
       if(!s){++stats_.dropped;return;}
-      s->noise.reset();s->used=true;s->link=link;s->started=now_;std::memcpy(s->id,f.sender.data,8);p->authenticated=false;
+      s->noise.reset();s->used=true;s->initiator=false;s->link=link;s->started=now_;std::memcpy(s->id,f.sender.data,8);p->authenticated=false;
       uint8_t ephemeral[32];entropy_(ephemeral,32);bool ok=s->noise.begin(false,identity_->dhSecret(),ephemeral,p->id,response,sizeof(response),n);crypto::wipe(ephemeral,sizeof(ephemeral));if(!ok){s->used=false;return;}
     }
     if(!s||!s->noise.receive(f.payload,response,sizeof(response),n)){++stats_.rejected;return;}

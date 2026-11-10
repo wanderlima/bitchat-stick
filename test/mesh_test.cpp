@@ -23,11 +23,18 @@ int main(){
  auto text=packet(remote,2,{reinterpret_cast<const uint8_t*>("hello"),5});receive(m,text);assert(m.messageCount()==1);receive(m,text);assert(m.messageCount()==1);
  text.back()^=1;auto rejected=m.stats().rejected;receive(m,text);assert(m.stats().rejected>rejected);
  NoiseSession phone;uint8_t ephemeral[32],handshake[128],response[128];entropy(ephemeral,32);size_t n=0,r=0;
- assert(phone.begin(true,remote.dhSecret(),ephemeral,local.id(),handshake,sizeof(handshake),n));
- receive(m,packet(remote,0x10,{handshake,n},1800000000000ULL,{local.id(),8},false));
- wire::FrameView reply;assert(wire::decode({sent.back().data(),sent.back().size()},reply)==wire::Error::None);assert(reply.type==0x10);
- assert(phone.receive(reply.payload,response,sizeof(response),r));assert(phone.ready());
+ wire::FrameView reply;
+ // The first announcement automatically initiates Noise, before relay emits the announcement.
+ const std::vector<uint8_t>* initiation=nullptr;
+ for(const auto& raw:sent){assert(wire::decode({raw.data(),raw.size()},reply)==wire::Error::None);if(reply.type==0x10 && reply.payload.size==32)initiation=&raw;}
+ assert(initiation);assert(wire::decode({initiation->data(),initiation->size()},reply)==wire::Error::None);
+ assert(phone.begin(false,remote.dhSecret(),ephemeral,local.id(),handshake,sizeof(handshake),n));
+ assert(phone.receive(reply.payload,response,sizeof(response),r));
  receive(m,packet(remote,0x10,{response,r},1800000000000ULL,{local.id(),8},false));
+ const std::vector<uint8_t>* finalHandshake=nullptr;
+ for(const auto& raw:sent){assert(wire::decode({raw.data(),raw.size()},reply)==wire::Error::None);if(reply.type==0x10 && reply.payload.size==64)finalHandshake=&raw;}
+ assert(finalHandshake);assert(wire::decode({finalHandshake->data(),finalHandshake->size()},reply)==wire::Error::None);
+ assert(phone.receive(reply.payload,response,sizeof(response),r));assert(phone.ready());
  assert(wire::decode({sent.back().data(),sent.back().size()},reply)==wire::Error::None);assert(reply.type==0x11);
  assert(phone.decrypt(reply.payload,response,sizeof(response),r));assert(r==39&&response[0]==0x21);
  uint8_t state[39]={0x21,1,1,1,0,2,32};std::memcpy(state+7,remote.signingPublic(),32);

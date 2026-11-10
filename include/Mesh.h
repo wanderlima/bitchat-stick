@@ -32,13 +32,14 @@ class Mesh {
   const MeshStats& stats() const {return stats_;}
   bool ready() const {return identity_ && identity_->ready() && epoch_!=0;}
  private:
-  struct Session {NoiseSession noise;uint8_t id[8]{};uint16_t link=kAnyLink;uint32_t started=0;bool used=false;};
+  struct Session {NoiseSession noise;uint8_t id[8]{};uint16_t link=kAnyLink;uint32_t started=0;bool used=false,initiator=false;};
   bool emit(wire::FrameView& frame,uint16_t target=kAnyLink,uint16_t except=kAnyLink,bool sign=true);
   void process(wire::FrameView& frame,uint16_t link);
   MeshPeer* find(const uint8_t* id);
   Session* session(const uint8_t* id,uint16_t link);
   bool duplicate(const wire::FrameView& frame);
   void store(const char* name,wire::Bytes text,bool outgoing);
+  void startNoise(MeshPeer& peer,uint16_t link);
   void handleNoise(const wire::FrameView& frame,uint16_t link);
   void bot(MeshPeer& peer,wire::Bytes text);
   Identity* identity_=nullptr;Identity::Entropy entropy_=nullptr;Send send_=nullptr;
