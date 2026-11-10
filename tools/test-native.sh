@@ -15,7 +15,6 @@ run_test navigation test/navigation_input_test.cpp
 run_test settings test/settings_test.cpp src/Settings.cpp
 run_test selection test/peer_selection_test.cpp src/PeerTable.cpp src/PeerSelection.cpp
 run_test scanner test/scanner_test.cpp src/Scanner.cpp src/PeerTable.cpp
-run_test ui test/ui_test.cpp src/PeerTable.cpp src/PeerSelection.cpp src/Settings.cpp
 
 run_test codec test/wire_codec_test.cpp src/WireCodec.cpp
 
@@ -49,3 +48,7 @@ swift -module-cache-path "$test_dir/swift-cache" tools/VerifyPacketSignatures.sw
 run_crypto_test identity test/identity_test.cpp src/Identity.cpp src/CryptoPrimitives.cpp -I test/fakes
 
 run_crypto_test mesh test/mesh_test.cpp src/Mesh.cpp src/Identity.cpp src/NoiseSession.cpp src/FragmentAssembler.cpp src/WireCodec.cpp src/PacketSecurity.cpp src/CryptoPrimitives.cpp "$test_dir/miniz.o" -I test/fakes
+
+run_crypto_test ui test/ui_test.cpp src/PeerTable.cpp src/PeerSelection.cpp src/Settings.cpp src/Mesh.cpp src/Identity.cpp src/NoiseSession.cpp src/FragmentAssembler.cpp src/WireCodec.cpp src/PacketSecurity.cpp src/CryptoPrimitives.cpp "$test_dir/miniz.o" -I test/fakes
+
+run_crypto_test transport test/transport_test.cpp src/Mesh.cpp src/Identity.cpp src/NoiseSession.cpp src/FragmentAssembler.cpp src/WireCodec.cpp src/PacketSecurity.cpp src/CryptoPrimitives.cpp "$test_dir/miniz.o" -I test/fakes

@@ -63,6 +63,10 @@ void drainTx(uint32_t now){
 }
 }
 bool beginTransport(){
+ // NimBLE 2.5 requires an idle GAP controller while registering GATT.
+ // beginScanner() has already initialized the stack and started discovery.
+ auto* scan=NimBLEDevice::getScan();
+ if(scan && scan->isScanning() && !scan->stop())return false;
  events=xQueueCreate(12,sizeof(Event));if(!events||!identity.begin(entropy))return false;
  NimBLEDevice::setMTU(512);server=NimBLEDevice::createServer();if(!server)return false;
  server->setCallbacks(&serverCallbacks,false);server->advertiseOnDisconnect(true);
