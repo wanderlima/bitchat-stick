@@ -9,7 +9,9 @@ Date: **2026-11-10**. Device name: **Bitchat Stick**. Supported context: public 
 - [x] Reproduced startup reboot loop fixed by pausing scanning during GATT registration.
 - [x] Android 2.2.0 recognized the Stick's signed announcement and established Noise; Stick reported an authenticated peer with zero protocol rejects during observation.
 - [x] Owner confirmed that the device appeared in the network.
-- [ ] Final display, full iOS messaging, two-phone relay and endurance acceptance below.
+- [x] Final short USB observation showed two subscribed links and two authenticated peers; this is not indirect-relay proof.
+- [x] Owner confirmed Android DM delivery status and reading the DM on the Stick.
+- [ ] Final display, unread/read-status acceptance, full iOS messaging, controlled relay and endurance below.
 
 ## 1. Display and navigation
 
@@ -38,7 +40,8 @@ Date: **2026-11-10**. Device name: **Bitchat Stick**. Supported context: public 
 
 Use your own test phones and synthetic content. Public BLE messages are visible to nearby participants.
 
-- [ ] From Android, send a unique public message such as `android-stick-001` in #bluetooth; it appears in Channels → Messages on the Stick.
+- [ ] In Inbox, verify **Mesh** and **Direct DMs** are separate. Mesh is the shared local public conversation, not a room created by the Stick.
+- [ ] From Android, send a unique public message such as `android-stick-001` in #bluetooth; it appears in Inbox → Mesh on the Stick.
 - [ ] Repeat from iPhone with `ios-stick-001`. Verify sender name and actual content.
 - [ ] B/C changes message; A enters text scrolling; B/C scrolls long text; hold-B leaves detail, then Messages.
 - [ ] Send long text, accents and emoji: no crash, unsupported display glyphs are substituted, and truncation is indicated when applicable.
@@ -51,11 +54,13 @@ Use your own test phones and synthetic content. Public BLE messages are visible 
 ## 4a. Private-message reader
 
 - [ ] Wait for **Noise auth**, then send a new DM from Android directly to **Bitchat Stick**.
-- [ ] Open Channels → Messages: the message appears with a **DM** label and correct sender/content.
-- [ ] The Android delivery indicator may update after the encrypted delivered receipt; this is not a read receipt.
+- [ ] Open Inbox → Direct DMs: the message appears with a **DM** label and correct sender/content.
+- [ ] Before opening the DM on the Stick, Android should show delivered only. Opening it sends the encrypted read receipt; verify Android changes to read within a few seconds while connected.
 - [ ] Repeat from iPhone; test long text and reconnect. Earlier DMs sent before the update are not automatically recovered.
 - [ ] Send `!info` as a DM: it is displayed privately and never produces a public InfoBot reply.
-- [ ] Check Home's message count and mixed BLE/DM history without confusing public-channel privacy.
+- [ ] A new incoming message shows the envelope and increments unread counts. Reading one entry clears only that entry; opening Mesh must not clear unread DMs.
+- [ ] While reading an older message, a new arrival preserves focus and remains unread.
+- [ ] Repeat the delivered → read transition on iPhone; test reconnect before opening the DM.
 
 ## 5. Controlled relay — do not skip negative controls
 
@@ -74,4 +79,4 @@ Use your own test phones and synthetic content. Public BLE messages are visible 
 
 ## Limits that are not failures of this version
 
-No private-message sending, media/groups, geographic/Nostr channels, sync/history recovery, OTA or message composer/canned-reply UI. History and peer pins are in RAM; local identity and brightness persist in unencrypted NVS. Outgoing public sending is currently exercised through InfoBot and public relay; private sending is limited to protocol delivery receipts. Queue/notification acceptance is not end-to-end delivery confirmation. Welcome automation intentionally stays disabled.
+No private-message sending, media/groups, geographic/Nostr channels, sync/history recovery, OTA or message composer/canned-reply UI. History and peer pins are in RAM; local identity and brightness persist in unencrypted NVS. Outgoing public sending is currently exercised through InfoBot and public relay; private sending is limited to protocol delivery receipts. Queue/notification acceptance is not end-to-end delivery confirmation; the sender app must actually receive the encrypted delivered/read receipt. Welcome automation intentionally stays disabled.

@@ -24,17 +24,17 @@ Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Fi
 | A held ≥700ms | Reserved; no confirmation on release |
 | C held ≥700ms | No down action on release; six-second hold retains power off |
 
-Messages returns to Channels on hold-B. Splash only leaves on short-A. Short actions occur on release, with no auto-repeat. The first press after the 30-second screen timeout only wakes the display; navigation stays suppressed until all buttons are released. Scanning continues on its normal schedule. Brightness is restored from a versioned NVS record on boot; invalid/missing records use 50%. Only explicit confirmations write flash; known unchanged saved values are skipped, while invalid/unknown records are repaired. Failed saves show `Not saved / RAM only` in Settings.
+Messages returns to Inbox on hold-B. Splash only leaves on short-A. Short actions occur on release, with no auto-repeat. The first press after the 30-second screen timeout only wakes the display; navigation stays suppressed until all buttons are released. Scanning continues on its normal schedule. Brightness is restored from a versioned NVS record on boot; invalid/missing records use 50%. Only explicit confirmations write flash; known unchanged saved values are skipped, while invalid/unknown records are repaired. Failed saves show `Not saved / RAM only` in Settings.
 
 ## Screens and data sources
 
 | Screen | Live behavior | Limits / future scope |
 |---|---|---|
 | Start | Name, shared controls, A enters Home | Final logo remains a design asset task |
-| Home | Advertisement candidates, signed-peer count, real relay/transport state | Counts do not prove channel membership |
+| Home | Advertisement candidates, signed-peer/unread counts, envelope, real relay/transport state | Counts do not prove channel membership |
 | Nearby | Signed peers take priority when available; otherwise filtered candidates; A opens ID/address details | Signed-only and Noise-authenticated statuses are distinct; RSSI belongs only to observations |
-| Channels | Public BLE `#bluetooth`, transport status and Inbox + DMs; A opens Messages | No private groups or Nostr context |
-| Messages | Twelve-entry public/DM live history with BLE/DM labels; B/C cycle messages; A opens text-scroll mode; B/C scroll; hold-B leaves detail, then returns to Channels | RAM-only, 192 displayed bytes, truncation indicated; no composer |
+| Inbox | Separate Mesh (`#bluetooth`) and Direct DMs destinations with unread counts; A opens the selected history | No private groups or Nostr context |
+| Messages | Twelve-entry public/DM live history with BLE/DM labels; B/C cycle messages; A opens text-scroll mode; B/C scroll; hold-B leaves detail, then returns to Inbox | RAM-only, 192 displayed bytes, truncation indicated; no composer |
 | InfoBot | Command reference, authentication readiness, immediate Bot ON/OFF switch | Toggle is per boot; Welcome OFF |
 | Settings | Four working destinations | Additional configuration is future scope |
 | Brightness | Five presets, explicit apply, persistent value, visible save failure | Physical 5% readability remains to be checked |
@@ -93,3 +93,9 @@ The **95 × 95px** QR points to **https://github.com/wanderlima/bitchat-stick**.
 ## Verification and previews
 
 The [eleven JPEG previews](screens/README.md) are generated from current drawing calls and pinned font bitmaps, using simulated measurements. They are not hardware screenshots or protocol evidence. The host UI regression checks controls, applied-versus-focused brightness, all screens, live status, ordinary/candidate/empty peers, large counters and text/rectangle bounds. Physical readability, battery behavior, radio scanning, and QR camera reading need a device pass after upload.
+
+## Inbox and read state
+
+**Mesh** is a label for the apps' existing public local mesh (`#bluetooth`), not a new room created by the Stick. Multiple nearby participants share it. **Direct DMs** filters private messages addressed to the Stick. The header envelope appears whenever a retained incoming message is unread; Home and each inbox show counts. Viewing one message marks only that entry read. Incoming messages do not replace the message currently being read.
+
+For DMs, a local read schedules the official encrypted Noise read receipt (`0x02` plus the original message ID). Unopened DMs produce only delivered receipts (`0x03`). Pending read receipts retry with bounded work when a suitable authenticated session is available. A queued receipt is not guaranteed radio delivery, and read state is not persisted across reboot.

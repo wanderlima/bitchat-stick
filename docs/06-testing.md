@@ -86,11 +86,20 @@ The first integrated upload reproduced a NimBLE GATT-registration assertion whil
 
 The framebuffer revision was built/uploaded after the owner reported lighter redraw flicker; physical visual acceptance remains with the owner. Use the [device checklist](13-device-checklist.md) to record the final revision, both phone versions and each actual result.
 
-### Final installed source snapshot
+### Earlier DM-reader snapshot (superseded)
 
 - Firmware source commit: `1872efb` (documentation/export commits afterward do not change the installed firmware).
 - Application image SHA-256: `edfed7e93f99a50a055d1e58217151e7e2fb66134d4f039cfb406ee2ce8b3a8b`.
 - Target build: 97,336 bytes static RAM and 974,785 bytes application flash; the 64,800-byte display canvas is allocated dynamically in PSRAM.
 - Final observed runtime samples: one subscribed link, one authenticated peer, active RTC, zero rejected packets in the captured interval and about 145,000 bytes free internal heap. These are short observations, not endurance results.
 - Fourteen native suites and the independent CryptoKit signature check passed after private-text/receipt integration. JPEG previews were regenerated from the real UI with simulated data and visually inspected.
-- The owner's initial missing message was identified as an Android DM sent before private-text display support. The DM reader/receipt update was installed and a new trial requested; receipt/display of that retry has not yet been confirmed.
+- The owner's initial missing message was identified as an Android DM sent before private-text display support. The DM reader/receipt update was installed; the owner subsequently confirmed Android delivery status and reading the DM on the Stick. Remote read status was not yet implemented at that checkpoint.
+
+### Current installed Inbox / Mesh / read-receipt revision
+
+- Firmware source commit: `ca9f68b`. Later documentation/export changes do not alter the installed firmware.
+- Application image SHA-256: `61b521444822e3ee3838038729f30d1cfb8eb689718ea95c96bf3d7887663ea5`.
+- Build: 98,296 bytes static RAM; 977,057 bytes application flash. Upload completed with hash verification.
+- Final short USB observation: `links=2 peers=2 auth=2 accepted=13 rejected=0 queued=16 relay=7 drops=3 heap=144040 clock=RTC`. This confirms simultaneous subscribed/authenticated peers and source-level forwarding activity, not a controlled indirect-delivery test. Drops include attempts without a usable destination; they are not equivalent to protocol rejections.
+- Native suites passed after inbox filtering, unread tracking, stable reader focus and encrypted read receipts. Tests decrypt the exact read-receipt payload, verify no read receipt before opening, and retry a failed enqueue.
+- Owner confirmed Android delivery and DM reading before this revision. The new Android/iOS delivered-to-read UI transition remains a manual acceptance check.

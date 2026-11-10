@@ -14,6 +14,7 @@ Firmware **v0.2.0**, English (en-US). Source implementation and physical accepta
 - Signature-checked public relay with TTL reduction, deduplication and ingress exclusion; paced MTU-aware notifications with bounded queues.
 - Authenticated, recent public InfoBot commands and rate limits; immediate on-device Bot ON/OFF switch. This switch resets to ON at reboot; brightness and local identity persist.
 - Real repository QR, Wander Lima credits, BLE/heap/uptime counters and UTC RTC status. Serial telemetry contains counters, not message bodies or private keys.
+- Separate Mesh/Direct DMs inboxes, header unread envelope and per-message read state. Opening a DM schedules its encrypted read receipt; unopened messages remain unread.
 
 ## Confirmed hardware evidence
 
@@ -135,6 +136,6 @@ Only the loop mutates PeerTable. BLE callbacks enqueue fixed-size observations w
 
 The v0.2 target built and uploaded successfully. Native tests cover fourteen suites plus an independent CryptoKit signature check. The hardware-reproduced GATT startup assertion was corrected, Android verified the announcement and Noise session, and the owner confirmed network visibility. Buffered drawing replaces normal direct erase/redraw; visual acceptance remains a device check.
 
-The owner initially tested a DM while the reader supported only public BLE text. Authenticated private-text decoding, encrypted delivery receipts and DM labels were subsequently added. DMs remain separate from public InfoBot processing; DM commands never generate public replies. Direct-message sending/composition is still future scope.
+The owner initially tested a DM while the reader supported only public BLE text. Authenticated private-text decoding, encrypted delivery receipts and DM labels were subsequently added. DMs remain separate from public InfoBot processing; DM commands never generate public replies. Direct-message sending/composition is still future scope. The owner confirmed Android delivery status and reading the DM on the Stick; encrypted read acknowledgements were added afterward and still require final app-side acceptance.
 
 The earlier brightness self-test verified NVS readback across ESP32 restart and restored the original setting. Use the [complete acceptance checklist](13-device-checklist.md) for final display, Android/iOS message reception, controlled relay, reconnect and battery tests. Upload verification does not mark those tests as passed.

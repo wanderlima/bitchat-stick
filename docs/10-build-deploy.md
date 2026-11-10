@@ -123,7 +123,7 @@ If the monitor starts after this line, it may not appear until the next boot. Ev
 6. Compare voltage/estimate on USB and battery; no measured autonomy is established.
 7. Check About credits/links and Diagnostics, then complete the [hardware checklist](09-getting-started.md#evidence-and-hardware-checklist).
 
-Open Channels → #bluetooth → Messages for the live reader. InfoBot shows authentication readiness and a per-boot enable switch. Complete the [current device checklist](13-device-checklist.md); network visibility alone does not prove forwarding.
+Open Inbox → Mesh → Messages for the live reader. InfoBot shows authentication readiness and a per-boot enable switch. Complete the [current device checklist](13-device-checklist.md); network visibility alone does not prove forwarding.
 
 ## 8. Artifacts and traceability
 

@@ -1,6 +1,6 @@
 # Implementation plan by screen and complexity
 
-Updated: **2026-11-10**. English (en-US) firmware v0.2.0. Source implementation is complete for the current eleven-screen public-BLE scope. Physical acceptance is intentionally separate: use the [device checklist](13-device-checklist.md). Future product ideas are not represented as implemented.
+Updated: **2026-11-10**. English (en-US) firmware v0.2.0. Source implementation is complete for the current eleven-screen public-BLE and received-DM scope. Physical acceptance is intentionally separate: use the [device checklist](13-device-checklist.md). Future product ideas are not represented as implemented.
 
 ## Screen order — lowest to highest complexity
 
@@ -12,10 +12,10 @@ Updated: **2026-11-10**. English (en-US) firmware v0.2.0. Source implementation 
 | 4 | Brightness | 5/25/50/75/100%, explicit apply, NVS persistence/error handling | All levels on USB/battery; full power cycle |
 | 5 | Battery | Voltage, approximate percentage, unknown/low states | Compare USB/battery; measure actual endurance |
 | 6 | Diagnostics | BLE reports/drops, heap, uptime, mesh accept/reject and clock | Long-run counters and memory trend |
-| 7 | Home | Candidate/peer totals, relay state, live header | State transitions, no erase/redraw flicker |
+| 7 | Home | Candidate/peer/unread totals, relay state, live header | State transitions, no erase/redraw flicker |
 | 8 | Nearby | Filtered candidates, signed peers, Noise authentication, stable candidate selection, IDs/details | Android/iOS foreground/background/reconnect behavior |
 | 9 | Messages | Signed public and authenticated private input, bounded history, paging and text scrolling | Real text, Unicode substitution, truncation, reconnect |
-| 10 | Channels | Public BLE #bluetooth and actual transport availability | Offline context and controlled indirect forwarding |
+| 10 | Inbox | Public BLE #bluetooth and actual transport availability | Offline context and controlled indirect forwarding |
 | 11 | InfoBot | Authenticated fresh commands, reply limits, ON/OFF control, welcomes OFF | Cross-platform replies, cooldown, no reply loops |
 
 ## Completed engineering groups
@@ -31,6 +31,9 @@ Updated: **2026-11-10**. English (en-US) firmware v0.2.0. Source implementation 
 9. Fix the hardware-reproduced startup assertion; add idle-GAP, overflow and fragment transport regressions.
 10. Automatically initiate Noise after discovery; verify Android announcement and handshake on hardware.
 11. Connect all current screens to real state, add the bot switch, buffer display updates, and document acceptance limits.
+12. Decode received DMs and send encrypted delivered receipts without exposing private text to InfoBot.
+13. Separate Mesh/Direct DMs inboxes; add unread envelope/counts and stable per-message read state.
+14. Send encrypted read receipts when a DM is displayed, with bounded retries and explicit mobile acceptance checks.
 
 Each implementation group is committed separately; no push is part of this work. Native success and upload verification do not turn the remaining physical checks into passes.
 

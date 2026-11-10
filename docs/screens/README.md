@@ -22,9 +22,9 @@ The current revision restores grouped panels, the green Nearby card and left bor
 
 ![Nearby green observation card](02-nearby-peers.jpg)
 
-## Channels
+## Inbox
 
-![Channel availability](03-channels.jpg)
+![Mesh and Direct DMs inboxes](03-channels.jpg)
 
 ## Messages
 
@@ -76,4 +76,4 @@ All eleven views use the actual drawing code. Simulated measurements are confine
 
 ## Reproduce exports
 
-After installing the pinned PlatformIO dependencies, run `sh tools/render-device-previews.sh` on macOS. It renders the real UI calls using the test display, a simulated observation/battery and synthetic outgoing public text, then updates the JPEGs. No message is transmitted and no real identity or conversation is embedded. These previews intentionally do not claim Android/iOS interoperability.
+After installing the pinned PlatformIO dependencies, run `sh tools/render-device-previews.sh` on macOS. It renders the real UI calls using the test display, simulated observations/battery and synthetic signed peer/public-message traffic, then updates the JPEGs. No message is transmitted and no real identity or conversation is embedded. These previews intentionally do not claim Android/iOS interoperability.
