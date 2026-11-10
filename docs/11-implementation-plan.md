@@ -12,8 +12,8 @@ Status: **Done** = implemented in source; **Mock** = local preview/unavailable s
 |---|---|---|---|---|
 | 1 | Start | Done | Physical readability check; final logo when supplied | S |
 | 2 | About | Done | Camera test of repository QR on the display; optional version/build metadata | S |
-| 3 | Settings | Done | Persistence policy; save/restore supported preferences | S–M |
-| 4 | Brightness | Done | USB/battery checks for all presets; persistent applied value | S–M |
+| 3 | Settings | Done | Physical preference checks; future preference/reset controls | S–M |
+| 4 | Brightness | Done | USB/battery checks for all presets; verify persistence on power cycle | S–M |
 | 5 | Battery | Done, approximate | Unknown/low-voltage device tests; supported charging indication; calibrated estimates; measured autonomy | M |
 | 6 | Diagnostics | Done | Counter explanations; richer BLE failures; bounded long-running telemetry | M |
 | 7 | Home | Done | Validate candidate totals/state transitions; aggregate future transport/relay states | M–L |
@@ -40,15 +40,15 @@ Status: **Done** = implemented in source; **Mock** = local preview/unavailable s
 
 - **Done · S:** working destinations for Brightness, Battery, About and Diagnostics.
 - **Done · S:** shared A/B/C semantics, selection highlighting, row separators and hold-B navigation.
-- **Pending · S:** define persisted preferences and reset/default behavior.
-- **Pending · M:** implement bounded, versioned preference storage and recovery from invalid values. Settings currently live only in RAM.
+- **Done · S:** versioned brightness preference with a 50% fallback for missing/invalid values.
+- **Done · M:** brightness stored as one NVS record on explicit changed choices; failed saves retain the RAM value and show a warning. Transient navigation state remains in RAM.
 
 ## 4. Brightness
 
 - **Done · S:** 5/25/50/75/100% presets; distinct focus and applied radio mark; A applies; hold-B cancels.
 - **Done · M:** PWM application and wake restoration; default 50%.
 - **Pending · M:** test all presets on USB and battery, including 5% readability and wake.
-- **Pending · M:** persist the applied value after the Settings storage policy is defined. Avoid writing flash on every navigation event.
+- **Done · M:** persist applied brightness without writes on navigation, cancellation or unchanged values. Host tests cover reboot and storage failure paths; physical power-cycle testing remains pending.
 
 ## 5. Battery
 
@@ -122,7 +122,7 @@ Status: **Done** = implemented in source; **Mock** = local preview/unavailable s
 
 1. Validate the candidate-only Nearby filter on the physical device.
 2. Finish the physical checks for Start, About, Settings, Brightness, Battery and Diagnostics.
-3. Implement preference persistence and candidate-selection stability.
+3. Verify preference persistence on hardware and implement candidate-selection stability.
 4. Pin mobile protocol versions and establish codec test vectors.
 5. Add and validate transport/security, then real Messages.
 6. Enable real channel contexts and relay only after their individual gates pass.

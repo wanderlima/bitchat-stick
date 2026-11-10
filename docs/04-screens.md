@@ -24,7 +24,7 @@ Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Fi
 | A held ≥700ms | Reserved; no confirmation on release |
 | C held ≥700ms | No down action on release; six-second hold retains power off |
 
-Messages returns to Channels on hold-B. Splash only leaves on short-A. Short actions occur on release, with no auto-repeat. The first press after the 30-second screen timeout only wakes the display; navigation stays suppressed until all buttons are released. Scanning continues on its normal schedule. Brightness settings remain in RAM and reset on reboot.
+Messages returns to Channels on hold-B. Splash only leaves on short-A. Short actions occur on release, with no auto-repeat. The first press after the 30-second screen timeout only wakes the display; navigation stays suppressed until all buttons are released. Scanning continues on its normal schedule. Brightness is restored from a versioned NVS record on boot; invalid/missing records use 50%. Only explicit changed choices write flash. Failed saves show `Not saved / RAM only` in Settings.
 
 ## Screens and data sources
 

@@ -1,5 +1,6 @@
 #include "Ui.h"
 #include "Scanner.h"
+#include "Settings.h"
 #include "NavigationInput.h"
 #include <M5Unified.h>
 #include "assets/UiBitmaps.h"
@@ -21,7 +22,7 @@ constexpr uint8_t brightnessLevels[] = {13, 64, 128, 191, 255};
 constexpr unsigned brightnessPercent[] = {5, 25, 50, 75, 100};
 size_t brightnessIndex = 2;
 uint8_t brightness = brightnessLevels[brightnessIndex];
-bool sleeping = false, detail = false;
+bool sleeping = false, detail = false, settingsSaved = true;
 uint32_t lastInput = 0, lastDraw = 0, lastBattery = 0;
 int battery = -1, voltage = 0;
 NavigationInput input;
@@ -213,6 +214,11 @@ void draw(const PeerTable& peers, uint32_t now) {
     case Screen::Settings: {
       const char* options[] = {"Brightness", "Battery", "About", "Diagnostics"};
       menu(options, 4, 54, 30);
+      if (!settingsSaved) {
+        panel(195, 40);
+        label("Not saved", 200, amber, 13, 109, compact);
+        label("RAM only", 218, muted, 13, 109, compact);
+      }
       break;
     }
     case Screen::Brightness:
@@ -273,6 +279,8 @@ void move(int direction, const PeerTable& peers) {
 }
 } // namespace
 void beginUi() {
+  brightnessIndex = loadBrightnessIndex();
+  brightness = brightnessLevels[brightnessIndex];
   M5.Display.setRotation(0);
   M5.Display.setBrightness(brightness);
   M5.Display.setFont(body);
@@ -315,6 +323,7 @@ void updateUi(const PeerTable& peers, uint32_t now) {
       screen = destinations[selection];
       selection = screen == Screen::Brightness ? brightnessIndex : 0;
     } else if (screen == Screen::Brightness) {
+      settingsSaved = saveBrightnessIndex(uint8_t(selection));
       brightnessIndex = selection;
       brightness = brightnessLevels[brightnessIndex];
       M5.Display.setBrightness(brightness);

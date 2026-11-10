@@ -1,5 +1,6 @@
 #include "../src/Ui.cpp"
 #include <cassert>
+#include <Preferences.h>
 #include <cstdio>
 #include <cstring>
 namespace stick {
@@ -47,7 +48,9 @@ int main() {
   press(1,true);assert(screen==Screen::Settings);
   press(0);assert(screen==Screen::Brightness && selection==2);
   press(2);press(0);assert(brightness==191 && brightnessIndex==3 && screen==Screen::Settings);
+  assert(fake_preferences::writes==1);
   press(0);press(2);press(1,true);assert(screen==Screen::Settings && brightnessIndex==3); // cancel without applying
+  assert(fake_preferences::writes==1);
   press(2);press(0);assert(screen==Screen::Battery && has("4000 mV"));
   press(1,true);press(2);press(0);assert(screen==Screen::About && has("Wander Lima") && !has("SOON"));
   press(1,true);press(2);press(0);assert(screen==Screen::Diagnostics && has("BLE 123") && has("Drop 2"));
@@ -90,5 +93,11 @@ int main() {
   assert(pixel(18,167)==fg); // Unfilled center retains the focused 75% cream background.
   assert(M5.Display.brightness==pwm);brightnessIndex=applied;
   screen=Screen::Diagnostics;reports=0xffffffff;drops=0xffffffff;draw(table,0xffffffff);check();
+  fake_preferences::writeSucceeds=false;
+  screen=Screen::Brightness;selection=4;press(0);
+  assert(!settingsSaved && has("Not saved") && brightness==255);
+  fake_preferences::writeSucceeds=true;
+  screen=Screen::Brightness;selection=4;press(0);
+  assert(settingsSaved && !has("Not saved") && fake_preferences::record==0xBC510104);
   std::puts("UI: navigation, presets, credits, live header/data, grouping and text bounds passed");
 }

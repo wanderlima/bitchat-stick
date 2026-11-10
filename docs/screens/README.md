@@ -66,7 +66,7 @@ Build once with PlatformIO to install the pinned M5GFX font sources. From the ro
 python3 tools/generate-ui-bitmaps.py
 python3 tools/generate-ui-fonts.py
 mkdir -p /tmp/bitchat-ui-previews
-c++ -std=c++17 -Wall -Wextra -Werror -I test/fakes -I include test/ui_preview.cpp src/PeerTable.cpp -o /tmp/bitchat-ui-preview
+c++ -std=c++17 -Wall -Wextra -Werror -I test/fakes -I include test/ui_preview.cpp src/PeerTable.cpp src/Settings.cpp -o /tmp/bitchat-ui-preview
 /tmp/bitchat-ui-preview /tmp/bitchat-ui-previews
 python3 tools/render-previews.py /tmp/bitchat-ui-previews
 swift -module-cache-path /tmp/bitchat-swift-cache tools/export-preview-jpegs.swift /tmp/bitchat-ui-previews docs/screens

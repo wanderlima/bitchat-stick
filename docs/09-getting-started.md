@@ -12,7 +12,7 @@ Firmware foundation v0.1.0. English (en-US) is the default. The design documents
 - Real advertisement fields when running on hardware: sanitized name, address/type, RSSI, age, and mainnet/testnet candidate classification.
 - Bitchat mainnet/testnet service UUID filter before enqueueing; unrelated BLE devices do not appear in Nearby. Matching advertisements remain unverified candidates. Diagnostics counts all received reports.
 - Bounded 32-event queue and 32-observation table; expire after 60 seconds and replace the oldest observation when full.
-- Shared input handling, screen-off after 30 seconds, wake-only first press, 5/25/50/75/100% brightness presets (50% default), and RAM-only settings.
+- Shared input handling, screen-off after 30 seconds, wake-only first press, 5/25/50/75/100% brightness presets (50% default), and persistent brightness.
 - Live header status square/battery icon; dedicated Battery, About, and Diagnostics views. About credits Wander Lima and includes a real QR linking to github.com/wanderlima/bitchat-stick.
 - Larger bold text, strong contrast, grouped panels, and a green Nearby card/left border. No regular-screen navigation footer.
 
@@ -20,7 +20,7 @@ Current screenshots are illustrative previews. This revision still needs physica
 
 ## Not implemented
 
-Bitchat message GATT transport, packet codec, signed identity, verified peers, Noise participation, relay, chat reading, channel creation/joining, InfoBot, welcomes, Nostr, persistent settings/history, OTA, and Pocket Messenger. There is no hidden switch that enables them.
+Bitchat message GATT transport, packet codec, signed identity, verified peers, Noise participation, relay, chat reading, channel creation/joining, InfoBot, welcomes, Nostr, persistent history and preferences beyond brightness, OTA, and Pocket Messenger. There is no hidden switch that enables them.
 
 ## Pinned dependencies
 
@@ -73,8 +73,15 @@ c++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined test/navigatio
 UI state/layout tests use a lightweight display fake and font advance metrics from pinned M5GFX; they execute the real `src/Ui.cpp`:
 
 ```sh
-c++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined -I test/fakes -I include test/ui_test.cpp src/PeerTable.cpp -o /tmp/bitchat-ui-test
+c++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined -I test/fakes -I include test/ui_test.cpp src/PeerTable.cpp src/Settings.cpp -o /tmp/bitchat-ui-test
 /tmp/bitchat-ui-test
+```
+
+Brightness persistence regressions use the real storage adapter with an NVS fake:
+
+```sh
+c++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined -I test/fakes -I include test/settings_test.cpp src/Settings.cpp -o /tmp/bitchat-settings-test
+/tmp/bitchat-settings-test
 ```
 
 They cover navigation through screens/sub-screens, brightness application/cancellation, full author attribution, live header/data, grouping, and text/rectangle bounds. Software rendering is not a physical display test.
@@ -92,7 +99,7 @@ The table test covers updates, address-type distinction, bounds/oldest replaceme
 | A held ≥700 ms | Reserved; no confirmation on release |
 | C held ≥700 ms | No down action; 6-second hold retains power off |
 
-On the splash screen, only A enters Home; B/C and long-B do not change pages. Short actions occur on release. After screen-off, the first A/B/C press only wakes it; suppress navigation until all buttons are released. Settings are volatile. Real USB/battery power-off behavior must be checked on the Plus2.
+On the splash screen, only A enters Home; B/C and long-B do not change pages. Short actions occur on release. After screen-off, the first A/B/C press only wakes it; suppress navigation until all buttons are released. Brightness persists in NVS; transient screen/navigation state remains volatile. Real USB/battery power-off behavior must be checked on the Plus2.
 
 The UI uses native FreeMono body/compact bitmaps at 16/14px, generated from pinned M5GFX glyphs to preserve strokes without fractional scaling. Titles use FreeMonoBold9pt7b and the brand uses FreeMonoBold12pt7b. Primary cream is #EBDCBA, quantized to RGB565 0xEEF7. The 20px BLE header has a subtle outline. Text is English; non-ASCII radio-name bytes still render as `?`. Current JPEG previews are not pixel-identical hardware screenshots. InfoBot command examples explicitly say `Preview only` and never send a message.
 
