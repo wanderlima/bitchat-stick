@@ -220,7 +220,7 @@ void draw(const PeerTable& peers, uint32_t now) {
       break;
     }
     case Screen::Channels:
-      panel(54,76);item("Public BLE",60,selection==0,26);
+      panel(54,76);item("Mesh",60,selection==0,26);
       label("#bluetooth",94,fg,13,109,compact);
       std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,112,green,13,109,compact);
       panel(140,76);item("Direct DMs",146,selection==1,26);

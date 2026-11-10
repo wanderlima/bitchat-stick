@@ -61,7 +61,7 @@ int main() {
   press(1,true);press(2);press(0);assert(screen==Screen::About && has("Wander Lima") && !has("SOON"));
   press(1,true);press(2);press(0);assert(screen==Screen::Diagnostics && has("BLE 123") && has("Drop 2"));
   // Visit the remaining primary screens and detail states with the same controls.
-  screen=Screen::Channels;draw(table,tick);check();assert(has("#bluetooth") && has("Public BLE"));press(0);assert(screen==Screen::Messages);
+  screen=Screen::Channels;draw(table,tick);check();assert(has("#bluetooth") && has("Mesh"));press(0);assert(screen==Screen::Messages);
   press(1,true);assert(screen==Screen::Channels);
   screen=Screen::Bot;selection=0;draw(table,tick);check();press(0);assert(detail);press(1,true);assert(!detail);
   // Verify all presets, header error/idle states, and low/unknown battery rendering.
@@ -122,7 +122,7 @@ int main() {
   screen=Screen::Dashboard;draw(table,tick);check();assert(mesh().unreadCount()==1&&has("P:1 New:1"));
   auto unreadIcon=[](){for(const auto& r:M5.Display.rects)if(r.x==56&&r.y==6&&r.w==10&&r.color==green)return true;return false;};
   assert(unreadIcon());battery=100;draw(table,tick);check();assert(has("100%")&&unreadIcon());
-  screen=Screen::Channels;selection=1;detail=false;draw(table,tick);check();assert(has("Public BLE")&&has("Direct DMs"));
+  screen=Screen::Channels;selection=1;detail=false;draw(table,tick);check();assert(has("Mesh")&&has("Direct DMs"));
   press(0);assert(screen==Screen::Messages&&messageScope==MessageScope::Direct&&has("No messages")&&mesh().unreadCount()==1);
   press(1,true);assert(screen==Screen::Channels&&selection==1);press(1);assert(selection==0);press(0);
   assert(messageScope==MessageScope::Public&&has("Live")&&mesh().unreadCount()==0&&!unreadIcon());
