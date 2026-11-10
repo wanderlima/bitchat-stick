@@ -31,8 +31,22 @@ size_t Mesh::peerCount()const{size_t n=0;for(const auto& p:peers_)n+=p.used;retu
 size_t Mesh::authenticatedCount()const{size_t n=0;for(const auto& p:peers_)n+=p.used&&p.authenticated;return n;}
 const MeshPeer* Mesh::peer(size_t ordinal)const{for(const auto& p:peers_)if(p.used && !ordinal--)return &p;return nullptr;}
 MeshPeer* Mesh::find(const uint8_t* id){for(auto& p:peers_)if(p.used&&same(p.id,id))return &p;return nullptr;}
-const ChatMessage* Mesh::message(size_t offset)const{return offset<messageCount_?&messages_[(messageNext_+messages_.size()-1-offset)%messages_.size()]:nullptr;}
-void Mesh::store(const char* name,wire::Bytes text,bool outgoing,bool privateMessage){auto& m=messages_[messageNext_];m=ChatMessage{};std::snprintf(m.name,sizeof(m.name),"%s",name);displayText(m.text,sizeof(m.text),text);m.outgoing=outgoing;m.privateMessage=privateMessage;m.truncated=text.size>=sizeof(m.text);messageNext_=(messageNext_+1)%messages_.size();if(messageCount_<messages_.size())++messageCount_;}
+namespace {
+bool inScope(const ChatMessage& message,MessageScope scope){
+  return scope==MessageScope::All || message.privateMessage==(scope==MessageScope::Direct);
+}
+}
+size_t Mesh::messageCount(MessageScope scope)const{
+  size_t count=0;for(size_t i=0;i<messageCount_;++i)count+=inScope(messages_[(messageNext_+messages_.size()-1-i)%messages_.size()],scope);return count;
+}
+const ChatMessage* Mesh::message(size_t offset,MessageScope scope)const{
+  for(size_t i=0;i<messageCount_;++i){const auto& m=messages_[(messageNext_+messages_.size()-1-i)%messages_.size()];if(inScope(m,scope)&&!offset--)return &m;}return nullptr;
+}
+size_t Mesh::unreadCount(MessageScope scope)const{
+  size_t count=0;for(size_t i=0;i<messageCount_;++i){const auto& m=messages_[(messageNext_+messages_.size()-1-i)%messages_.size()];count+=m.unread&&inScope(m,scope);}return count;
+}
+void Mesh::markRead(uint32_t sequence){for(auto& m:messages_)if(m.sequence==sequence)m.unread=false;}
+void Mesh::store(const char* name,wire::Bytes text,bool outgoing,bool privateMessage){auto& m=messages_[messageNext_];m=ChatMessage{};if(!++messageSequence_)++messageSequence_;m.sequence=messageSequence_;m.unread=!outgoing;std::snprintf(m.name,sizeof(m.name),"%s",name);displayText(m.text,sizeof(m.text),text);m.outgoing=outgoing;m.privateMessage=privateMessage;m.truncated=text.size>=sizeof(m.text);messageNext_=(messageNext_+1)%messages_.size();if(messageCount_<messages_.size())++messageCount_;}
 bool Mesh::emit(wire::FrameView& frame,uint16_t target,uint16_t except,bool sign){
   if(!ready()||!send_)return false;
   uint8_t signature[64];

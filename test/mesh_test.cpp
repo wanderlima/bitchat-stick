@@ -43,6 +43,8 @@ int main(){
  uint8_t dm[]={1,0,4,'d','m','0','1',1,5,'!','i','n','f','o'};
  assert(phone.encrypt({dm,sizeof(dm)},handshake,sizeof(handshake),n));
  receive(m,packet(remote,0x11,{handshake,n},1800000000001ULL,{local.id(),8},false));
+ assert(m.unreadCount(MessageScope::Direct)==1&&m.unreadCount(MessageScope::Public)==1);
+ m.markRead(m.message(0)->sequence);assert(m.unreadCount(MessageScope::Direct)==0&&m.unreadCount()==1);
  assert(m.message(0)->privateMessage && std::strcmp(m.message(0)->text,"!info")==0);assert(m.stats().botReplies==0);
  assert(wire::decode({sent.back().data(),sent.back().size()},reply)==wire::Error::None);assert(reply.type==0x11);
  assert(phone.decrypt(reply.payload,response,sizeof(response),r));assert(r==5&&response[0]==3&&std::memcmp(response+1,"dm01",4)==0);
@@ -59,5 +61,7 @@ int main(){
  m.setBotEnabled(true);receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!help"),5},1800000031001ULL));assert(m.stats().botReplies==2);
  m.disconnected(1);assert(m.authenticatedCount()==0);
  receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!rules"),6},1700000000000ULL));assert(m.stats().botReplies==2);
+ for(unsigned i=0;i<20;++i)assert(m.sendText("outgoing"));
+ assert(m.messageCount()==12&&m.messageCount(MessageScope::Direct)==0&&m.unreadCount()==0);
  std::puts("Mesh: signed discovery/chat, forgery/replay rejection, Noise key binding, authenticated state, relay and bot cooldown passed");
 }

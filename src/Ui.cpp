@@ -29,6 +29,8 @@ size_t brightnessIndex = 2;
 uint8_t brightness = brightnessLevels[brightnessIndex];
 bool sleeping = false, detail = false, settingsSaved = true;
 size_t messageOffset = 0, textLine = 0;
+MessageScope messageScope = MessageScope::Public;
+uint32_t activeMessage = 0;
 uint32_t lastInput = 0, lastDraw = 0, lastBattery = 0;
 int battery = -1, voltage = 0;
 NavigationInput input;
@@ -106,7 +108,17 @@ void drawSplash() {
   label("Hold B: back", 175, muted, 10, 121, compact);
   item("A: START", 210, true);
 }
+void syncMessageFocus() {
+  if(screen!=Screen::Messages)return;
+  const size_t count=mesh().messageCount(messageScope);
+  if(activeMessage){for(size_t i=0;i<count;++i)if(mesh().message(i,messageScope)->sequence==activeMessage){messageOffset=i;return;}
+    activeMessage=0;detail=false;textLine=0;
+  }
+  if(messageOffset>=count)messageOffset=0;
+}
 void draw(const PeerTable& peers, uint32_t now) {
+  syncMessageFocus();
+  if(screen==Screen::Messages){const auto* message=mesh().message(messageOffset,messageScope);if(message){activeMessage=message->sequence;mesh().markRead(activeMessage);}}
   auto& d = surface();
   d.startWrite();
   d.fillScreen(bg);
@@ -115,6 +127,11 @@ void draw(const PeerTable& peers, uint32_t now) {
   d.fillRect(6, 7, 5, 5, radioColor);
   label(transportReady() ? "BLE" : scannerFault() ? "ERR" : "IDLE", 2,
         fg, 16, 59, compact);
+  if(mesh().unreadCount()) {
+    static const uint8_t envelope[]={0xff,0xc0,0xc0,0xc0,0xa1,0x40,0x92,0x40,0x8c,0x40,0x80,0x40,0xff,0xc0};
+    bitmap(envelope,56,6,10,7,green);
+    d.fillRect(68,5,2,2,green);
+  }
   char value[48];
   const bool batteryKnown = battery >= 0 && battery <= 100;
   if (batteryKnown) std::snprintf(value, sizeof(value), "%d%%", battery);
@@ -144,7 +161,7 @@ void draw(const PeerTable& peers, uint32_t now) {
     case Screen::Dashboard: {
       panel(54, 69);
       std::snprintf(value, sizeof(value), "Nearby: %u", unsigned(peers.candidates())); label(value, 57);
-      std::snprintf(value, sizeof(value), "P:%u Msg:%u", unsigned(mesh().peerCount()), unsigned(mesh().messageCount())); label(value, 79, green);
+      std::snprintf(value, sizeof(value), "P:%u New:%u", unsigned(mesh().peerCount()), unsigned(mesh().unreadCount())); label(value, 79, green);
       label(transportReady() && mesh().ready() ? "Relay: ON" : "Relay: OFF", 101, transportReady() && mesh().ready() ? green : amber);
       const char* options[] = {"Nearby", "Channels", "InfoBot", "Settings"};
       menu(options, 4, 129, 24);
@@ -203,26 +220,24 @@ void draw(const PeerTable& peers, uint32_t now) {
       break;
     }
     case Screen::Channels:
-      panel(54, 93);
-      item("#bluetooth", 60, true, 28);
-      divider(94);
-      label("Public BLE", 105, fg, 13, 109, compact);
-      label(transportStatus(), 126, transportReady() ? green : amber, 13, 109, compact);
-      panel(158, 78);
-      label("Inbox + DMs", 167);
-      label("No private", 194, muted, 13,109,compact);
-      label("groups yet", 214, muted, 13,109,compact);
+      panel(54,76);item("Public BLE",60,selection==0,26);
+      label("#bluetooth",94,fg,13,109,compact);
+      std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,112,green,13,109,compact);
+      panel(140,76);item("Direct DMs",146,selection==1,26);
+      label("Private text",180,fg,13,109,compact);
+      std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Direct)));label(value,198,green,13,109,compact);
+      label(transportStatus(),220,transportReady()?green:amber,7,123,compact);
       break;
     case Screen::Messages: {
-      const auto count = mesh().messageCount();
+      const auto count = mesh().messageCount(messageScope);
       if (!count) {
         panel(54, 117); label("No messages", 64); divider(92);
-        label("#bluetooth",103,green,13,109,compact);
+        label(messageScope==MessageScope::Direct?"Direct DMs":"#bluetooth",103,green,13,109,compact);
         label(transportStatus(),127,muted,13,109,compact);
         label("Waiting...",149,muted,13,109,compact);
       } else {
         if(messageOffset>=count) messageOffset=count-1;
-        const auto* message=mesh().message(messageOffset);
+        const auto* message=mesh().message(messageOffset,messageScope);
         std::snprintf(value,sizeof(value),"%u/%u %s",unsigned(messageOffset+1),unsigned(count),message->outgoing?"You":message->privateMessage?"DM":"BLE");label(value,55,muted,4,127,compact);
         panel(77, 159);label(message->name,84,green,13,109,compact);divider(106);
         const size_t length=std::strlen(message->text), lines=(length+11)/12;
@@ -313,9 +328,9 @@ void draw(const PeerTable& peers, uint32_t now) {
 }
 void move(int direction, const PeerTable& peers) {
   if (screen == Screen::Messages) {
-    if(detail) { const auto* message=mesh().message(messageOffset);const size_t lines=message?(std::strlen(message->text)+11)/12:0;
+    if(detail) { const auto* message=mesh().message(messageOffset,messageScope);const size_t lines=message?(std::strlen(message->text)+11)/12:0;
       if(direction<0 && textLine) --textLine; else if(direction>0 && textLine+5<lines) ++textLine;
-    } else if(mesh().messageCount()){messageOffset=(messageOffset+mesh().messageCount()+direction)%mesh().messageCount();textLine=0;}
+    } else if(mesh().messageCount(messageScope)){messageOffset=(messageOffset+mesh().messageCount(messageScope)+direction)%mesh().messageCount(messageScope);textLine=0;activeMessage=0;}
     return;
   }
   if (screen == Screen::Peers) {
@@ -325,7 +340,7 @@ void move(int direction, const PeerTable& peers) {
     return;
   }
   const size_t count = screen == Screen::Dashboard || screen == Screen::Settings ? 4 :
-                       screen == Screen::Bot ? 4 : screen == Screen::Brightness ? 5 : 0;
+                       screen == Screen::Channels ? 2 : screen == Screen::Bot ? 4 : screen == Screen::Brightness ? 5 : 0;
   if (count) selection = (selection + count + direction) % count;
   detail = false;
 }
@@ -344,6 +359,7 @@ void beginUi() {
   draw(PeerTable{}, lastInput);
 }
 void updateUi(const PeerTable& peers, uint32_t now) {
+  syncMessageFocus();
   const bool aDown = M5.BtnA.isPressed();
   const bool bDown = M5.BtnB.isPressed();
   const bool cDown = M5.BtnPWR.isPressed();
@@ -361,16 +377,17 @@ void updateUi(const PeerTable& peers, uint32_t now) {
       selection = screen == Screen::Brightness ? 0 : screen == Screen::Battery ? 1 : screen == Screen::About ? 2 : 3;
       screen = Screen::Settings;
     } else if (screen != Screen::Splash) {
+      const bool directInbox=screen==Screen::Messages && messageScope==MessageScope::Direct;
       screen = screen == Screen::Dashboard ? Screen::Settings :
                screen == Screen::Messages ? Screen::Channels : Screen::Dashboard;
-      selection = 0;
+      selection = directInbox ? 1 : 0;
     }
   } else if (action == NavigationAction::Select) {
     if (screen == Screen::Splash) screen = Screen::Dashboard;
     else if (screen == Screen::Dashboard) {
       const Screen destinations[] = {Screen::Peers, Screen::Channels, Screen::Bot, Screen::Settings};
       screen = destinations[selection]; selection = 0;
-    } else if (screen == Screen::Channels) { screen = Screen::Messages; messageOffset=textLine=0; detail=false; }
+    } else if (screen == Screen::Channels) { messageScope=selection==1?MessageScope::Direct:MessageScope::Public; screen = Screen::Messages; messageOffset=textLine=0; activeMessage=0; detail=false; }
     else if (screen == Screen::Bot && selection==3) mesh().setBotEnabled(!mesh().botEnabled());
     else if (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages) { detail = !detail; textLine=0; }
     else if (screen == Screen::Settings) {

@@ -36,7 +36,7 @@ int main() {
   std::strcpy(obs.address,"AA:BB:CC:DD:EE:FF");std::strcpy(obs.name,"Test phone");
   obs.rssi=-64;obs.network=Network::Mainnet;table.observe(obs);
   beginUi();check();assert(has("BITCHAT") && has("A: START"));
-  press(0);assert(screen==Screen::Dashboard && has("Nearby: 1") && has("P:0 Msg:0"));
+  press(0);assert(screen==Screen::Dashboard && has("Nearby: 1") && has("P:0 New:0"));
   bool square=false;
   for(const auto& r:M5.Display.rects) if(r.x==6 && r.y==7 && r.w==5 && r.h==5 && r.color==green) square=true;
   assert(square);
@@ -119,7 +119,16 @@ int main() {
     assert(wire::signPacket(f,other.signingSecret(),scratch,sizeof(scratch),signature));f.signature={signature,64};size_t n=0;assert(wire::encode(f,packet,sizeof(packet),n)==wire::Error::None);mesh().receive({packet,n},1);};
   inject(1,{announcement,74});screen=Screen::Peers;selection=0;detail=false;draw(table,tick);check();assert(has("Live")&&has("Signed only"));
   uint8_t longText[192];std::memset(longText,'x',sizeof(longText));inject(2,{longText,sizeof(longText)});
-  screen=Screen::Messages;messageOffset=0;textLine=0;detail=false;draw(table,tick);check();assert(has("Live"));
+  screen=Screen::Dashboard;draw(table,tick);check();assert(mesh().unreadCount()==1&&has("P:1 New:1"));
+  auto unreadIcon=[](){for(const auto& r:M5.Display.rects)if(r.x==56&&r.y==6&&r.w==10&&r.color==green)return true;return false;};
+  assert(unreadIcon());battery=100;draw(table,tick);check();assert(has("100%")&&unreadIcon());
+  screen=Screen::Channels;selection=1;detail=false;draw(table,tick);check();assert(has("Public BLE")&&has("Direct DMs"));
+  press(0);assert(screen==Screen::Messages&&messageScope==MessageScope::Direct&&has("No messages")&&mesh().unreadCount()==1);
+  press(1,true);assert(screen==Screen::Channels&&selection==1);press(1);assert(selection==0);press(0);
+  assert(messageScope==MessageScope::Public&&has("Live")&&mesh().unreadCount()==0&&!unreadIcon());
+  const uint32_t reading=activeMessage;longText[0]='y';inject(2,{longText,sizeof(longText)});draw(table,tick);check();
+  assert(activeMessage==reading&&mesh().unreadCount()==1&&messageOffset==1); // Incoming text never steals the reader's focus.
+  press(2);assert(activeMessage!=reading&&mesh().unreadCount()==0);
   press(0);assert(detail);press(2);assert(textLine==1);press(1,true);assert(!detail&&screen==Screen::Messages);press(1,true);assert(screen==Screen::Channels);
   assert(buffered && M5.Display.clears==0 && M5.Display.frames>10);
   std::puts("UI: navigation, presets, credits, live header/data, grouping and text bounds passed");
