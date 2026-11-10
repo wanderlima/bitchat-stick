@@ -43,6 +43,8 @@ The interface uses FreeMono Regular/Bold, warm cream `#EBDCBA` instead of pure w
 
 Home, Nearby, the BLE header, battery, diagnostics, navigation and brightness use real device data/controls. Nearby separates observations from the unverified Bitchat candidate status. Channels and Messages show unavailable states. InfoBot commands open local examples labeled **Preview only**; nothing is transmitted. Relay and welcome bot remain OFF. See the [screen behavior matrix](docs/04-screens.md#screens-and-data-sources).
 
+A bounded binary framing codec is also available for protocol development and host tests. It does not yet connect GATT, authenticate signatures or enable messaging. See the [pinned wire contract](docs/12-wire-contract.md).
+
 ## Planned progression
 
 1. Observe BLE advertisements and RSSI; distinguish candidates from verified identities.
