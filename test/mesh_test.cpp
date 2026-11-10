@@ -39,6 +39,19 @@ int main(){
  assert(phone.decrypt(reply.payload,response,sizeof(response),r));assert(r==39&&response[0]==0x21);
  uint8_t state[39]={0x21,1,1,1,0,2,32};std::memcpy(state+7,remote.signingPublic(),32);
  assert(phone.encrypt({state,sizeof(state)},handshake,sizeof(handshake),n));receive(m,packet(remote,0x11,{handshake,n},1800000000000ULL,{local.id(),8},false));assert(m.authenticatedCount()==1);
+ // Receive an authenticated private TLV message and verify the encrypted delivery receipt.
+ uint8_t dm[]={1,0,4,'d','m','0','1',1,5,'!','i','n','f','o'};
+ assert(phone.encrypt({dm,sizeof(dm)},handshake,sizeof(handshake),n));
+ receive(m,packet(remote,0x11,{handshake,n},1800000000001ULL,{local.id(),8},false));
+ assert(m.message(0)->privateMessage && std::strcmp(m.message(0)->text,"!info")==0);assert(m.stats().botReplies==0);
+ assert(wire::decode({sent.back().data(),sent.back().size()},reply)==wire::Error::None);assert(reply.type==0x11);
+ assert(phone.decrypt(reply.payload,response,sizeof(response),r));assert(r==5&&response[0]==3&&std::memcmp(response+1,"dm01",4)==0);
+ const auto stored=m.messageCount();assert(phone.encrypt({dm,sizeof(dm)},handshake,sizeof(handshake),n));
+ receive(m,packet(remote,0x11,{handshake,n},1800000000002ULL,{local.id(),8},false));assert(m.messageCount()==stored);
+ // Duplicate content fields are rejected even inside a valid session.
+ uint8_t malformed[]={1,0,1,'x',1,1,'a',1,1,'b'};
+ assert(phone.encrypt({malformed,sizeof(malformed)},handshake,sizeof(handshake),n));
+ receive(m,packet(remote,0x11,{handshake,n},1800000000003ULL,{local.id(),8},false));assert(m.messageCount()==stored);
  auto command=packet(remote,2,{reinterpret_cast<const uint8_t*>("!info"),5},1800000000001ULL);receive(m,command);assert(m.stats().botReplies==1);receive(m,command);assert(m.stats().botReplies==1);
  receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!help"),5},1800000000002ULL));assert(m.stats().botReplies==1);
  m.setBotEnabled(false);m.tick(31000,1800000031000ULL);

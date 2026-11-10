@@ -36,7 +36,7 @@ int main() {
   std::strcpy(obs.address,"AA:BB:CC:DD:EE:FF");std::strcpy(obs.name,"Test phone");
   obs.rssi=-64;obs.network=Network::Mainnet;table.observe(obs);
   beginUi();check();assert(has("BITCHAT") && has("A: START"));
-  press(0);assert(screen==Screen::Dashboard && has("Nearby: 1") && has("Peers: 0"));
+  press(0);assert(screen==Screen::Dashboard && has("Nearby: 1") && has("P:0 Msg:0"));
   bool square=false;
   for(const auto& r:M5.Display.rects) if(r.x==6 && r.y==7 && r.w==5 && r.h==5 && r.color==green) square=true;
   assert(square);

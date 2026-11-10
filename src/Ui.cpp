@@ -144,7 +144,7 @@ void draw(const PeerTable& peers, uint32_t now) {
     case Screen::Dashboard: {
       panel(54, 69);
       std::snprintf(value, sizeof(value), "Nearby: %u", unsigned(peers.candidates())); label(value, 57);
-      std::snprintf(value, sizeof(value), "Peers: %u", unsigned(mesh().peerCount())); label(value, 79, green);
+      std::snprintf(value, sizeof(value), "P:%u Msg:%u", unsigned(mesh().peerCount()), unsigned(mesh().messageCount())); label(value, 79, green);
       label(transportReady() && mesh().ready() ? "Relay: ON" : "Relay: OFF", 101, transportReady() && mesh().ready() ? green : amber);
       const char* options[] = {"Nearby", "Channels", "InfoBot", "Settings"};
       menu(options, 4, 129, 24);
@@ -209,7 +209,7 @@ void draw(const PeerTable& peers, uint32_t now) {
       label("Public BLE", 105, fg, 13, 109, compact);
       label(transportStatus(), 126, transportReady() ? green : amber, 13, 109, compact);
       panel(158, 78);
-      label("Local mesh", 167);
+      label("Inbox + DMs", 167);
       label("No private", 194, muted, 13,109,compact);
       label("groups yet", 214, muted, 13,109,compact);
       break;
@@ -223,7 +223,7 @@ void draw(const PeerTable& peers, uint32_t now) {
       } else {
         if(messageOffset>=count) messageOffset=count-1;
         const auto* message=mesh().message(messageOffset);
-        std::snprintf(value,sizeof(value),"%u/%u %s",unsigned(messageOffset+1),unsigned(count),message->outgoing?"You":"Peer");label(value,55,muted,4,127,compact);
+        std::snprintf(value,sizeof(value),"%u/%u %s",unsigned(messageOffset+1),unsigned(count),message->outgoing?"You":message->privateMessage?"DM":"BLE");label(value,55,muted,4,127,compact);
         panel(77, 159);label(message->name,84,green,13,109,compact);divider(106);
         const size_t length=std::strlen(message->text), lines=(length+11)/12;
         if(textLine>=lines) textLine=lines?lines-1:0;

@@ -33,8 +33,8 @@ Messages returns to Channels on hold-B. Splash only leaves on short-A. Short act
 | Start | Name, shared controls, A enters Home | Final logo remains a design asset task |
 | Home | Advertisement candidates, signed-peer count, real relay/transport state | Counts do not prove channel membership |
 | Nearby | Signed peers take priority when available; otherwise filtered candidates; A opens ID/address details | Signed-only and Noise-authenticated statuses are distinct; RSSI belongs only to observations |
-| Channels | Public BLE `#bluetooth`, transport status; A opens Messages | No private groups or Nostr context |
-| Messages | Twelve-entry live history; B/C cycle messages; A opens text-scroll mode; B/C scroll; hold-B leaves detail, then returns to Channels | RAM-only, 192 displayed bytes, truncation indicated; no composer |
+| Channels | Public BLE `#bluetooth`, transport status and Inbox + DMs; A opens Messages | No private groups or Nostr context |
+| Messages | Twelve-entry public/DM live history with BLE/DM labels; B/C cycle messages; A opens text-scroll mode; B/C scroll; hold-B leaves detail, then returns to Channels | RAM-only, 192 displayed bytes, truncation indicated; no composer |
 | InfoBot | Command reference, authentication readiness, immediate Bot ON/OFF switch | Toggle is per boot; Welcome OFF |
 | Settings | Four working destinations | Additional configuration is future scope |
 | Brightness | Five presets, explicit apply, persistent value, visible save failure | Physical 5% readability remains to be checked |

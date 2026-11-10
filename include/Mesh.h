@@ -12,7 +12,7 @@ struct MeshPeer {
   uint32_t seen=0, lastBot=0;
   bool botReplied=false;
 };
-struct ChatMessage { char name[25]{}, text[193]{}; bool outgoing=false, truncated=false; };
+struct ChatMessage { char name[25]{}, text[193]{}; bool outgoing=false, truncated=false, privateMessage=false; };
 struct MeshStats { uint32_t accepted=0,rejected=0,relayed=0,sent=0,dropped=0,botReplies=0; };
 // Single-owner loop model. Callbacks must enqueue before calling receive().
 class Mesh {
@@ -40,7 +40,8 @@ class Mesh {
   MeshPeer* find(const uint8_t* id);
   Session* session(const uint8_t* id,uint16_t link);
   bool duplicate(const wire::FrameView& frame);
-  void store(const char* name,wire::Bytes text,bool outgoing);
+  bool rememberDigest(const uint8_t digest[32]);
+  void store(const char* name,wire::Bytes text,bool outgoing,bool privateMessage=false);
   void startNoise(MeshPeer& peer,uint16_t link);
   void handleNoise(const wire::FrameView& frame,uint16_t link);
   void bot(MeshPeer& peer,wire::Bytes text);

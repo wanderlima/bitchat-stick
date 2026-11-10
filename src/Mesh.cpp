@@ -32,7 +32,7 @@ size_t Mesh::authenticatedCount()const{size_t n=0;for(const auto& p:peers_)n+=p.
 const MeshPeer* Mesh::peer(size_t ordinal)const{for(const auto& p:peers_)if(p.used && !ordinal--)return &p;return nullptr;}
 MeshPeer* Mesh::find(const uint8_t* id){for(auto& p:peers_)if(p.used&&same(p.id,id))return &p;return nullptr;}
 const ChatMessage* Mesh::message(size_t offset)const{return offset<messageCount_?&messages_[(messageNext_+messages_.size()-1-offset)%messages_.size()]:nullptr;}
-void Mesh::store(const char* name,wire::Bytes text,bool outgoing){auto& m=messages_[messageNext_];m=ChatMessage{};std::snprintf(m.name,sizeof(m.name),"%s",name);displayText(m.text,sizeof(m.text),text);m.outgoing=outgoing;m.truncated=text.size>=sizeof(m.text);messageNext_=(messageNext_+1)%messages_.size();if(messageCount_<messages_.size())++messageCount_;}
+void Mesh::store(const char* name,wire::Bytes text,bool outgoing,bool privateMessage){auto& m=messages_[messageNext_];m=ChatMessage{};std::snprintf(m.name,sizeof(m.name),"%s",name);displayText(m.text,sizeof(m.text),text);m.outgoing=outgoing;m.privateMessage=privateMessage;m.truncated=text.size>=sizeof(m.text);messageNext_=(messageNext_+1)%messages_.size();if(messageCount_<messages_.size())++messageCount_;}
 bool Mesh::emit(wire::FrameView& frame,uint16_t target,uint16_t except,bool sign){
   if(!ready()||!send_)return false;
   uint8_t signature[64];
@@ -51,7 +51,9 @@ bool Mesh::announce(uint16_t target){if(!ready())return false;
 bool Mesh::sendText(const char* text){if(!text)return false;size_t n=std::strlen(text);if(!n||n>192||!textValid({reinterpret_cast<const uint8_t*>(text),n}))return false;
   wire::FrameView f;f.type=2;f.ttl=7;f.payload={reinterpret_cast<const uint8_t*>(text),n};if(!emit(f))return false;store("You",f.payload,true);return true;
 }
-bool Mesh::duplicate(const wire::FrameView& f){size_t n=0;if(!wire::canonical(f,scratch_,sizeof(scratch_),n))return true;uint8_t digest[32];crypto::hash({scratch_,n},f.signature,digest);
+bool Mesh::duplicate(const wire::FrameView& f){size_t n=0;if(!wire::canonical(f,scratch_,sizeof(scratch_),n))return true;uint8_t digest[32];crypto::hash({scratch_,n},f.signature,digest);return rememberDigest(digest);
+}
+bool Mesh::rememberDigest(const uint8_t digest[32]){
   for(size_t i=0;i<dedupCount_;++i)if(same(dedup_[i].data(),digest,16))return true;
   std::memcpy(dedup_[dedupNext_].data(),digest,16);dedupNext_=(dedupNext_+1)%dedup_.size();if(dedupCount_<dedup_.size())++dedupCount_;return false;
 }
@@ -126,7 +128,25 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
     }
   }else{
     if(!s||!s->noise.ready()||!s->noise.decrypt(f.payload,plain_,sizeof(plain_),n)){++stats_.rejected;return;}
-    // Authenticated peer state only; private chat/media are intentionally not rendered.
+    struct ClearPlain {uint8_t* data;size_t size;~ClearPlain(){crypto::wipe(data,size);}} clear{plain_,sizeof(plain_)};
+    if(n && plain_[0]==0x01){
+      // Private text stays private: never pass this branch to public relay/InfoBot.
+      wire::Bytes id,content;size_t at=1;bool valid=p->authenticated;
+      while(at<n && valid){if(at+2>n){valid=false;break;}uint8_t type=plain_[at++],len=plain_[at++];if(at+len>n){valid=false;break;}
+        wire::Bytes* field=type==0?&id:type==1?&content:nullptr;
+        if(!field||field->data){valid=false;break;}*field={plain_+at,len};at+=len;
+      }
+      if(!valid||!id.size||id.size>64||!content.size||!textValid(id)||!textValid(content)){++stats_.rejected;return;}
+      uint8_t digest[32];crypto::hash({p->id,8},id,digest);
+      if(!rememberDigest(digest)){store(p->name,content,false,true);p->seen=now_;++stats_.accepted;}
+      // Delivery acknowledgement is encrypted and means stored, never read.
+      uint8_t receipt[65],encrypted[85];receipt[0]=0x03;std::memcpy(receipt+1,id.data,id.size);size_t written=0;
+      if(s->noise.encrypt({receipt,id.size+1},encrypted,sizeof(encrypted),written)){
+        wire::FrameView reply;reply.type=0x11;reply.ttl=7;reply.sender={identity_->id(),8};reply.recipient={p->id,8};reply.timestamp=epoch_;reply.payload={encrypted,written};emit(reply,link,kAnyLink,false);
+      }
+      return;
+    }
+    // Other private media/group payloads remain unsupported.
     if(n<2||plain_[0]!=0x21||plain_[1]!=1){++stats_.rejected;return;}
     bool caps=false,key=false;size_t at=2;
     while(at<n){if(at+2>n){++stats_.rejected;return;}uint8_t type=plain_[at++],len=plain_[at++];if(at+len>n){++stats_.rejected;return;}
