@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <cstring>
 namespace stick {
+JoycSample fakeJoyc;
+JoycSample pollJoyc(uint32_t) { return fakeJoyc; }
 bool active=true, faulted=false;
 bool transportReady() { return active && !faulted; }
 size_t transportLinks() { return 0; }
@@ -134,6 +136,17 @@ int main() {
   assert(activeMessage==reading&&mesh().unreadCount()==1&&messageOffset==1); // Incoming text never steals the reader's focus.
   press(2);assert(activeMessage!=reading&&mesh().unreadCount()==0);
   press(0);assert(detail);press(2);assert(textLine==1);press(1,true);assert(!detail&&screen==Screen::Messages);press(1,true);assert(screen==Screen::Channels);
+  // Joystick gestures share the physical-button navigation path.
+  auto joy=[&](int16_t x,int16_t y,uint32_t step=20){fakeJoyc.x=x;fakeJoyc.y=y;fakeJoyc.valid=true;tick+=step;updateUi(table,tick);check();};
+  screen=Screen::Dashboard;selection=0;detail=false;
+  joy(0,0);joy(0,81);assert(selection==1);joy(0,100,1499);assert(selection==1);
+  joy(0,100,1);assert(selection==2);joy(0,0);joy(0,-100);assert(selection==1);
+  joy(0,0);joy(100,0);assert(screen==Screen::Channels);joy(100,0,2000);assert(screen==Screen::Channels);
+  joy(0,0);joy(-100,0);assert(screen==Screen::Dashboard);joy(-100,0,2000);assert(screen==Screen::Dashboard);
+  joy(0,0);sleeping=true;M5.Display.setBrightness(0);joy(100,0);assert(!sleeping&&screen==Screen::Dashboard&&M5.Display.brightness==brightness);
+  joy(100,0);assert(screen==Screen::Dashboard);joy(0,0);joy(100,0);assert(screen==Screen::Peers);
+  screen=Screen::Diagnostics;joy(0,0);joy(0,127);assert(has("J:0,127"));
+  fakeJoyc.valid=false;press(1,true);assert(screen==Screen::Settings);
   assert(buffered && M5.Display.clears==0 && M5.Display.frames>10);
   std::puts("UI: navigation, presets, credits, live header/data, grouping and text bounds passed");
 }

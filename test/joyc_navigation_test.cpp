@@ -9,7 +9,7 @@ int main(){
   assert(input(127,0)==A::None); // No boot-held confirmation.
   assert(input(0,0)==A::None);
   for(int v=-80;v<=80;++v){assert(input(v,0)==A::None);assert(input(0,v)==A::None);}
-  assert(input(81,0)==A::Select);assert(input(127,0,1500)==A::None);
+  assert(input(81,0)==A::Select);assert(input(127,0,1500)==A::None);assert(input(127,0,31000,true)==A::None);
   assert(input(-127,0,1600)==A::None); // Left cannot follow right without centering.
   assert(input(11,0)==A::None);assert(input(-81,0)==A::None);
   assert(input(10,-10)==A::None);assert(input(-81,0)==A::Back);

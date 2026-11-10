@@ -24,7 +24,22 @@ Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Fi
 | A held ≥700ms | Reserved; no confirmation on release |
 | C held ≥700ms | No down action on release; six-second hold retains power off |
 
-Messages returns to Inbox on hold-B. Splash only leaves on short-A. Short actions occur on release, with no auto-repeat. The first press after the 30-second screen timeout only wakes the display; navigation stays suppressed until all buttons are released. Scanning continues on its normal schedule. Brightness is restored from a versioned NVS record on boot; invalid/missing records use 50%. Only explicit confirmations write flash; known unchanged saved values are skipped, while invalid/unknown records are repaired. Failed saves show `Not saved / RAM only` in Settings.
+Messages returns to Inbox on hold-B. Splash leaves on short-A or JoyC right. Short physical-button actions occur on release, with no auto-repeat. The first press after the 30-second screen timeout only wakes the display; navigation stays suppressed until all buttons are released. Scanning continues on its normal schedule. Brightness is restored from a versioned NVS record on boot; invalid/missing records use 50%. Only explicit confirmations write flash; known unchanged saved values are skipped, while invalid/unknown records are repaired. Failed saves show `Not saved / RAM only` in Settings.
+
+## Optional Mini JoyC HAT
+
+The firmware supports the [M5Stack Mini JoyC HAT (U156)](https://docs.m5stack.com/en/hat/Hat_Mini_JoyC). The HAT connection uses SDA G0/SCL G26 at 100 kHz, separate from the internal RTC bus. It reads the signed 8-bit axes at `0x54`, registers `0x20`–`0x21`, following the [M5Stack protocol](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/610/HAT_MiniJoyC.pdf). The center pushbutton does not navigate. LED and calibration settings are unchanged.
+
+| Gesture | Activation | Behavior |
+|---|---|---|
+| Left | X < −80 | Back once |
+| Right | X > 80 | Confirm once |
+| Up | Y < −80 | Move up; repeat every 1.5 s while held |
+| Down | Y > 80 | Move down; repeat every 1.5 s while held |
+
+Exactly −80 or 80 is inactive. To rearm left/right, return both axes to the inclusive −10…10 center range. The stronger axis wins on a diagonal; equal diagonals do nothing. A deflection wakes a dark screen without navigating; center before the next gesture. Physical buttons take priority if used together. After detection or reconnection, the HAT must report center before it can navigate. Missing/failed reads are ignored and retried without delaying startup.
+
+Diagnostics shows `J:X,Y` when the HAT responds. It exposes the module's calibrated values so the physical direction and thresholds can be verified without changing calibration.
 
 ## Screens and data sources
 

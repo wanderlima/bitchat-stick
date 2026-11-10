@@ -33,6 +33,8 @@ Exit the monitor with `Ctrl+C` before uploading again. Deployment currently mean
 - **Hold B for 700 ms:** go back; from Home, open Settings.
 - **Hold C for 6 seconds:** retain the power-off behavior. A long C press never becomes a down action on release.
 
+The optional **M5Stack Mini JoyC HAT (U156)** also navigates the menus: left goes back, right confirms, and up/down move and repeat every 1.5 seconds when held past the activation threshold. Left/right require recentering before another action. The physical buttons remain available. See the [JoyC controls](docs/04-screens.md#optional-mini-joyc-hat) and [device checks](docs/13-device-checklist.md#1a-mini-joyc-hat).
+
 The splash screen shows the project name and controls, aligned to the current Figma design. Press A to enter Home. Navigation instructions are shown only on the splash screen, freeing space on the other screens. The first press after the screen turns off only wakes it.
 
 Settings offers 5%, 25%, 50%, 75%, and 100% brightness, with 50% as the default. About credits **Wander Lima** and includes a real QR code for [the project repository](https://github.com/wanderlima/bitchat-stick). A radio mark shows the applied brightness; the cream highlight shows the focused option.

@@ -21,6 +21,15 @@ Date: **2026-11-10**. Device name: **Bitchat Stick**. Supported context: public 
 - [ ] Open all eleven screens; verify grouping, dividers, cream text and the green Nearby border.
 - [ ] Wait 30 seconds: display turns off. First press only wakes it; selected screen/brightness remain intact.
 
+## 1a. Mini JoyC HAT
+
+- [ ] Boot without the HAT: the normal buttons and BLE still work. Boot again with the Mini JoyC attached and centered.
+- [ ] In Diagnostics, verify left/right are negative/positive X and up/down are negative/positive Y using `J:X,Y`.
+- [ ] Move within −80…80: no navigation. Cross −80 or 80: the intended direction acts.
+- [ ] Hold right or left for several seconds: only one action. Move directly to the opposite side: no second action until both axes return to −10…10.
+- [ ] Hold up and down separately: an immediate step, then one step per 1.5 seconds. Move out of the active range to stop repeating.
+- [ ] With the display off, tilt once to wake only. Center and tilt again to navigate. Check the physical buttons still work.
+
 ## 2. Settings, battery and QR
 
 - [ ] Apply each brightness: 5%, 25%, 50%, 75%, 100%; check readability and radio mark versus focus highlight.

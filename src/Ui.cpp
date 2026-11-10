@@ -6,6 +6,8 @@
 #include "Settings.h"
 #include "PeerSelection.h"
 #include "NavigationInput.h"
+#include "JoycNavigation.h"
+#include "Joyc.h"
 #include <M5Unified.h>
 #include "assets/UiBitmaps.h"
 #include "assets/UiFonts.h"
@@ -34,6 +36,8 @@ uint32_t activeMessage = 0;
 uint32_t lastInput = 0, lastDraw = 0, lastBattery = 0;
 int battery = -1, voltage = 0;
 NavigationInput input;
+JoycNavigation joycInput;
+JoycSample joycAxes;
 M5Canvas canvas(&M5.Display);
 bool buffered = false;
 lgfx::LGFXBase& surface() {
@@ -319,7 +323,10 @@ void draw(const PeerTable& peers, uint32_t now) {
       std::snprintf(value, sizeof(value), "Up %lus", (unsigned long)(now / 1000)); label(value, 152, fg, 13, 109, compact);
       divider(176);
       std::snprintf(value, sizeof(value), "OK %lu Err%lu", (unsigned long)mesh().stats().accepted, (unsigned long)mesh().stats().rejected); label(value, 187, green, 13, 109, compact);
-      label(clockRtc() ? "RTC / v0.2" : "Build clock", 216, clockRtc() ? muted : amber, 13,109,compact);
+      if (joycAxes.valid) {
+        std::snprintf(value, sizeof(value), "J:%d,%d", int(joycAxes.x), int(joycAxes.y));
+        label(value, 216, green, 13,109,compact);
+      } else label(clockRtc() ? "RTC / v0.2" : "Build clock", 216, clockRtc() ? muted : amber, 13,109,compact);
       break;
     default: break;
   }
@@ -363,7 +370,11 @@ void updateUi(const PeerTable& peers, uint32_t now) {
   const bool aDown = M5.BtnA.isPressed();
   const bool bDown = M5.BtnB.isPressed();
   const bool cDown = M5.BtnPWR.isPressed();
-  const auto action = input.update(aDown, bDown, cDown, now, sleeping);
+  const auto buttons = input.update(aDown, bDown, cDown, now, sleeping);
+  joycAxes = pollJoyc(now);
+  const auto joystick = joycInput.update(joycAxes.x, joycAxes.y, joycAxes.valid, now, sleeping,
+                                        aDown || bDown || cDown || buttons != NavigationAction::None);
+  const auto action = buttons != NavigationAction::None ? buttons : joystick;
   if (aDown || bDown || cDown || action != NavigationAction::None) lastInput = now;
   if (action == NavigationAction::Wake) {
     sleeping = false;

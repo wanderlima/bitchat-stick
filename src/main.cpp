@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "Transport.h"
 #include "Clock.h"
+#include "Joyc.h"
 
 stick::PeerTable peers;
 void setup() {
@@ -48,10 +49,10 @@ void loop() {
   static uint32_t lastReport=0;
   if(uint32_t(now-lastReport)>=10000){
     lastReport=now;const auto& stats=stick::mesh().stats();
-    Serial.printf("mesh links=%u peers=%u auth=%u accepted=%lu rejected=%lu queued=%lu relay=%lu bot=%lu drops=%lu heap=%u clock=%s\n",
+    Serial.printf("mesh links=%u peers=%u auth=%u accepted=%lu rejected=%lu queued=%lu relay=%lu bot=%lu drops=%lu heap=%u clock=%s joyc=%s\n",
       unsigned(stick::transportLinks()),unsigned(stick::mesh().peerCount()),unsigned(stick::mesh().authenticatedCount()),
       (unsigned long)stats.accepted,(unsigned long)stats.rejected,(unsigned long)stats.sent,(unsigned long)stats.relayed,
-      (unsigned long)stats.botReplies,(unsigned long)(stats.dropped+stick::transportDrops()),unsigned(ESP.getFreeHeap()),stick::clockRtc()?"RTC":"build");
+      (unsigned long)stats.botReplies,(unsigned long)(stats.dropped+stick::transportDrops()),unsigned(ESP.getFreeHeap()),stick::clockRtc()?"RTC":"build",stick::pollJoyc(now).valid?"present":"absent");
   }
   delay(10);
 }

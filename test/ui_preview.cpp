@@ -4,6 +4,8 @@
 #include <Preferences.h>
 #include "PacketSecurity.h"
 namespace stick {
+JoycSample fakeJoyc;
+JoycSample pollJoyc(uint32_t) { return fakeJoyc; }
 bool transportReady(){return true;}
 size_t transportLinks(){return 1;}
 uint32_t transportDrops(){return 0;}

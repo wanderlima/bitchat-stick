@@ -21,12 +21,12 @@ class JoycNavigation {
       return A::None;
     }
     const auto direction = classify(x, y);
+    if (blocked_) return A::None;
     if (sleeping && direction != A::None) {
       blocked_ = true;
       held_ = A::None;
       return A::Wake;
     }
-    if (blocked_) return A::None;
     if (direction == A::Back || direction == A::Select) {
       blocked_ = true; // One horizontal action for the whole gesture.
       held_ = A::None;
