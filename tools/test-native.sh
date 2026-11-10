@@ -20,3 +20,18 @@ run_test ui test/ui_test.cpp src/PeerTable.cpp src/PeerSelection.cpp src/Setting
 run_test codec test/wire_codec_test.cpp src/WireCodec.cpp
 
 run_test fragments test/fragment_assembler_test.cpp src/FragmentAssembler.cpp src/WireCodec.cpp
+
+crypto_dir=.pio/libdeps/m5stickc-plus2/Monocypher/src
+if [ ! -f "$crypto_dir/monocypher.c" ]; then
+  echo 'Install pinned dependencies first: pio pkg install -e m5stickc-plus2' >&2
+  exit 1
+fi
+${CC:-cc} -std=c99 -fsanitize=address,undefined -I "$crypto_dir" -c "$crypto_dir/monocypher.c" -o "$test_dir/monocypher.o"
+${CC:-cc} -std=c99 -fsanitize=address,undefined -I "$crypto_dir" -c "$crypto_dir/optional/monocypher-ed25519.c" -o "$test_dir/ed25519.o"
+run_crypto_test() {
+  name=$1
+  shift
+  "$compiler" -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined -I include -I "$crypto_dir" "$@" "$test_dir/monocypher.o" "$test_dir/ed25519.o" -o "$test_dir/$name"
+  "$test_dir/$name"
+}
+run_crypto_test crypto test/crypto_primitives_test.cpp src/CryptoPrimitives.cpp

@@ -56,7 +56,7 @@ The first build downloads dependencies. Generated `.pio/build/m5stickc-plus2/fir
 
 ## Native tests
 
-Run all eight host suites, including the actual scanner callback with NimBLE/queue fakes:
+Run all nine host suites, including the actual scanner callback with NimBLE/queue fakes:
 
 ```sh
 sh tools/test-native.sh

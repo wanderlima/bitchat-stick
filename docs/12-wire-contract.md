@@ -62,7 +62,7 @@ No new public/private message, welcome, forwarding, or channel claim is enabled 
 
 The C++ test decodes each frame, verifies fields, re-encodes the unpadded prefix byte-for-byte, rejects every truncated prefix, checks invalid flags/lengths/padding and runs 10,000 deterministic hostile frames under AddressSanitizer/UndefinedBehaviorSanitizer. This is independent serializer evidence for the stated subset, not Android-radio or cryptographic certification.
 
-Run all eight host suites from the root:
+Run all nine host suites from the root:
 
 ```sh
 sh tools/test-native.sh
@@ -78,3 +78,9 @@ The fixture generator source is `tools/generate-protocol-fixtures.swift`. To reg
 - Prove authenticated phone↔Stick messages before channel/bot participation.
 - Prove the indirect route, TTL/deduplication and negative controls before enabling relay.
 - Establish reliable authenticated entry events before enabling welcomes; a scan result never qualifies.
+
+## Cryptographic primitives
+
+Monocypher **4.0.2**, pinned commit `0d85f98c9d9b0227e42cf795cb527dff372b40a4`, provides Ed25519, X25519 and IETF ChaCha20-Poly1305. It is an external PlatformIO dependency; its dual BSD-2-Clause/CC0 notice is reproduced in `monocypher-license.md`. SHA-256 uses the existing ESP32 mbedTLS implementation; host tests use the macOS system implementation. No custom elliptic-curve or cipher algorithm is introduced.
+
+Host tests cover RFC 4231 HMAC, RFC 8032 Ed25519, RFC 7748 X25519, all-zero shared-secret rejection, and AEAD output compared independently with Apple CryptoKit. Each Noise cipher operation initializes a fresh IETF AEAD context with the protocol nonce; Monocypher's optional streaming rekey state is not retained across packets. These primitives alone do not enable or authenticate live messages.
