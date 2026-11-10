@@ -108,10 +108,10 @@ Exit with `Ctrl+C` before another upload. Re-list/update the port if it changes 
 The latest source prints this startup line:
 
 ```text
-Bitchat Stick 0.1.0 | passive scanner | relay and bot unavailable
+Bitchat Stick 0.2.0 | signed BLE mesh | authenticated InfoBot
 ```
 
-If the monitor starts after this line, it may not appear until the next boot. The firmware does not continuously log individual advertisements; use Settings → Diagnostics for report/drop/free-RAM counters. Silence after startup alone is not a scanner failure.
+If the monitor starts after this line, it may not appear until the next boot. Every ten seconds the firmware logs aggregate mesh/link/authentication/queue/drop/heap/clock counters. It does not log message bodies or keys. Use Settings → Diagnostics for on-screen counters.
 
 ## 7. Validate on the device
 
@@ -123,7 +123,7 @@ If the monitor starts after this line, it may not appear until the next boot. Th
 6. Compare voltage/estimate on USB and battery; no measured autonomy is established.
 7. Check About credits/links and Diagnostics, then complete the [hardware checklist](09-getting-started.md#evidence-and-hardware-checklist).
 
-Channels, Messages, and InfoBot must honestly show unavailable RX/TX. A passive scanner cannot exchange chat messages or relay them.
+Open Channels → #bluetooth → Messages for the live reader. InfoBot shows authentication readiness and a per-boot enable switch. Complete the [current device checklist](13-device-checklist.md); network visibility alone does not prove forwarding.
 
 ## 8. Artifacts and traceability
 

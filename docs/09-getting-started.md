@@ -1,26 +1,29 @@
 # Getting started — implementation status
 
-Firmware foundation v0.1.0. English (en-US) is the default. The design documents describe a wider future product; this page distinguishes implemented code from verified hardware behavior.
+Firmware **v0.2.0**, English (en-US). Source implementation and physical acceptance are tracked separately in the [device checklist](13-device-checklist.md).
 
-## Implemented foundation
+## Implemented
 
-- C++/Arduino/PlatformIO target for the Plus2 ESP32-PICO-V3-02, 8 MB flash, PSRAM enabled.
-- Early GPIO4 HOLD assertion, M5Unified initialization, portrait display, voltage and battery estimate.
-- Figma-aligned splash name and consistent navigation instructions. A enters Home without a timed auto-dismiss or blocking scan delay.
-- Home, Nearby, Channels, Messages, InfoBot, and Settings screens. Unimplemented messaging features show their actual unavailable state rather than sample chat.
-- Passive BLE observation: no advertising, GATT links, or chat transmission. Five-second scan periods with approximately two seconds between them; 80 ms windows every 160 ms during a scan.
-- Real advertisement fields when running on hardware: sanitized name, address/type, RSSI, age, and mainnet/testnet candidate classification.
-- Bitchat mainnet/testnet service UUID filter before enqueueing; unrelated BLE devices do not appear in Nearby. Matching advertisements remain unverified candidates. Diagnostics counts all received reports.
-- Bounded 32-event queue and 32-observation table; expire after 60 seconds and replace the oldest observation when full.
-- Shared input handling, screen-off after 30 seconds, wake-only first press, 5/25/50/75/100% brightness presets (50% default), and persistent brightness.
-- Live header status square/battery icon; dedicated Battery, About, and Diagnostics views. About credits Wander Lima and includes a real QR linking to github.com/wanderlima/bitchat-stick.
-- Larger bold text, strong contrast, grouped panels, and a green Nearby card/left border. No regular-screen navigation footer.
+- PlatformIO/Arduino firmware for Plus2, early power HOLD, physical navigation, real voltage/estimated battery, screen timeout and wake suppression.
+- Eleven working screens with FreeMono, warm cream, grouped panels, dividers, green Nearby styling, and buffered rendering to remove erase/redraw flicker.
+- Persistent brightness: 5/25/50/75/100%, default 50%; explicit apply writes NVS and storage failures are visible.
+- Passive UUID-filtered candidate scanning alongside mainnet GATT advertising. At most two subscribed peripheral links; mobiles initiate the BLE connection.
+- Persistent Noise/signing identity, bounded v1/v2 codec, signed packets, raw-DEFLATE expansion, fragment reassembly, automatic Noise XX and authenticated peer-state binding.
+- Twelve signed peer records; candidate, signed-only, and Noise-authenticated statuses are distinct.
+- Twelve public/private received messages in RAM, 192 displayed bytes each, paging and text scrolling. Unsupported display glyphs are substituted; malformed UTF-8 is rejected.
+- Signature-checked public relay with TTL reduction, deduplication and ingress exclusion; paced MTU-aware notifications with bounded queues.
+- Authenticated, recent public InfoBot commands and rate limits; immediate on-device Bot ON/OFF switch. This switch resets to ON at reboot; brightness and local identity persist.
+- Real repository QR, Wander Lima credits, BLE/heap/uptime counters and UTC RTC status. Serial telemetry contains counters, not message bodies or private keys.
 
-Current screenshots are illustrative previews. This revision still needs physical UI, power, and scan validation after upload.
+## Confirmed hardware evidence
 
-## Not implemented
+The earlier brightness self-test saved/read back a changed value across ESP32 restart and restored the original setting. The integrated firmware exposed an initialization assertion when GATT was registered during scanning; pausing scanning before registration fixed the reproduced reboot loop. After correction the Stick stayed running with an active RTC, a subscribed Android link, a verified signed announcement and an authenticated Noise peer. Android Bitchat 2.2.0 independently logged successful signature verification and Noise establishment. The owner confirmed network visibility.
 
-Bitchat message GATT transport, packet codec, signed identity, verified peers, Noise participation, relay, chat reading, channel creation/joining, InfoBot, welcomes, Nostr, persistent history and preferences beyond brightness, OTA, and Pocket Messenger. There is no hidden switch that enables them.
+Full two-phone messaging/relay, iOS payload exchange, display flicker/readability, battery-only operation, and endurance remain physical acceptance items, not claimed passes. Use the [checklist](13-device-checklist.md).
+
+## Future scope
+
+Private-message sending, media/groups, arbitrary encrypted channels, Nostr, gossip synchronization, general routed Noise forwarding, OTA, persistent chat history and Pocket Messenger sending are not implemented. Welcomes remain disabled until reliable entry detection exists. Keys are stored in unencrypted NVS; peer key pins/history are RAM-only.
 
 ## Pinned dependencies
 
@@ -109,12 +112,15 @@ The table test covers updates, address-type distinction, bounds/oldest replaceme
 
 On the splash screen, only A enters Home; B/C and long-B do not change pages. Short actions occur on release. After screen-off, the first A/B/C press only wakes it; suppress navigation until all buttons are released. Brightness persists in NVS; transient screen/navigation state remains volatile. Real USB/battery power-off behavior must be checked on the Plus2.
 
-The UI uses native FreeMono body/compact bitmaps at 16/14px, generated from pinned M5GFX glyphs to preserve strokes without fractional scaling. Titles use FreeMonoBold9pt7b and the brand uses FreeMonoBold12pt7b. Primary cream is #EBDCBA, quantized to RGB565 0xEEF7. The 20px BLE header has a subtle outline. Text is English; non-ASCII radio-name bytes still render as `?`. Current JPEG previews are not pixel-identical hardware screenshots. InfoBot command examples explicitly say `Preview only` and never send a message.
+The UI uses native FreeMono body/compact bitmaps at 16/14px, generated from pinned M5GFX glyphs to preserve strokes without fractional scaling. Titles use FreeMonoBold9pt7b and the brand uses FreeMonoBold12pt7b. Primary cream is #EBDCBA, quantized to RGB565 0xEEF7. The 20px BLE header has a subtle outline. Text is English; non-ASCII radio-name bytes still render as `?`. Current JPEG previews are not pixel-identical hardware screenshots. InfoBot command pages explain public replies; the ON/OFF row controls real behavior for the current boot.
 
 ## Source structure
 
 - `src/main.cpp`: initialization and application loop.
 - `src/Scanner.cpp`: NimBLE and bounded observation queue.
+- `src/Transport.cpp`, `src/Clock.cpp`: peripheral GATT queues/fragmentation and UTC RTC setup.
+- `src/Mesh.cpp`: signed peers, public/DM history, Noise authentication, relay and InfoBot.
+- `src/Identity.cpp`, `src/CryptoPrimitives.cpp`, `src/NoiseSession.cpp`, `src/PacketSecurity.cpp`: persistence and protocol security.
 - `src/PeerTable.cpp`, `include/PeerTable.h`: hardware-independent observation model.
 - `src/Ui.cpp`: display, common screen layout, navigation, power-display settings.
 - `src/NavigationInput.h`: shared input semantics.
@@ -127,20 +133,8 @@ Only the loop mutates PeerTable. BLE callbacks enqueue fixed-size observations w
 
 ## Evidence and hardware checklist
 
-The initial firmware compiled successfully. Initial static RAM: 42,480 bytes; initial application flash: 846,013 bytes. A later navigation/typography/splash build also compiled (42,496 bytes static RAM, 856,077 bytes application flash). These are build snapshots, not runtime heap or battery measurements. The final en-US/header/settings revision compiled successfully with 42,496 bytes of static RAM and 857,181 bytes of application flash. All three native suites passed with sanitizers. The FreeMono/cream revision also passed the firmware build (42,496 bytes static RAM; 855,421 bytes application flash) and UI regressions with sanitizers. The owner reported using an earlier build on the Plus2. No new firmware was uploaded by the agent during these edits.
+The v0.2 target built and uploaded successfully. Native tests cover fourteen suites plus an independent CryptoKit signature check. The hardware-reproduced GATT startup assertion was corrected, Android verified the announcement and Noise session, and the owner confirmed network visibility. Buffered drawing replaces normal direct erase/redraw; visual acceptance remains a device check.
 
-After uploading the latest revision:
+The owner initially tested a DM while the reader supported only public BLE text. Authenticated private-text decoding, encrypted delivery receipts and DM labels were subsequently added. DMs remain separate from public InfoBot processing; DM commands never generate public replies. Direct-message sending/composition is still future scope.
 
-1. Verify USB and battery-only boot, Plus2 identification, and HOLD behavior.
-2. Check the Figma-aligned splash, English controls, and A entering Home.
-3. Exercise A/B/C and long presses on all screens; ensure no accidental action after wake/long press.
-4. Check larger text, panel boundaries, high-contrast selection, green Nearby card, and lack of regular navigation footers.
-5. Compare voltage/estimate on USB/battery; do not infer remaining hours.
-6. Run Bitchat on phones A/B and compare actual advertised UUIDs, permissions, foreground/background behavior, RSSI, and expiry.
-7. Observe heap/queue drops for 60 minutes in an owned test environment.
-8. Confirm screen-off leaves scanning scheduled and holding C behaves correctly with/without USB.
-9. Keep messages, relay, and bot disabled until the [protocol test gates](06-testing.md) pass.
-
-The eleven-screen Figma sync passed all three native suites with sanitizers and the firmware build (42,496 bytes static RAM; 858,801 bytes application flash). The repository QR decoded to the expected URL from the software render. Upload and physical validation remain separate steps.
-
-On 2026-11-10, a dedicated USB-powered Plus2 self-test verified brightness persistence across ESP32 restart and restored the original setting. Normal firmware was reinstalled afterward. See the [executed device checks](06-testing.md#executed-device-checks--2026-11-10) for scope and reproduction.
+The earlier brightness self-test verified NVS readback across ESP32 restart and restored the original setting. Use the [complete acceptance checklist](13-device-checklist.md) for final display, Android/iOS message reception, controlled relay, reconnect and battery tests. Upload verification does not mark those tests as passed.

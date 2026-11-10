@@ -1,0 +1,77 @@
+# Device acceptance checklist — v0.2.0
+
+Date: **2026-11-10**. Device name: **Bitchat Stick**. Supported context: public BLE **#bluetooth**. Record the firmware commit/image hash, both phone models/OS/app versions, power source and test time. Start with both apps in the foreground and Bluetooth permissions granted.
+
+## Evidence already recorded
+
+- [x] Production target builds and uploads with image hash verification.
+- [x] Native regression suites cover protocol, crypto/Noise vectors, persistence, mesh, UI and GATT bounds.
+- [x] Reproduced startup reboot loop fixed by pausing scanning during GATT registration.
+- [x] Android 2.2.0 recognized the Stick's signed announcement and established Noise; Stick reported an authenticated peer with zero protocol rejects during observation.
+- [x] Owner confirmed that the device appeared in the network.
+- [ ] Final display, full iOS messaging, two-phone relay and endurance acceptance below.
+
+## 1. Display and navigation
+
+- [ ] Boot from USB, then battery only: one splash, no repeated resets.
+- [ ] Remain on Home/Nearby for at least one minute: no visible black erase/redraw flashes; text and header remain stable.
+- [ ] A confirms/selects, B moves up, C moves down; hold-B backs out; hold-C for six seconds powers off without an extra down action.
+- [ ] Open all eleven screens; verify grouping, dividers, cream text and the green Nearby border.
+- [ ] Wait 30 seconds: display turns off. First press only wakes it; selected screen/brightness remain intact.
+
+## 2. Settings, battery and QR
+
+- [ ] Apply each brightness: 5%, 25%, 50%, 75%, 100%; check readability and radio mark versus focus highlight.
+- [ ] Apply a level, fully power off/on, and verify persistence. Back out without applying a different level and verify no change.
+- [ ] Compare voltage/estimated percentage on USB and battery. Treat percentage as approximate; do not expect remaining-runtime or charging claims.
+- [ ] Scan the About QR: it opens https://github.com/wanderlima/bitchat-stick and credits Wander Lima.
+
+## 3. Discovery and authentication — repeat for each phone
+
+- [ ] Open Bitchat with Bluetooth enabled. Other users see **Bitchat Stick**.
+- [ ] Nearby excludes unrelated BLE radios. Candidates say unverified; signed peers and **Noise auth** remain distinct.
+- [ ] Wait for automatic Noise authentication. If it remains **Signed only**, record phone/app version, transport status and Diagnostics counters; do not count it as authenticated.
+- [ ] Close/reopen the app and toggle Bluetooth. The Stick remains responsive, clears disconnected authentication and recovers without duplicate welcome messages.
+- [ ] Repeat with app foreground, background and screen locked; record differences rather than assuming equal discovery.
+
+## 4. Messages and InfoBot
+
+Use your own test phones and synthetic content. Public BLE messages are visible to nearby participants.
+
+- [ ] From Android, send a unique public message such as `android-stick-001` in #bluetooth; it appears in Channels → Messages on the Stick.
+- [ ] Repeat from iPhone with `ios-stick-001`. Verify sender name and actual content.
+- [ ] B/C changes message; A enters text scrolling; B/C scrolls long text; hold-B leaves detail, then Messages.
+- [ ] Send long text, accents and emoji: no crash, unsupported display glyphs are substituted, and truncation is indicated when applicable.
+- [ ] With a **Noise auth** peer and Bot ON, send `!info`; receive one signed public reply from Bitchat Stick.
+- [ ] Wait at least 30 seconds between commands from the same peer; check `!rules`, `!help`, and aliases `!regras`, `!ajuda`.
+- [ ] Send ordinary text, `!info extra`, and repeated commands: no unintended replies or reply flood.
+- [ ] In InfoBot select Bot ON/OFF with A. OFF suppresses replies immediately; ON restores them after cooldown. The switch returns to ON after reboot.
+- [ ] Reconnect/reopen apps: no welcome spam and no replay-triggered replies. Welcome remains OFF.
+
+## 4a. Private-message reader
+
+- [ ] Wait for **Noise auth**, then send a new DM from Android directly to **Bitchat Stick**.
+- [ ] Open Channels → Messages: the message appears with a **DM** label and correct sender/content.
+- [ ] The Android delivery indicator may update after the encrypted delivered receipt; this is not a read receipt.
+- [ ] Repeat from iPhone; test long text and reconnect. Earlier DMs sent before the update are not automatically recovered.
+- [ ] Send `!info` as a DM: it is displayed privately and never produces a public InfoBot reply.
+- [ ] Check Home's message count and mixed BLE/DM history without confusing public-channel privacy.
+
+## 5. Controlled relay — do not skip negative controls
+
+- [ ] Turn Wi-Fi/cellular off on both phones; keep Bluetooth on. Use only #bluetooth, with no other relays nearby.
+- [ ] Arrange phone A and B so they cannot exchange a new unique message directly. With the Stick off, verify that a new control message does **not** arrive. A failed control invalidates the relay trial.
+- [ ] Power the Stick and place it where both phones can connect. Confirm two links/eligible signed traffic, then send a new unique message A → B and B → A.
+- [ ] Confirm relay counters increase and no duplicate/loop storm occurs. A successful app delivery while phones still have a direct path is not relay proof.
+- [ ] Power the Stick off again and repeat with a new nonce to confirm the negative control still holds.
+
+## 6. Endurance and failure recovery
+
+- [ ] Run for 60 minutes with controlled traffic and both phones; record heap trend, drops, latency, resets and lowest battery voltage.
+- [ ] Repeat screen-on/screen-off and USB/battery scenarios. Screen-off is not deep sleep; radio remains active.
+- [ ] Disconnect both phones and reconnect: no stuck peer/authentication state, endless queue growth or frozen UI.
+- [ ] If any test fails, record the screen, phone/app versions, exact steps, time, last serial counter lines and firmware hash. Do not include keys or private conversations.
+
+## Limits that are not failures of this version
+
+No private-message sending, media/groups, geographic/Nostr channels, sync/history recovery, OTA or message composer/canned-reply UI. History and peer pins are in RAM; local identity and brightness persist in unencrypted NVS. Outgoing public sending is currently exercised through InfoBot and public relay; private sending is limited to protocol delivery receipts. Queue/notification acceptance is not end-to-end delivery confirmation. Welcome automation intentionally stays disabled.

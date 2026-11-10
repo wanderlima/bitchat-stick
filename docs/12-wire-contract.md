@@ -15,7 +15,7 @@ Date: **2026-11-10**. This document records source/host evidence, not a complete
 - Mainnet service: `F47B5E2D-4A9E-4C5A-9B3F-8E1D2C3A4B5C`.
 - Testnet service: `F47B5E2D-4A9E-4C5A-9B3F-8E1D2C3A4B5A`.
 - Characteristic: `A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D`.
-- Service discovery is not authenticated association. The production Stick still only scans; no GATT participant or relay has been enabled by this framing work.
+- Service discovery is not authenticated association. The Stick now advertises mainnet GATT and processes validated packets; a service match alone still does not authorize chat or bot actions.
 
 ## Implemented framing subset
 
@@ -40,15 +40,15 @@ The decoder validates all reads before accessing bytes and publishes views only 
 
 Out-of-order fragments are accepted. Exact duplicates do not consume space or extend the 30-second lifetime; conflicting duplicate data or metadata invalidates the assembly. Full capacity rejects new streams. Expiry is wrap-safe. Completion validates the recovered wire frame and requires its sender/type to match the assembly envelope. This is consistency checking, not cryptographic sender authentication. Nested fragments are rejected; recovered compressed frames still pass declared-size and bounded expansion checks.
 
-The current limits intentionally exclude large media streams. The assembler is not yet connected to GATT or Messages; a complete frame still needs cryptographic/session validation before delivery. Tests cover ordering, conflicts, resource limits, insufficient output capacity/retry, expiry/wrap and inner-sender mismatch.
+The current limits intentionally exclude large media streams. The assembler is connected to GATT; recovered frames still pass cryptographic/session validation before delivery. Tests cover ordering, conflicts, resource limits, insufficient output capacity/retry, expiry/wrap and inner-sender mismatch.
 
 ## Security boundary
 
-A parsed frame is **not an authenticated packet**. The codec only exposes signature bytes; it never validates them or creates a verified peer. Synthetic signature fixtures are intentionally not cryptographically valid.
+A parsed frame is **not an authenticated packet**. The codec only exposes signature bytes; it never validates them or creates a verified peer. The framing-only fixtures use opaque synthetic signature bytes; the separate signed-packet fixtures contain valid independently generated signatures.
 
 The pinned Swift public-message handler requires a valid sender signature. Signing also has its own canonicalization: TTL zero, signature omitted, mutable RSR removed, serializer compression/padding policy applied. Raw unpadded encoding is therefore not a drop-in signing preimage. Identity-key binding, signing/verification, Noise XX, replay/freshness checks, compression and radio-integrated fragment handling must be implemented/tested before any untrusted frame can feed real Messages or InfoBot.
 
-No new public/private message, welcome, forwarding, or channel claim is enabled by the codec. Traffic stays disabled until the relevant gates in [the two-phone plan](06-testing.md) pass.
+Framing alone is not authentication. The integrated mesh enables only the validated source subset described below; radio acceptance is tracked separately in [the two-phone plan](06-testing.md).
 
 ## Independent serializer fixtures
 
@@ -101,11 +101,11 @@ Raw DEFLATE expansion uses the existing pinned M5GFX miniz implementation, with 
 
 ## Live mesh model
 
-`Mesh` owns twelve signed peer records, two responder Noise sessions, twelve 192-byte display messages, a 64-entry deduplication cache, and bounded fragment storage. Announcements bind the sender ID to SHA-256 of the advertised Noise key and verify the advertised Ed25519 key. This is self-consistency, not out-of-band verification. Keys are pinned in RAM until peer expiry; peer trust is not persisted.
+`Mesh` owns twelve signed peer records, two initiator/responder Noise sessions, twelve 192-byte display messages, a 64-entry deduplication cache, and bounded fragment storage. Announcements bind the sender ID to SHA-256 of the advertised Noise key and verify the advertised Ed25519 key. This is self-consistency, not out-of-band verification. Keys are pinned in RAM until peer expiry; peer trust is not persisted.
 
-Only a successful identity-bound Noise handshake followed by authenticated peer state (`0x21`, version 1) authorizes InfoBot commands. Public commands must also be fresh within 30 seconds. Replies have a 30-second per-peer and 3-second global cooldown. `!info`, `!rules`, `!help`, `!regras`, and `!ajuda` are supported. No advertisement or reconnect produces a welcome message.
+Only a successful identity-bound Noise handshake followed by authenticated peer state (`0x21`, version 1) authorizes InfoBot commands. Public commands must also be fresh within 30 seconds, with at most five seconds of future skew. Replies have a 30-second per-peer and 3-second global cooldown. `!info`, `!rules`, `!help`, `!regras`, and `!ajuda` are supported. No advertisement or reconnect produces a welcome message.
 
-The public BLE channel accepts UTF-8 signed text, rejects malformed/control input, and substitutes unsupported display glyphs. Display history is RAM-only and long messages are explicitly truncated. Signed announcements/public text are relayed with reduced TTL after verification and deduplication. Private messages, media, private groups, gossip synchronization, Nostr, and opaque multi-hop Noise forwarding are outside this implementation. Noise initiates automatically after signed discovery and also handles incoming direct-link handshakes; it is not an arbitrary routed session manager. Crossed initiations keep the smaller peer ID as initiator. Reconnect/timeout clears authenticated state; sessions expire after one hour.
+The public BLE channel accepts UTF-8 signed text, rejects malformed/control input, and substitutes unsupported display glyphs. Display history is RAM-only and long messages are explicitly truncated. Signed announcements/public text are relayed with reduced TTL after verification and deduplication. Private-message sending, media, private groups, gossip synchronization, Nostr, and opaque multi-hop Noise forwarding are outside this implementation. Noise initiates automatically after signed discovery and also handles incoming direct-link handshakes; it is not an arbitrary routed session manager. Crossed initiations keep the smaller peer ID as initiator. Reconnect/timeout clears authenticated state; sessions expire after one hour.
 
 Local identity uses a versioned NVS record and never rotates automatically when storage is corrupt. NVS is not encrypted: physical flash extraction can disclose keys. No hardware secure-storage guarantee is made.
 
@@ -114,3 +114,9 @@ Local identity uses a versioned NVS record and never rotates automatically when 
 The Stick advertises the official mainnet service and exposes the official read/write/write-without-response/notify characteristic. It acts as a peripheral; mobile apps initiate connections. Two subscribed links, twelve inbound 512-byte events, and six outgoing 4096-byte frames bound memory use. Callbacks only enqueue; parsing, crypto, drawing and sending run in the application loop. Notifications are paced at most once every 20 ms and are fragmented for each negotiated MTU. MTU values too small for the fragment envelope produce an explicit error/drop, never a truncated frame. Queue acceptance is not delivery acknowledgement.
 
 UTC is read from the Plus2 RTC. The build timestamp repairs an unset/older RTC and initializes system time; the RTC is preserved when newer. A failed RTC falls back to build time plus uptime and is visible in Diagnostics. A long delay between build and first use with no working RTC can make packets stale: rebuild/upload to repair the time floor. No phone timestamp is trusted as a clock source. Do not distribute an old binary as a reliable clock-setting mechanism.
+
+## Authenticated direct-message reader
+
+Noise payload type `0x01` is decoded as the official private-text TLV packet: one-byte type/length, required message ID (`0x00`) and content (`0x01`). The decoder requires authenticated peer state, nonempty valid UTF-8, unique known fields, a message ID of at most 64 bytes and exact lengths. IDs are deduplicated together with sender identity. Received text enters the same bounded RAM history with a DM marker; long content is explicitly truncated for display. Decrypted working buffers are wiped on every exit.
+
+A successful store sends an encrypted `0x03` delivered receipt carrying the original message ID. Retransmissions can be acknowledged without duplicating history. Receipt means received/stored, not read. No DM is sent to the public relay or InfoBot. Private media/groups, courier envelopes and DM composition remain unsupported. Native tests cover private decoding, receipts, re-encrypted duplicates, malformed TLVs and isolation of `!info` inside a DM.

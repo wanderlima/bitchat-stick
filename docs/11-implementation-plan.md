@@ -1,130 +1,44 @@
-# Implementation plan by screen
+# Implementation plan by screen and complexity
 
-Updated: **2026-11-10**. Screens below are ordered from lowest to highest implementation complexity. Tasks within each screen follow the same order. This is an engineering sequence; it does not reorder the device menu or Figma artboards.
+Updated: **2026-11-10**. English (en-US) firmware v0.2.0. Source implementation is complete for the current eleven-screen public-BLE scope. Physical acceptance is intentionally separate: use the [device checklist](13-device-checklist.md). Future product ideas are not represented as implemented.
 
-Complexity measures the remaining work, including protocol integration and validation, rather than the number of visual elements. Dependencies take precedence over the ranking. Estimates are relative: **S** local UI/configuration, **M** device behavior or state handling, **L** transport or protocol integration, **XL** security, mesh or interoperability work.
+## Screen order — lowest to highest complexity
 
-Status: **Done** = implemented in source; **Mock** = local preview/unavailable state without real transport; **Pending** = not implemented. A successful build or host test is not evidence of Bitchat interoperability. Physical checks remain required for each firmware revision.
+| Order | Screen | Implemented behavior | Remaining physical acceptance |
+|---|---|---|---|
+| 1 | Start | Shared controls, project name, A opens Home | Battery boot, readability, wake suppression |
+| 2 | About | Wander Lima, open-source credit, repository QR | Camera scan at practical brightness |
+| 3 | Settings | Four destinations and shared navigation | Return/focus behavior on the device |
+| 4 | Brightness | 5/25/50/75/100%, explicit apply, NVS persistence/error handling | All levels on USB/battery; full power cycle |
+| 5 | Battery | Voltage, approximate percentage, unknown/low states | Compare USB/battery; measure actual endurance |
+| 6 | Diagnostics | BLE reports/drops, heap, uptime, mesh accept/reject and clock | Long-run counters and memory trend |
+| 7 | Home | Candidate/peer totals, relay state, live header | State transitions, no erase/redraw flicker |
+| 8 | Nearby | Filtered candidates, signed peers, Noise authentication, stable candidate selection, IDs/details | Android/iOS foreground/background/reconnect behavior |
+| 9 | Messages | Signed public and authenticated private input, bounded history, paging and text scrolling | Real text, Unicode substitution, truncation, reconnect |
+| 10 | Channels | Public BLE #bluetooth and actual transport availability | Offline context and controlled indirect forwarding |
+| 11 | InfoBot | Authenticated fresh commands, reply limits, ON/OFF control, welcomes OFF | Cross-platform replies, cooldown, no reply loops |
 
-## Recommended screen order
+## Completed engineering groups
 
-| Order | Screen | Current state | Next work, easiest → hardest | Complexity |
-|---|---|---|---|---|
-| 1 | Start | Done | Physical readability check; final logo when supplied | S |
-| 2 | About | Done | Camera test of repository QR on the display; optional version/build metadata | S |
-| 3 | Settings | Done | Physical preference checks; future preference/reset controls | S–M |
-| 4 | Brightness | Done | USB/battery checks for all presets; verify persistence on power cycle | S–M |
-| 5 | Battery | Done, approximate | Unknown/low-voltage device tests; supported charging indication; calibrated estimates; measured autonomy | M |
-| 6 | Diagnostics | Done | Counter explanations; richer BLE failures; bounded long-running telemetry | M |
-| 7 | Home | Done | Validate candidate totals/state transitions; aggregate future transport/relay states | M–L |
-| 8 | Nearby | Done, advertisement candidates only | Candidate filter/device tests; discovery reliability; stable selection; authenticated peers | M–XL |
-| 9 | Messages | Mock | Preview/empty/error states; codec; GATT; authenticated sessions; real message reading/sending | L–XL |
-| 10 | Channels | Mock | Disabled/channel states; real context model; subscriptions/membership; encrypted channel participation | L–XL |
-| 11 | InfoBot | Mock | Local command examples; trusted command context; actual replies; anti-spam; reliable welcome detection | L–XL |
+1. Persist and validate brightness settings; preserve Nearby candidate selection.
+2. Exercise actual scanner callbacks and bounded filtering/recovery.
+3. Implement bounded v1/v2 framing and fragment reassembly using official serializer fixtures.
+4. Cross-check crypto primitives and Noise XX against independent vectors.
+5. Match signed/compressed packet canonicalization and verify local signatures independently with CryptoKit.
+6. Persist a stable local identity and fail closed on corrupt/unwritable storage.
+7. Implement signed peer discovery, public messages, deduplication, TTL relay, Noise peer-state binding and rate-limited InfoBot.
+8. Add two-link peripheral GATT with queued callbacks, paced MTU fragmentation and RTC time.
+9. Fix the hardware-reproduced startup assertion; add idle-GAP, overflow and fragment transport regressions.
+10. Automatically initiate Noise after discovery; verify Android announcement and handshake on hardware.
+11. Connect all current screens to real state, add the bot switch, buffer display updates, and document acceptance limits.
 
-## 1. Start
+Each implementation group is committed separately; no push is part of this work. Native success and upload verification do not turn the remaining physical checks into passes.
 
-- **Done · S:** project name, en-US control instructions and A to enter Home.
-- **Done · S:** no blocking splash delay; scan scheduling continues.
-- **Pending · S:** check readability, wake behavior and startup on USB/battery after each UI update.
-- **Pending · S:** add the final logo when an approved asset exists. The current design intentionally omits the placeholder.
+## Future scope — deliberately excluded from this version
 
-## 2. About
-
-- **Done · S:** Wander Lima credits and local QR for `https://github.com/wanderlima/bitchat-stick`.
-- **Done · S:** decode the QR from the software-rendered About screen.
-- **Pending · S:** verify camera reading directly from the Plus2 display at practical brightness/distance.
-- **Pending · S:** optionally include build/version information without reducing QR readability.
-
-## 3. Settings
-
-- **Done · S:** working destinations for Brightness, Battery, About and Diagnostics.
-- **Done · S:** shared A/B/C semantics, selection highlighting, row separators and hold-B navigation.
-- **Done · S:** versioned brightness preference with a 50% fallback for missing/invalid values.
-- **Done · M:** brightness stored as one NVS record on explicit changed choices; failed saves retain the RAM value and show a warning. Transient navigation state remains in RAM.
-
-## 4. Brightness
-
-- **Done · S:** 5/25/50/75/100% presets; distinct focus and applied radio mark; A applies; hold-B cancels.
-- **Done · M:** PWM application and wake restoration; default 50%.
-- **Pending · M:** test all presets on USB and battery, including 5% readability and wake.
-- **Done · M:** persist applied brightness without writes on navigation, cancellation or unchanged values. Host tests cover storage failures, and a USB-powered Plus2 self-test passed NVS save/readback across ESP32 restart and restored the original value. Battery-only power-cycle/visual testing remains pending.
-
-## 5. Battery
-
-- **Done · S:** real voltage, approximate percentage, unknown state and explicit estimate limitation.
-- **Done · M:** five-second measurement refresh; low-battery color indication in the header.
-- **Pending · M:** validate measurements on USB and battery; handle supported power-source/charging information without inference.
-- **Pending · M:** calibrate estimate and hysteresis from observed hardware data.
-- **Pending · M:** measure runtime before displaying remaining-time estimates or enabling automatic low-battery policies.
-
-## 6. Diagnostics
-
-- **Done · S:** advertisement-report count, queue drops, free heap, uptime and version.
-- **Done · M:** all BLE reports are counted, even when the advertisement is rejected by the Bitchat filter. Queue drops concern only queued matching observations.
-- **Pending · S:** clarify report/candidate/drop terminology in any expanded diagnostics view.
-- **Pending · M:** expose scanner initialization/restart failures and supported connection errors.
-- **Pending · M:** run extended scan/load tests with bounded telemetry; detect memory degradation and queue pressure.
-
-## 7. Home
-
-- **Done · S:** working Nearby, Channels, InfoBot and Settings navigation.
-- **Done · M:** Nearby candidate count, explicit unverified status, real scanner/battery header; relay OFF.
-- **Pending · M:** verify totals across expiry, scan pauses, backgrounded phones and rotating addresses.
-- **Pending · L:** replace relay/transport unavailability with actual state only after the protocol gates pass. A successful advertisement match is not a transport connection.
-
-## 8. Nearby
-
-- **Done · S:** device name, RSSI, last-seen age, paging and address/type details.
-- **Done · M:** list only advertisements matching the configured Bitchat mainnet/testnet service UUIDs; exclude unrelated BLE observations from the queue/table and from UI paging. Keep raw advertisement counts in Diagnostics.
-- **Done · M:** bounded 32-entry table, 60-second expiry, sanitization and candidate-only indexing. Host tests exercise the real scanner callback for both UUIDs, unrelated advertisements, queue overflow and scan restart. Physical discovery checks remain pending.
-- **Pending · M:** verify the filter using the owner's Bitchat phone alongside unrelated BLE devices; confirm both supported UUID contexts with pinned mobile versions.
-- **Pending · M:** investigate passive-scan misses, including service UUIDs available only in scan responses. Evaluate active scanning separately; it is not enabled by this filter.
-- **Done · M:** preserve selection by address/type across expiry, insertion and slot reuse. Replaced/expired selections close details and choose a valid fallback. Rotating radio addresses still cannot establish a stable authenticated user.
-- **Pending · XL:** establish authenticated identity through the real protocol. Until then use `Bitchat? / Not verified`, never claim confirmed users or reliable arrivals.
-
-## 9. Messages
-
-- **Mock · S:** unavailable state, No RX/TX warning, separators and return to Channels. No invented conversation is shown.
-- **Pending · S–M:** define connection/loading/empty/error states, paged reading and long/unsupported-text behavior.
-- **Foundation · L:** bounded uncompressed v1/v2 framing codec tested against five vectors emitted by the official pinned Swift serializer. Truncation, flags, routes, signatures-as-bytes, padding and hostile inputs have host coverage. Bounded fragment assembly also has host coverage (2 streams, 32 chunks, 4096 bytes, timeout/conflict checks). Compression, cryptographic verification and radio integration/interoperability remain pending.
-- **Pending · L:** establish GATT discovery, connection lifecycle, notification/write handling and bounded queues.
-- **Pending · XL:** validate identity, signatures and Noise/session requirements before presenting protected messages as readable/authenticated.
-- **Pending · XL:** receive/send real messages and prove two-phone interoperability. Preserve reading position as traffic arrives.
-
-## 10. Channels
-
-- **Mock · S:** neutral `No channels / Chat is not ready / Scanner only` panel and reference to Nearby. A opens the Messages status preview; no channel is joined.
-- **Pending · S–M:** define disabled, loading, joined, disconnected and unavailable channel states without implying a live channel.
-- **Pending · L:** model the contexts actually supported by the selected upstream version after Messages transport is functional.
-- **Pending · L:** connect channel discovery/subscription and membership events to real protocol evidence.
-- **Pending · XL:** support protected-channel participation only where the Stick has the necessary keys/context.
-- **Pending · XL:** evaluate Nostr as a separate internet-dependent feature; do not conflate it with offline BLE channels.
-
-## 11. InfoBot
-
-- **Mock · S:** selectable `!info`, `!rules`, `!help` examples labeled `Preview only`; welcome bot OFF.
-- **Pending · S:** define editable information/rules/help content and configuration limits.
-- **Pending · L:** parse commands only from valid incoming messages and allowed contexts; require functional Messages/Channels first.
-- **Pending · L:** send real responses through the transport, with deduplication, rate limits and loop prevention.
-- **Pending · XL:** enable welcomes only after a reliable, authenticated entry event can be distinguished from rediscovery, reconnection or replay. Advertisements alone are insufficient.
-
-## Cross-screen dependencies and later milestones
-
-- **Done · S–M:** shared header, native FreeMono sizes, local assets, navigation, 30-second display timeout and wake-only first press.
-- **Pending · M:** repeat the physical UI/power test pass after uploads; validate button long-press behavior and screen-off scanning.
-- **Pending · L–XL:** complete codec → GATT → identity/session → real messaging before enabling bot or channel participation. See [compatibility gates](07-compatibility.md) and [two-phone tests](06-testing.md).
-- **Pending · XL:** mesh relay: TTL, deduplication, forwarding, bounded buffers and phone A → Stick → phone B tests with the direct route excluded. UI relay status must remain OFF until forwarding is functional.
-- **Pending · XL:** Pocket Messenger: extend the working Messages experience with paged reading and confirmed canned replies after transport/security gates pass.
-- **Pending · L:** OTA, persistent history and broader Unicode support are separate workstreams; they are not hidden switches in the current firmware.
-
-## Next execution sequence
-
-1. Validate the candidate-only Nearby filter on the physical device.
-2. Finish the physical checks for Start, About, Settings, Brightness, Battery and Diagnostics.
-3. Confirm battery-only preference persistence and QR readability; selection stability already has host coverage.
-4. Pin mobile protocol versions and establish codec test vectors.
-5. Add and validate transport/security, then real Messages.
-6. Enable real channel contexts and relay only after their individual gates pass.
-7. Connect InfoBot; gate welcomes separately on reliable entry detection.
-8. Build Pocket Messenger on the validated messaging foundation.
+- **M:** final logo asset; persistent bot preference; explicit local identity reset; build-information expansion.
+- **M–L:** charging/source indication where supported, battery calibration/hysteresis and measured autonomy.
+- **L:** Pocket Messenger composition and confirmed canned replies; persistent history only after an explicit retention decision.
+- **L–XL:** private-message sending, media/groups, protected-channel participation, gossip synchronization, general encrypted routing and central-role connection scheduling.
+- **XL:** Nostr/internet contexts, OTA, persistent/out-of-band peer trust and secure-storage provisioning.
+- **Conditional:** welcomes only after an authoritative, tested entry signal exists. Reappearance, a BLE advert or a reconnect is insufficient.

@@ -1,10 +1,10 @@
 # Bitchat Stick — M5StickC Plus2
 
-Initial firmware v0.1.0 · Default language: **English (en-US)**.
+Firmware **v0.2.0** · Default language: **English (en-US)**.
 
-A pocket-sized BLE observer, with Bitchat relay and InfoBot participation planned after interoperability is demonstrated. The initial firmware implements passive scanning, a bounded nearby-device list, physical-button navigation, brightness control, and a battery estimate. **It does not receive or send Bitchat messages.** GATT messaging, authenticated identities, Noise sessions, relay, and InfoBot are not implemented.
+A small BLE Bitchat participant for M5StickC Plus2. The firmware implements signed discovery and public chat, automatic identity-bound Noise sessions, bounded public-packet relay, and authenticated InfoBot commands. Other Bitchat users see the device as **Bitchat Stick** in the local `#bluetooth` context.
 
-The owner has reported using the initial firmware on the device. The latest navigation, splash screen, typography, grouping, and language changes still require a new upload and physical verification. Software compilation and native tests do not prove radio interoperability.
+Android 2.2.0 has verified the Stick's announcement and completed a real Noise handshake. The owner also confirmed seeing the device in the network. Full iOS messaging, indirect two-phone relay, background behavior, and battery endurance still require the [device acceptance checklist](docs/13-device-checklist.md). Compilation and native tests alone do not establish interoperability.
 
 ## Build and upload
 
@@ -39,19 +39,17 @@ Settings offers 5%, 25%, 50%, 75%, and 100% brightness, with 50% as the default.
 
 The interface uses FreeMono Regular/Bold, warm cream `#EBDCBA` instead of pure white, an outlined BLE header, high-contrast selection, grouped panels, and dividers between menu items and information groups. Nearby retains a dark-green peer card and a bright-green left border. The [screen previews](docs/screens/README.md) illustrate the current direction; they are software renders of all eleven screens, not photographs or hardware captures.
 
-## Live features and previews
+## Live features and remaining scope
 
-Home, Nearby, the BLE header, battery, diagnostics, navigation and brightness use real device data/controls. Nearby separates observations from the unverified Bitchat candidate status. Channels and Messages show unavailable states. InfoBot commands open local examples labeled **Preview only**; nothing is transmitted. Relay and welcome bot remain OFF. See the [screen behavior matrix](docs/04-screens.md#screens-and-data-sources).
+- Home, Nearby, Channels, Messages, InfoBot, Settings, Brightness, Battery, About, and Diagnostics use real firmware state.
+- Nearby distinguishes service-advertisement candidates, signed peers, and Noise-authenticated peers. A signed name is not an out-of-band verified human identity.
+- Channels opens the public BLE `#bluetooth` context. Messages reads signed public text and authenticated DMs, with explicit BLE/DM labels. It keeps twelve RAM-only entries, with message paging and text scrolling; at most 192 bytes are rendered per entry, with an explicit truncation mark.
+- Signed public announcements and text are verified, deduplicated, and eligible for TTL-limited forwarding without echoing the ingress link. Queue acceptance is not a delivery acknowledgement.
+- InfoBot supports `!info`, `!rules`, and `!help`, plus `!regras`/`!ajuda` aliases. Commands require an authenticated peer and recent signed public text. Per-peer/global limits prevent reply floods. The on-device `Bot: ON/OFF` switch applies immediately for the current boot.
+- Welcome messages remain OFF because discovery/reconnection does not reliably prove channel entry.
+- Drawing uses a 135 × 240 offscreen framebuffer before updating the display, avoiding the visible erase/redraw cycle.
 
-A bounded binary framing codec is also available for protocol development and host tests. It does not yet connect GATT, authenticate signatures or enable messaging. See the [pinned wire contract](docs/12-wire-contract.md).
-
-## Planned progression
-
-1. Observe BLE advertisements and RSSI; distinguish candidates from verified identities.
-2. Validate GATT transport and packet formats against pinned mobile builds.
-3. Demonstrate phone A → Stick → phone B forwarding without a direct link or internet.
-4. Enable message reading and InfoBot only in contexts the Stick can legitimately participate in.
-5. Explore Pocket Messenger with paged reading and confirmed canned replies.
+Private-message composition/media, private groups, Nostr, gossip/history synchronization, arbitrary routed Noise forwarding, OTA, persistent chat history, and Pocket Messenger composition/canned replies remain future scope. See the [wire contract and security limits](docs/12-wire-contract.md) and [current implementation plan](docs/11-implementation-plan.md).
 
 The official project distinguishes the offline BLE `#bluetooth` context from geographic channels carried over Nostr and the internet. Do not assume arbitrary channels, passwords, or historical `/j` and `/pass` commands work in installed versions. See the [official channel description](https://github.com/permissionlesstech/bitchat#channel-types).
 
@@ -68,9 +66,11 @@ The official project distinguishes the offline BLE `#bluetooth` context from geo
 - [Implementation status and getting started](docs/09-getting-started.md)
 - [Build and USB deployment](docs/10-build-deploy.md)
 - [Implementation plan by screen and complexity](docs/11-implementation-plan.md)
+- [Wire contract and interoperability evidence](docs/12-wire-contract.md)
+- [Device acceptance checklist](docs/13-device-checklist.md)
 
 ## Hardware and evidence
 
 Target: M5StickC Plus2 with ESP32-PICO-V3-02, 135 × 240 display, and nominal 200 mAh battery. Refer to the [M5Stack hardware documentation](https://docs.m5stack.com/en/core/StickC-Plus2). Binaries built for ESP32-C3/C6/S3 are not interchangeable with this target.
 
-“Documented upstream” means described by the cited source. “Third-party claim” is not an independent test. “Proposed” means future work. “Unverified” requires an experiment. No Plus2 Bitchat messaging compatibility, range, or battery runtime has been established by this project.
+“Documented upstream” means described by the cited source. “Third-party claim” is not an independent test. “Proposed” means future work. “Unverified” requires an experiment. The Android discovery/signature/Noise path has hardware evidence. Full messaging compatibility, controlled indirect relay, range, and battery runtime have not yet been established.

@@ -16,15 +16,15 @@ Do not estimate later phases before transport feasibility is established. Each g
 
 ## Current progress
 
-The scanner/UI foundation exists and has compiled; the owner has used an earlier build on the Plus2. Native model and navigation tests pass. Updated A/B/C controls, splash screen, larger fonts, restored panels, footer removal, and en-US defaults require a new hardware check. BLE message reception/transmission and relay remain unimplemented.
+The eleven-screen firmware, persistent identity/brightness, signed public mesh, automatic Noise, bounded GATT, public message reader, and authenticated InfoBot are implemented. Native tests include official codec/signature fixtures, independent Android Noise vectors, CryptoKit verification, hostile input, mesh processing, UI bounds/navigation and transport startup/fragmentation. Android hardware has verified discovery/signatures/Noise; the owner confirmed visibility.
 
-The official service UUID snapshot is recorded, but this is not completion of the full protocol gate. No mobile-build compatibility matrix has passed.
+The active gate is physical acceptance: iOS message exchange, controlled two-phone relay, bot behavior on the actual apps, screen readability/flicker, reconnect/background behavior, and endurance. See the [checklist](13-device-checklist.md). Passing software tests is not a substitute.
 
-## Pending stack decision for messaging
+## Recorded stack decision
 
-Compare a minimal implementation, adaptation of an existing relay, and selected components from C3/C6/S3 projects. Evaluate classic-ESP32 support, licensing, protocol freshness, independent iOS/Android tests, memory cost, parser security, and UI integration. Do not choose by advertised feature count. Record the decision and SHAs before importing code.
+Use the existing Plus2 Arduino/NimBLE stack with a bounded local protocol model. Cryptography uses pinned Monocypher 4.0.2 and ESP32 mbedTLS SHA-256; host tests cross-check official Swift/Android behavior. The exact SHAs and limitations are recorded in the [wire contract](12-wire-contract.md). No C3/C6/S3 firmware port is claimed.
 
-Additional channels, protected groups, and Nostr are separate decisions. If the selected apps expose only the local BLE context, deliver that context honestly rather than inventing channels through local filtering.
+Private groups/media, Nostr, general encrypted routing, synchronization and Pocket Messenger composition remain separate future milestones. Welcome automation remains blocked by the lack of a reliable entry event.
 
 ## Future definition of done
 

@@ -1,6 +1,6 @@
 # Test plan — two phones and one Plus2
 
-**Protocol/radio matrix: not executed by this project.** Native software tests and successful compilation are separate evidence. The owner has reported using the initial device UI; this does not establish indirect forwarding or messaging compatibility.
+**Full two-phone acceptance matrix: pending. Android discovery, signature verification and Noise establishment have hardware evidence.** Native software tests and successful compilation are separate evidence. The owner has reported using the initial device UI; this does not establish indirect forwarding or messaging compatibility.
 
 ## Preparation
 
@@ -68,7 +68,7 @@ Date; operator; builds/SHAs; hardware; topology; radios; steps; expected/observe
 ## Executed device checks — 2026-11-10
 
 - Plus2, USB-powered: the dedicated `settings-selftest` firmware used the production Settings adapter, wrote brightness index 4 (100%) from original index 2 (50%), restarted the ESP32, read back index 4, then restored and read back index 2. UART repeatedly reported `SETTINGS_SELFTEST PASS original=2 persisted=4 restored=2`.
-- The normal `m5stickc-plus2` firmware was reinstalled immediately afterward; esptool verified the written flash hash. This includes persistent brightness and stable Nearby selection. Codec/reassembly code exists but is not connected to live messaging.
+- The normal `m5stickc-plus2` firmware was reinstalled immediately afterward; esptool verified the written flash hash. At that earlier checkpoint this included persistent brightness and stable Nearby selection; protocol/GATT integration was added later in the same session.
 - This verifies NVS across a software/device restart, not a battery-only power-cycle or calibrated brightness/voltage/autonomy. Physical readability and camera QR reading remain manual checks.
 - Available app versions were queried: Android 2.2.0/build 42, Android 16 on SM-A366E; iOS app 1.8.0/build 1 on iPhone 15 Pro. No authenticated phone↔Stick message exchange has passed yet. See the [wire contract](12-wire-contract.md).
 
@@ -79,3 +79,18 @@ python tools/test-settings-device.py --port /dev/cu.usbserial-REPLACE_ME --pio /
 ```
 
 This temporarily installs a dedicated test firmware, preserves/restores the original brightness, and always attempts to reinstall production firmware in a `finally` block. Do not disconnect the device during the operation; if interrupted forcibly, reinstall `m5stickc-plus2` manually. The test only clears its own `stick-test-v1` namespace.
+
+## 2026-11-10 integrated firmware observation
+
+The first integrated upload reproduced a NimBLE GATT-registration assertion while scanning, causing repeated reboots. The corrected startup pauses discovery before registering services; the scanner resumes on its normal loop schedule. Native transport tests now assert this ordering. A subsequent USB observation showed stable heap around 145 KB before framebuffer changes, one subscribed Android link, a signed peer, then a Noise-authenticated peer with zero protocol rejections. Android 2.2.0 independently logged successful signature verification and responder handshake establishment. The owner reported seeing Bitchat Stick in the network. These observations do not establish indirect relay or message delivery.
+
+The framebuffer revision was built/uploaded after the owner reported lighter redraw flicker; physical visual acceptance remains with the owner. Use the [device checklist](13-device-checklist.md) to record the final revision, both phone versions and each actual result.
+
+### Final installed source snapshot
+
+- Firmware source commit: `1872efb` (documentation/export commits afterward do not change the installed firmware).
+- Application image SHA-256: `edfed7e93f99a50a055d1e58217151e7e2fb66134d4f039cfb406ee2ce8b3a8b`.
+- Target build: 97,336 bytes static RAM and 974,785 bytes application flash; the 64,800-byte display canvas is allocated dynamically in PSRAM.
+- Final observed runtime samples: one subscribed link, one authenticated peer, active RTC, zero rejected packets in the captured interval and about 145,000 bytes free internal heap. These are short observations, not endurance results.
+- Fourteen native suites and the independent CryptoKit signature check passed after private-text/receipt integration. JPEG previews were regenerated from the real UI with simulated data and visually inspected.
+- The owner's initial missing message was identified as an Android DM sent before private-text display support. The DM reader/receipt update was installed and a new trial requested; receipt/display of that retry has not yet been confirmed.
