@@ -42,7 +42,7 @@ struct NimBLECharacteristic {
  bool notify(const uint8_t* bytes,size_t n,uint16_t){notifications.emplace_back(bytes,bytes+n);return true;}
 };
 struct NimBLEService {NimBLECharacteristic characteristic;NimBLECharacteristic* createCharacteristic(const char*,unsigned,size_t){return &characteristic;}};
-struct NimBLEAdvertising {bool active=false;bool addServiceUUID(const char*){return true;}void enableScanResponse(bool){}bool setName(const char*){return true;}bool start(){active=true;return true;}};
+struct NimBLEAdvertising {bool active=false;unsigned starts=0;bool isAdvertising(){return active;}bool addServiceUUID(const char*){return true;}void enableScanResponse(bool){}bool setName(const char*){return true;}bool start(){++starts;active=true;return true;}};
 struct NimBLEServer {
  NimBLEService service;NimBLEServerCallbacks* callback=nullptr;uint16_t mtu=185;unsigned connected=0,disconnects=0;
  unsigned getConnectedCount()const{return connected;}

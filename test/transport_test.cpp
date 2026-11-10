@@ -12,6 +12,7 @@ int main(){
   for(unsigned now=40;now<500;now+=20)pollTransport(now);
   assert(!characteristic.notifications.empty());wire::FrameView frame;
   assert(wire::decode({characteristic.notifications[0].data(),characteristic.notifications[0].size()},frame)==wire::Error::None);assert(frame.type==1);
+  NimBLEDevice::advertising.active=false;pollTransport(1000);assert(NimBLEDevice::advertising.isAdvertising());
   // Force MTU fragmentation, then independently recover and verify the complete frame.
   server.mtu=64;characteristic.notifications.clear();assert(mesh().announce());
   for(unsigned now=500;now<1500;now+=20)pollTransport(now);

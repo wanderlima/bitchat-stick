@@ -17,7 +17,7 @@ Identity identity;
 NimBLEServer* server=nullptr;NimBLECharacteristic* characteristic=nullptr;
 QueueHandle_t events=nullptr;
 std::atomic<uint32_t> drops{0};
-Link links[2];Tx tx[6];size_t head=0,tail=0,count=0,txLink=0,txOffset=0;uint32_t lastSend=0;uint8_t fragmentBytes[512]{};bool started=false;
+Link links[2];Tx tx[6];size_t head=0,tail=0,count=0,txLink=0,txOffset=0;uint32_t lastSend=0,lastAdvertise=0;uint8_t fragmentBytes[512]{};bool started=false;
 void entropy(void* out,size_t n){esp_fill_random(out,n);}
 void queueEvent(Event& event){if(xQueueSend(events,&event,0)!=pdTRUE){++drops;server->disconnect(event.handle);}}
 class ServerCallbacks:public NimBLEServerCallbacks {
@@ -88,6 +88,12 @@ void pollTransport(uint32_t now){if(!started)return;
      else if(event.kind==5){link->subscribed=false;mesh().disconnected(event.handle);}}
  }
  for(auto& link:links)if(link.handle!=kAnyLink&&server->getPeerMTU(link.handle)==0){mesh().disconnected(link.handle);link=Link{};}
+ // A successful peripheral connection stops legacy advertising. Keep a slot
+ // discoverable for the second phone, with bounded retry after radio errors.
+ auto* advertising=NimBLEDevice::getAdvertising();
+ if(server->getConnectedCount()<2 && !advertising->isAdvertising() && uint32_t(now-lastAdvertise)>=1000){
+   lastAdvertise=now;if(!advertising->start())++drops;
+ }
  drainTx(now);
 }
 bool transportReady(){return started;}
