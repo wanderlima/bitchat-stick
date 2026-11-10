@@ -47,3 +47,5 @@ run_crypto_test packets test/packet_security_test.cpp src/PacketSecurity.cpp src
 swift -module-cache-path "$test_dir/swift-cache" tools/VerifyPacketSignatures.swift "$test_dir/local-signatures.txt"
 
 run_crypto_test identity test/identity_test.cpp src/Identity.cpp src/CryptoPrimitives.cpp -I test/fakes
+
+run_crypto_test mesh test/mesh_test.cpp src/Mesh.cpp src/Identity.cpp src/NoiseSession.cpp src/FragmentAssembler.cpp src/WireCodec.cpp src/PacketSecurity.cpp src/CryptoPrimitives.cpp "$test_dir/miniz.o" -I test/fakes
