@@ -21,5 +21,12 @@ int main() {
   assert(saveBrightnessIndex(3) && record == 0xBC510103); // Failure does not poison retries.
   writable = false; assert(!saveBrightnessIndex(1));
   readable = false; assert(loadBrightnessIndex() == 2);
+  // A fallback is not evidence that NVS already holds the same choice.
+  writable = true;record = 0xBC510104;readable = false;
+  assert(loadBrightnessIndex()==2);
+  readable = true;assert(saveBrightnessIndex(2) && record==0xBC510102);
+  record = 0xFFFFFFFF;assert(loadBrightnessIndex()==2);
+  assert(saveBrightnessIndex(2) && record==0xBC510102); // Explicit apply repairs an invalid record.
+  const auto unchangedWrites=writes;assert(saveBrightnessIndex(2) && writes==unchangedWrites);
   std::puts("Settings: reboot, validation, schema, unchanged values and storage failures passed");
 }
