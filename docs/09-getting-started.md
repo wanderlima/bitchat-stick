@@ -73,7 +73,7 @@ c++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined test/navigatio
 UI state/layout tests use a lightweight display fake and font advance metrics from pinned M5GFX; they execute the real `src/Ui.cpp`:
 
 ```sh
-c++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined -I test/fakes -I include test/ui_test.cpp src/PeerTable.cpp src/Settings.cpp -o /tmp/bitchat-ui-test
+c++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined -I test/fakes -I include test/ui_test.cpp src/PeerTable.cpp src/PeerSelection.cpp src/Settings.cpp -o /tmp/bitchat-ui-test
 /tmp/bitchat-ui-test
 ```
 

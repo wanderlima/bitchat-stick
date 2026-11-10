@@ -66,7 +66,7 @@ int main() {
   battery=-1;draw(table,tick);check();assert(has("--%"));
   battery=5;draw(table,tick);check();assert(has("5%"));
   // Nearby excludes ordinary BLE and never invents peers when no candidate is present.
-  screen=Screen::Peers;detail=false;peerIndex=0;
+  screen=Screen::Peers;detail=false;peerSelection=PeerSelection{};
   draw(PeerTable{},tick);check();assert(has("No Bitchat") && !has("Test phone"));
   PeerTable ordinary;obs.network=Network::Other;ordinary.observe(obs);
   draw(ordinary,tick);check();assert(has("No Bitchat") && !has("Test phone") && !has("Other BLE"));
@@ -76,7 +76,7 @@ int main() {
     std::snprintf(obs.address,sizeof(obs.address),"AA:BB:CC:DD:EE:%02X",i);
     std::strcpy(obs.name,"A name that is too long");full.observe(obs);
   }
-  peerIndex=31;draw(full,tick);check();assert(has("Device 32/32"));
+  peerSelection.move(-1,full);draw(full,tick);check();assert(has("Device 32/32"));
   screen=Screen::Settings;draw(table,tick);check();assert(has("Diagnostics"));
   screen=Screen::Bot;
   for(selection=0;selection<3;++selection) {detail=true;draw(table,tick);check();assert(has("Preview only"));}

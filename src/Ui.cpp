@@ -1,6 +1,7 @@
 #include "Ui.h"
 #include "Scanner.h"
 #include "Settings.h"
+#include "PeerSelection.h"
 #include "NavigationInput.h"
 #include <M5Unified.h>
 #include "assets/UiBitmaps.h"
@@ -17,7 +18,8 @@ constexpr uint16_t headerBorder = 0x41C6;
 constexpr uint32_t screenTimeout = 30000;
 enum class Screen { Splash, Dashboard, Peers, Channels, Messages, Bot, Settings, Brightness, Battery, About, Diagnostics };
 Screen screen = Screen::Splash;
-size_t selection = 0, peerIndex = 0;
+size_t selection = 0;
+PeerSelection peerSelection;
 constexpr uint8_t brightnessLevels[] = {13, 64, 128, 191, 255};
 constexpr unsigned brightnessPercent[] = {5, 25, 50, 75, 100};
 size_t brightnessIndex = 2;
@@ -140,6 +142,8 @@ void draw(const PeerTable& peers, uint32_t now) {
       break;
     }
     case Screen::Peers: {
+      if (peerSelection.sync(peers)) detail = false;
+      const auto peerIndex = peerSelection.index();
       const auto n = peers.candidates();
       if (!n) {
         panel(54, 110);
@@ -148,7 +152,6 @@ void draw(const PeerTable& peers, uint32_t now) {
         label(scannerFault() ? "Scan error" : "Waiting for", 103, muted, 13, 109, compact);
         label(scannerFault() ? "Check BLE" : "BLE adverts", 125, muted, 13, 109, compact);
       } else {
-        peerIndex %= n;
         const auto& obs = peers.candidateAt(peerIndex)->observation;
         std::snprintf(value, sizeof(value), "Device %u/%u", unsigned(peerIndex + 1), unsigned(n));
         label(value, 56, fg, 4, 127);
@@ -268,7 +271,7 @@ void draw(const PeerTable& peers, uint32_t now) {
 }
 void move(int direction, const PeerTable& peers) {
   if (screen == Screen::Peers) {
-    if (peers.candidates()) peerIndex = (peerIndex + peers.candidates() + direction) % peers.candidates();
+    peerSelection.move(direction, peers);
     detail = false;
     return;
   }

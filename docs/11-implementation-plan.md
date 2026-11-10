@@ -80,7 +80,7 @@ Status: **Done** = implemented in source; **Mock** = local preview/unavailable s
 - **Done · M:** bounded 32-entry table, 60-second expiry, sanitization and candidate-only indexing.
 - **Pending · M:** verify the filter using the owner's Bitchat phone alongside unrelated BLE devices; confirm both supported UUID contexts with pinned mobile versions.
 - **Pending · M:** investigate passive-scan misses, including service UUIDs available only in scan responses. Evaluate active scanning separately; it is not enabled by this filter.
-- **Pending · M:** preserve selected device by address/type as the table changes; test rotating addresses and duplicate names.
+- **Done · M:** preserve selection by address/type across expiry, insertion and slot reuse. Replaced/expired selections close details and choose a valid fallback. Rotating radio addresses still cannot establish a stable authenticated user.
 - **Pending · XL:** establish authenticated identity through the real protocol. Until then use `Bitchat? / Not verified`, never claim confirmed users or reliable arrivals.
 
 ## 9. Messages
