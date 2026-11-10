@@ -64,3 +64,18 @@ The foundation has host tests for observation-table bounds/expiry and shared inp
 ## Report template
 
 Date; operator; builds/SHAs; hardware; topology; radios; steps; expected/observed; counts/latency; logs; passed/failed/inconclusive/not executed; limitations; next action. Avoid storing real people's identifiers unless necessary.
+
+## Executed device checks — 2026-11-10
+
+- Plus2, USB-powered: the dedicated `settings-selftest` firmware used the production Settings adapter, wrote brightness index 4 (100%) from original index 2 (50%), restarted the ESP32, read back index 4, then restored and read back index 2. UART repeatedly reported `SETTINGS_SELFTEST PASS original=2 persisted=4 restored=2`.
+- The normal `m5stickc-plus2` firmware was reinstalled immediately afterward; esptool verified the written flash hash. This includes persistent brightness and stable Nearby selection. Codec/reassembly code exists but is not connected to live messaging.
+- This verifies NVS across a software/device restart, not a battery-only power-cycle or calibrated brightness/voltage/autonomy. Physical readability and camera QR reading remain manual checks.
+- Available app versions were queried: Android 2.2.0/build 42, Android 16 on SM-A366E; iOS app 1.8.0/build 1 on iPhone 15 Pro. No authenticated phone↔Stick message exchange has passed yet. See the [wire contract](12-wire-contract.md).
+
+To repeat the controlled NVS check, use the PlatformIO Python environment (pyserial required), an explicit Plus2 port and the PlatformIO executable:
+
+```sh
+python tools/test-settings-device.py --port /dev/cu.usbserial-REPLACE_ME --pio /path/to/pio
+```
+
+This temporarily installs a dedicated test firmware, preserves/restores the original brightness, and always attempts to reinstall production firmware in a `finally` block. Do not disconnect the device during the operation; if interrupted forcibly, reinstall `m5stickc-plus2` manually. The test only clears its own `stick-test-v1` namespace.

@@ -48,7 +48,7 @@ Status: **Done** = implemented in source; **Mock** = local preview/unavailable s
 - **Done · S:** 5/25/50/75/100% presets; distinct focus and applied radio mark; A applies; hold-B cancels.
 - **Done · M:** PWM application and wake restoration; default 50%.
 - **Pending · M:** test all presets on USB and battery, including 5% readability and wake.
-- **Done · M:** persist applied brightness without writes on navigation, cancellation or unchanged values. Host tests cover reboot and storage failure paths; physical power-cycle testing remains pending.
+- **Done · M:** persist applied brightness without writes on navigation, cancellation or unchanged values. Host tests cover storage failures, and a USB-powered Plus2 self-test passed NVS save/readback across ESP32 restart and restored the original value. Battery-only power-cycle/visual testing remains pending.
 
 ## 5. Battery
 
@@ -122,7 +122,7 @@ Status: **Done** = implemented in source; **Mock** = local preview/unavailable s
 
 1. Validate the candidate-only Nearby filter on the physical device.
 2. Finish the physical checks for Start, About, Settings, Brightness, Battery and Diagnostics.
-3. Verify preference persistence on hardware and implement candidate-selection stability.
+3. Confirm battery-only preference persistence and QR readability; selection stability already has host coverage.
 4. Pin mobile protocol versions and establish codec test vectors.
 5. Add and validate transport/security, then real Messages.
 6. Enable real channel contexts and relay only after their individual gates pass.

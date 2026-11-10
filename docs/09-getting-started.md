@@ -142,3 +142,5 @@ After uploading the latest revision:
 9. Keep messages, relay, and bot disabled until the [protocol test gates](06-testing.md) pass.
 
 The eleven-screen Figma sync passed all three native suites with sanitizers and the firmware build (42,496 bytes static RAM; 858,801 bytes application flash). The repository QR decoded to the expected URL from the software render. Upload and physical validation remain separate steps.
+
+On 2026-11-10, a dedicated USB-powered Plus2 self-test verified brightness persistence across ESP32 restart and restored the original setting. Normal firmware was reinstalled afterward. See the [executed device checks](06-testing.md#executed-device-checks--2026-11-10) for scope and reproduction.
