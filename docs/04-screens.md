@@ -140,3 +140,7 @@ Owner acceptance on 2026-11-11: the installed sending flow worked well. This gen
 ## App navigation and InfoBot update — 2026-11-11
 
 The public inbox is named #bluetooth again, with Public chat as its subtitle. Home Back returns to Start. Sound labels the public-message alert Channel. InfoBot offers !info, !rules, !help, !about and Bot: ON/OFF; the top status shows command results or reasons to wait. The noninteractive Welcome: OFF footer is removed. See [InfoBot behavior](15-infobot.md) for public/private reply conditions.
+
+## Public writing and DM recovery
+
+Inbox → #bluetooth now has Read chat/Write msg actions. Write msg opens the shared method/preset/keyboard/confirmation flow with an explicit public target. Existing per-user Reply remains private. A failed private send shows Not sent as the heading and its reason below: Connecting, Peer gone, or Link / queue. Connecting retains the draft and starts negotiation; the user must retry Send after authentication.

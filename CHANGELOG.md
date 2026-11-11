@@ -6,6 +6,8 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 ### Added
 
+- Read chat/Write msg actions in #bluetooth, using the shared composer with explicit public destination confirmation.
+
 - First-DM private introduction explaining !help/!about, controlled by Bot ON/OFF and remembered by authenticated peer ID for the current boot (32 identities, no eviction). Public traffic/reconnections never trigger it; queue failures can retry on the next new DM.
 
 - Private message composition from identified Nearby users and Inbox messages, using a shared four-screen flow: Reply, Short msgs, Keyboard and Confirm.
@@ -23,6 +25,9 @@ User-visible changes and validation evidence are recorded here in English (en-US
 - M5GFX and M5Unified are pinned to 0.2.36 and 0.2.8 respectively, aligned with the supplied working HAT reference. RTC writes are verified through readback for that API.
 
 ### Fixed
+
+- Expanded the private-session pool from two to twelve so a third discovered identity is not excluded. Explicit DM sends initiate missing authentication and retain the draft; orphaned sessions are released.
+- DM send failures show a concrete reason instead of an ambiguous yellow status. Added counter-only BLE/session/clock diagnostics.
 
 - InfoBot now answers signed public commands without requiring a private Noise session and answers authenticated DM commands privately. Added !about with the project link, case/whitespace handling, three-second peer cooldown and visible reply/block status.
 - Removed the misleading noninteractive Welcome: OFF footer; automatic greetings remain disabled.

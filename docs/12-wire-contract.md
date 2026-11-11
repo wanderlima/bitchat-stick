@@ -101,7 +101,7 @@ Raw DEFLATE expansion uses the existing pinned M5GFX miniz implementation, with 
 
 ## Live mesh model
 
-`Mesh` owns twelve signed peer records, two initiator/responder Noise sessions, twelve 192-byte display messages, a 64-entry deduplication cache, and bounded fragment storage. Announcements bind the sender ID to SHA-256 of the advertised Noise key and verify the advertised Ed25519 key. This is self-consistency, not out-of-band verification. Keys are pinned in RAM until peer expiry; peer trust is not persisted.
+`Mesh` owns twelve signed peer records, twelve bounded initiator/responder Noise sessions, twelve 192-byte display messages, a 64-entry deduplication cache, and bounded fragment storage. Announcements bind the sender ID to SHA-256 of the advertised Noise key and verify the advertised Ed25519 key. This is self-consistency, not out-of-band verification. Keys are pinned in RAM until peer expiry; peer trust is not persisted.
 
 InfoBot public commands require a verified signed message from an identified peer, without an extra private-session gate. DM commands require a successful identity-bound Noise handshake and authenticated peer state (`0x21`, version 1); replies stay private. Command timestamps must be within two minutes of the local clock. Replies have a three-second per-peer and one-second global cooldown. `!info`, `!rules`, `!help`, `!about`, `!regras`, and `!ajuda` are supported. Duplicate private commands receive delivery acknowledgements without another bot reply. No advertisement or reconnect produces a welcome message. See [usage](15-infobot.md).
 

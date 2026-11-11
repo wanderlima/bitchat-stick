@@ -145,3 +145,11 @@ This revision passed nineteen native suites plus independent CryptoKit verificat
 ## Private introduction — 2026-11-11
 
 Nineteen native suites plus independent CryptoKit verification passed. The private-message test decrypts the first introduction and checks the exact English hint, addressed private frame and delivery-receipt order. It also covers Bot OFF, failed enqueue followed by a retry on a new DM, and suppression for duplicate/subsequent DMs. Public-only bot tests assert zero private introductions. The 32-entry identity memory has no eviction and is independent of peer/session expiry; it resets at reboot. Actual phone display of this new introduction remains an owner acceptance check in [the InfoBot guide](15-infobot.md#first-dm-introduction).
+
+## DM session recovery and public composer — 2026-11-11
+
+The owner reported DM sending/receiving stopped while public chat continued. A yellow Not sent status retained Send/Cancel. Initial telemetry showed three discovered peer identities but only two authenticated peers, matching the old two-session capacity. This is a plausible failure path, not proof that it was the only cause of the owner's exchange. A focused host build using the old two-session header fails the new third-identity handshake assertion; the twelve-session build passes.
+
+The session pool is now bounded to twelve, orphaned sessions are released and explicit DM sends initiate missing authentication while retaining the draft. Detailed send status distinguishes Connecting, expired peers and link/queue failures. Counter-only USB diagnostics report received writes/public/DM totals, transmit queue/notifies, clock and selected rejection reasons. No message bodies or keys are logged.
+
+Nineteen native suites and independent CryptoKit verification passed; the target built and uploaded with hash verification (990,336 bytes). UI tests exercise the new public Read chat/Write msg path, explicit public confirmation, actual public dispatch and cancellation without converting user replies to public traffic. Three additional software-rendered states were inspected. A post-upload observation found the loop/HAT active and heap stable at 137,088 bytes, but no phone was connected during that observation. Actual DM recovery and public reception await the owner's retry.

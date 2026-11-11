@@ -91,3 +91,13 @@ After installing the pinned PlatformIO dependencies, run `sh tools/render-device
 ![Send or cancel](17-confirm.jpg)
 
 Recipient and draft in these renders are synthetic. The firmware does not seed mock chats. The confirmation preview focuses Cancel, matching entry behavior.
+
+## Public composer states
+
+![Public channel actions](18-bluetooth-menu.jpg)
+
+![New public message](19-public-compose.jpg)
+
+![Public destination confirmation](20-public-confirm.jpg)
+
+These are additional states of the existing Inbox/composer screens, rather than new top-level screens.

@@ -8,6 +8,7 @@ Firmware **v0.2.0**, English (en-US). Source implementation and physical accepta
 - Seventeen working screens with FreeMono, warm cream, grouped panels, dividers, green Nearby styling, and buffered rendering to remove erase/redraw flicker.
 - Persistent brightness: 5/25/50/75/100%, default 50%; explicit apply writes NVS and storage failures are visible.
 - Passive UUID-filtered candidate scanning alongside mainnet GATT advertising. At most two subscribed peripheral links; mobiles initiate the BLE connection.
+- Private sessions are bounded to twelve peer/link records, independently of the two physical GATT links. User-initiated sends can start missing authentication; the unsent draft is retained for explicit retry.
 - Persistent Noise/signing identity, bounded v1/v2 codec, signed packets, raw-DEFLATE expansion, fragment reassembly, automatic Noise XX and authenticated peer-state binding.
 - Twelve signed peer records; candidate, signed-only, and Noise-authenticated statuses are distinct.
 - Twelve incoming/outgoing public/private messages in RAM, 192 displayed bytes each, paging and text scrolling. Unsupported display glyphs are substituted; malformed UTF-8 is rejected.
