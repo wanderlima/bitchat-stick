@@ -25,4 +25,4 @@ for i in 0..<names.count {
 }
 text("A confirm  ·  B up  ·  C down  ·  Hold B back  |  No hardware capture or messaging compatibility claim",50,1535,17)
 board.unlockFocus();save(board,"00-overview.jpg")
-print("Seventeen screen JPEGs and overview saved")
+print("\(files.count) screen/state JPEGs and overview saved")

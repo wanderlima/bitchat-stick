@@ -37,14 +37,17 @@ MessageComposer composer;
 Screen composeOrigin=Screen::Peers, editor=Screen::ShortMessages;
 size_t originSelection=0, editorSelection=0, reviewPage=0;
 bool originDetail=false, sendFailed=false;
+const char* sendFailure="Not sent";
+bool privateDraft=true;
 uint32_t queuedMessage=0;
 bool composing() {return screen==Screen::Reply||screen==Screen::ShortMessages||screen==Screen::Keyboard||screen==Screen::Confirm;}
 size_t reviewPages() {return (composer.length()+47)/48;}
 void openComposer(const uint8_t id[8],const char* name) {
   composeOrigin=screen;originSelection=selection;originDetail=detail;
-  composer.open(id,name);queuedMessage=0;sendFailed=false;reviewPage=0;
+  composer.open(id,name);privateDraft=true;queuedMessage=0;sendFailed=false;reviewPage=0;
   screen=Screen::Reply;selection=0;
 }
+void openPublicComposer(){const uint8_t id[8]{};openComposer(id,"#bluetooth");privateDraft=false;}
 void closeComposer() {
   composer.clear();screen=composeOrigin;selection=originSelection;detail=originDetail;queuedMessage=0;
 }
@@ -190,7 +193,7 @@ void draw(const PeerTable& peers, uint32_t now) {
   const char* title = "Home";
   switch (screen) {
     case Screen::Peers: title = "Nearby"; break;
-    case Screen::Channels: title = "Inbox"; break;
+    case Screen::Channels: title = detail ? "#bluetooth" : "Inbox"; break;
     case Screen::Messages: title = "Messages"; break;
     case Screen::Bot: title = "InfoBot"; break;
     case Screen::Settings: title = "Settings"; break;
@@ -200,10 +203,10 @@ void draw(const PeerTable& peers, uint32_t now) {
     case Screen::Diagnostics: title = "Diagnostics"; break;
     case Screen::Sound: title = "Sound"; break;
     case Screen::Joystick: title = "JoyC HAT"; break;
-    case Screen::Reply: title = "Reply"; break;
+    case Screen::Reply: title = privateDraft?"Reply":"Write"; break;
     case Screen::ShortMessages: title = "Short msgs"; break;
     case Screen::Keyboard: title = "Keyboard"; break;
-    case Screen::Confirm: title = queuedMessage ? "Queued" : "Confirm"; break;
+    case Screen::Confirm: title = queuedMessage ? "Queued" : sendFailed ? "Not sent" : "Confirm"; break;
     default: break;
   }
   label(title, 26, fg, 4, 127, &fonts::FreeMonoBold9pt7b);
@@ -270,6 +273,11 @@ void draw(const PeerTable& peers, uint32_t now) {
       break;
     }
     case Screen::Channels:
+      if(detail){
+        panel(54,50);label("Public chat",61,fg,13,109,compact);
+        std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,83,green,13,109,compact);
+        const char* actions[]={"Read chat","Write msg"};menu(actions,2,117,32);break;
+      }
       panel(54,76);item("#bluetooth",60,selection==0,26);
       label("Public chat",94,fg,13,109,compact);
       std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,112,green,13,109,compact);
@@ -301,7 +309,7 @@ void draw(const PeerTable& peers, uint32_t now) {
     case Screen::Reply: {
       panel(54,68,true);label(composer.recipientName,60,fg,13,109,compact);
       std::snprintf(value,sizeof(value),"%02x%02x%02x%02x",composer.recipient[0],composer.recipient[1],composer.recipient[2],composer.recipient[3]);
-      label(value,84,muted,13,109,compact);label("Private DM",103,green,13,109,compact);
+      label(privateDraft?value:"Public chat",84,muted,13,109,compact);label(privateDraft?"Private DM":"Everyone",103,green,13,109,compact);
       const char* options[]={"Short msg", "Keyboard"};menu(options,2,137,32);
       break;
     }
@@ -336,7 +344,7 @@ void draw(const PeerTable& peers, uint32_t now) {
     }
     case Screen::Confirm: {
       panel(54,44,true);label(composer.recipientName,58,fg,13,109,compact);
-      std::snprintf(value,sizeof(value),"%02x%02x%02x%02x",composer.recipient[0],composer.recipient[1],composer.recipient[2],composer.recipient[3]);label(value,79,muted,13,109,compact);
+      std::snprintf(value,sizeof(value),"%02x%02x%02x%02x",composer.recipient[0],composer.recipient[1],composer.recipient[2],composer.recipient[3]);label(privateDraft?value:"Public chat",79,muted,13,109,compact);
       if(selection<reviewPages()&&!queuedMessage)reviewPage=selection;
       panel(104,80);if(selection<reviewPages()&&!queuedMessage)d.drawRect(4,104,127,80,green);
       for(size_t row=0;row<4;++row){const size_t at=reviewPage*48+row*12,length=composer.length();if(at>=length)break;char part[13]{};std::memcpy(part,composer.draft+at,length-at>12?12:length-at);label(part,109+int(row)*18,fg,13,109,compact);}
@@ -346,7 +354,7 @@ void draw(const PeerTable& peers, uint32_t now) {
         const char* state=queued&&queued->delivery==DeliveryState::Read?"Read":queued&&queued->delivery==DeliveryState::Delivered?"Delivered":"Queued";
         label(state,185,green,13,109,compact);item("Done",213,true,22);
       }else{
-        if(sendFailed)label("Not sent",185,amber,13,109,compact);
+        if(sendFailed)label(sendFailure,185,amber,13,109,compact);
         else {std::snprintf(value,sizeof(value),"Text %u/%u",unsigned(reviewPage+1),unsigned(reviewPages()));label(value,185,muted,13,109,compact);}
         item("Send",201,selection==reviewPages(),18);item("Cancel",220,selection==reviewPages()+1,18);
       }
@@ -447,6 +455,7 @@ void draw(const PeerTable& peers, uint32_t now) {
   if(buffered) canvas.pushSprite(0,0);
 }
 void move(int direction, const PeerTable& peers) {
+  if(screen==Screen::Channels&&detail){selection=(selection+2+direction)%2;return;}
   if(composing()) {
     const size_t count=screen==Screen::Reply?2:screen==Screen::ShortMessages?MessageComposer::presetCount:screen==Screen::Keyboard?MessageComposer::keyCount:queuedMessage?1:reviewPages()+2;
     selection=(selection+count+direction)%count;return;
@@ -512,6 +521,7 @@ void updateUi(const PeerTable& peers, uint32_t now) {
       else if(screen==Screen::Confirm){screen=editor;selection=editorSelection;sendFailed=false;}
       else {selection=screen==Screen::Keyboard?1:0;screen=Screen::Reply;}
     }
+    else if(screen==Screen::Channels&&detail){detail=false;selection=0;}
     else if (detail && (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages)) detail = false;
     else if (settingsPageIndex(screen) >= 0) {
       selection = size_t(settingsPageIndex(screen));
@@ -521,6 +531,7 @@ void updateUi(const PeerTable& peers, uint32_t now) {
       screen = screen == Screen::Dashboard ? Screen::Splash :
                screen == Screen::Messages ? Screen::Channels : Screen::Dashboard;
       selection = directInbox ? 1 : 0;
+      if(screen==Screen::Channels)detail=!directInbox;
     }
   } else if (action == NavigationAction::Select) {
     if(screen==Screen::Reply){screen=selection==0?Screen::ShortMessages:Screen::Keyboard;selection=0;}
@@ -530,8 +541,8 @@ void updateUi(const PeerTable& peers, uint32_t now) {
       if(queuedMessage)closeComposer();
       else if(selection==reviewPages()+1)closeComposer();
       else if(selection==reviewPages()) {
-        if(mesh().sendDirect(composer.recipient,composer.draft)){queuedMessage=mesh().message(0)->sequence;selection=0;sendFailed=false;}
-        else sendFailed=true;
+        if(privateDraft?mesh().sendDirect(composer.recipient,composer.draft):mesh().sendText(composer.draft)){queuedMessage=mesh().message(0)->sequence;selection=0;sendFailed=false;}
+        else {sendFailed=true;sendFailure=privateDraft?mesh().sendStatus():"Link / queue";}
       }
     }
     else if(screen==Screen::Peers&&mesh().peerCount()) {
@@ -545,7 +556,11 @@ void updateUi(const PeerTable& peers, uint32_t now) {
     else if (screen == Screen::Dashboard) {
       const Screen destinations[] = {Screen::Peers, Screen::Channels, Screen::Bot, Screen::Settings};
       screen = destinations[selection]; selection = 0;
-    } else if (screen == Screen::Channels) { messageScope=selection==1?MessageScope::Direct:MessageScope::Public; screen = Screen::Messages; messageOffset=textLine=0; activeMessage=0; detail=false; }
+    } else if(screen==Screen::Channels){
+      if(!detail&&selection==0){detail=true;selection=0;}
+      else if(detail&&selection==1)openPublicComposer();
+      else {messageScope=detail?MessageScope::Public:MessageScope::Direct;screen=Screen::Messages;messageOffset=textLine=0;activeMessage=0;detail=false;}
+    }
     else if (screen == Screen::Bot && selection==kBotCommandCount) mesh().setBotEnabled(!mesh().botEnabled());
     else if (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages) { detail = !detail; textLine=0; }
     else if (screen == Screen::Settings) {

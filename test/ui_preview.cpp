@@ -46,4 +46,9 @@ int main(int argc, char** argv) {
     std::ofstream out((std::string(argv[1])+"/")+names[i]+".ops");
     for(const auto& op:M5.Display.ops) out<<op<<'\n';
   }
+  auto saveState=[&](const char* name){draw(peers,3000);assert(M5.Display.boundsOk);std::ofstream out(std::string(argv[1])+"/"+name+".ops");for(const auto& op:M5.Display.ops)out<<op<<'\n';};
+  screen=Screen::Channels;detail=true;selection=1;saveState("18-bluetooth-menu");
+  openPublicComposer();saveState("19-public-compose");
+  composer.preset(0);screen=Screen::ShortMessages;confirmDraft();saveState("20-public-confirm");
+
 }

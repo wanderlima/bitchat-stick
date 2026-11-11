@@ -65,9 +65,9 @@ int main() {
   press(1,true);press(2);press(0);assert(screen==Screen::Diagnostics && has("BLE 123") && has("Drop 2"));
   press(1,true);press(2);press(2);press(2);press(0);assert(screen==Screen::About && has("Wander Lima") && !has("SOON"));
   // Visit the remaining primary screens and detail states with the same controls.
-  screen=Screen::Channels;draw(table,tick);check();assert(has("#bluetooth") && has("Public chat") && !has("Mesh"));press(0);assert(screen==Screen::Messages);
+  screen=Screen::Channels;draw(table,tick);check();assert(has("#bluetooth") && has("Public chat") && !has("Mesh"));press(0);assert(screen==Screen::Channels&&detail&&has("Write msg"));press(0);assert(screen==Screen::Messages);
   press(1,true);assert(screen==Screen::Channels);
-  screen=Screen::Bot;selection=0;draw(table,tick);check();press(0);assert(detail);press(1,true);assert(!detail);
+  screen=Screen::Bot;selection=0;detail=false;draw(table,tick);check();press(0);assert(detail);press(1,true);assert(!detail);
   // Verify all presets, header error/idle states, and low/unknown battery rendering.
   screen=Screen::Brightness;
   for(size_t i=0;i<5;++i) { selection=i;draw(table,tick);check(); }
@@ -134,7 +134,7 @@ int main() {
 
   screen=Screen::Channels;selection=1;detail=false;draw(table,tick);check();assert(has("#bluetooth")&&has("Direct DMs"));
   press(0);assert(screen==Screen::Messages&&messageScope==MessageScope::Direct&&has("No messages")&&mesh().unreadCount()==1);
-  press(1,true);assert(screen==Screen::Channels&&selection==1);press(1);assert(selection==0);press(0);
+  press(1,true);assert(screen==Screen::Channels&&selection==1);press(1);assert(selection==0);press(0);press(0);
   assert(messageScope==MessageScope::Public&&has("Live")&&mesh().unreadCount()==0&&!unreadIcon());
   const uint32_t reading=activeMessage;longText[0]='y';inject(2,{longText,sizeof(longText)});draw(table,tick);check();
   assert(activeMessage==reading&&mesh().unreadCount()==1&&messageOffset==1); // Incoming text never steals the reader's focus.
@@ -192,6 +192,13 @@ int main() {
   screen=Screen::Messages;messageScope=MessageScope::Public;messageOffset=0;activeMessage=0;detail=true;draw(table,tick);
   press(0);assert(screen==Screen::Reply&&std::memcmp(composer.recipient,other.id(),8)==0);
   press(1,true);assert(screen==Screen::Messages&&detail);
+  // Public composition has an explicit channel target and never calls the DM path.
+  screen=Screen::Channels;detail=false;selection=0;press(0);assert(detail&&has("Write msg"));
+  press(2);press(0);assert(screen==Screen::Reply&&!privateDraft&&has("Public chat")&&has("#bluetooth"));
+  press(0);press(0);assert(screen==Screen::Confirm&&!privateDraft);press(0);assert(screen==Screen::Channels&&detail&&!composer.ready());
+  selection=1;press(0);press(0);press(0);assert(screen==Screen::Confirm);press(1);press(0);
+  assert(queuedMessage&&mesh().message(0)->outgoing&&!mesh().message(0)->privateMessage&&has("Done"));
+  press(0);assert(screen==Screen::Channels&&detail&&selection==1);press(1,true);assert(!detail&&screen==Screen::Channels);
   // Long confirmation pages and full keyboard drafts remain within 135x240.
   openComposer(other.id(),"A recipient with a long name");
   for(unsigned i=0;i<192;++i)composer.selectKey(0);
