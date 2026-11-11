@@ -5,6 +5,7 @@
 namespace fake_joyc {
 inline unsigned probes=0, releases=0, buttonReads=0;
 inline bool present=false, complete=true;
+inline uint8_t hardwareAddress=0x54;
 inline uint8_t axes[2]={0,0}, button=1, selected=0;
 inline uint8_t led[3]={0,0,0};
 }

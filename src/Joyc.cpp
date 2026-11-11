@@ -1,26 +1,36 @@
 #include "Joyc.h"
-#include <M5GFX.h>
+#include <M5Unified.h>
 
 namespace stick {
 namespace {
 // Mini JoyC U156: HAT SDA G0/SCL G26, separate from the Plus2 internal RTC bus.
-constexpr uint8_t address = 0x54;
+uint8_t address = 0x54;
+bool classic = false, detected = false;
 constexpr uint8_t position = 0x20; // Each axis requires its own one-byte transaction.
 constexpr uint32_t sampleInterval = 20, retryInterval = 1000;
-// A software port avoids the Arduino hardware-I2C driver and its locks.
-constexpr int bus = -1;
+// Use the same M5Unified controller and STOP/read sequence as the working Nemo project.
 JoycSample sample;
 bool initialized = false, polled = false;
 uint32_t lastPoll = 0;
 
 int16_t signedAxis(int raw) { return raw < 128 ? raw : raw - 256; }
+bool ping(uint8_t candidate) {
+  if (!M5.Ex_I2C.start(candidate, false, 100000)) return false;
+  return M5.Ex_I2C.stop();
+}
 bool readRegister(uint8_t reg, uint8_t& value) {
-  return lgfx::i2c::transactionWrite(bus, address, &reg, 1, 100000).has_value()
-      && lgfx::i2c::transactionRead(bus, address, &value, 1, 100000).has_value();
+  if (!M5.Ex_I2C.start(address, false, 100000)) return false;
+  const bool selected = M5.Ex_I2C.write(reg);
+  const bool selectStopped = M5.Ex_I2C.stop();
+  if (!selected || !selectStopped || !M5.Ex_I2C.start(address, true, 100000)) return false;
+  const bool received = M5.Ex_I2C.read(&value, 1, true);
+  const bool readStopped = M5.Ex_I2C.stop();
+  return received && readStopped;
 }
 void recoverBus() {
-  lgfx::i2c::release(bus);
+  M5.Ex_I2C.release();
   initialized = false;
+  detected = false;
 }
 }
 
@@ -30,33 +40,54 @@ JoycSample pollJoyc(uint32_t now, bool readButton) {
   lastPoll = now;
   sample = {};
   if (!initialized) {
-    initialized = lgfx::i2c::init(bus, 0, 26).has_value();
+    initialized = M5.Ex_I2C.begin(I2C_NUM_0, 0, 26);
     if (!initialized) return sample;
+  }
+  if (!detected) {
+    if (ping(0x54)) {
+      address = 0x54;
+      classic = false;
+    } else if (ping(0x38)) {
+      address = 0x38;
+      classic = true;
+    } else {
+      recoverBus();
+      return sample;
+    }
+    detected = true;
   }
   uint8_t axes[2]{};
   for (uint8_t axis = 0; axis < 2; ++axis) {
-    if (!readRegister(position + axis, axes[axis])) {
+    if (!readRegister((classic ? 0x60 : position) + axis, axes[axis])) {
       recoverBus();
       return sample;
     }
   }
-  const int x = axes[0], y = axes[1];
-  sample.x = signedAxis(x);
-  sample.y = signedAxis(y);
+  const int x = classic ? int(axes[0]) - 100 : signedAxis(axes[0]);
+  const int y = classic ? int(axes[1]) - 100 : signedAxis(axes[1]);
+  // Physical Plus2 check: raw X increases right; raw Y increases upward.
+  sample.x = x < -127 ? -127 : (x > 127 ? 127 : x);
+  sample.y = -y;
+  if (sample.y > 127) sample.y = 127;
+  if (sample.y < -127) sample.y = -127;
   sample.valid = true;
   if (readButton) {
     uint8_t button = 1;
-    if (readRegister(0x30, button) && button <= 1) {
+    if (readRegister(classic ? 0x64 : 0x30, button) && (classic || button <= 1)) {
       sample.buttonValid = true;
-      sample.pressed = button == 0;
+      sample.pressed = classic ? (button & 0x11) != 0 : button == 0;
     } else recoverBus();
   }
   return sample;
 }
 bool setJoycLed(uint8_t brightness) {
   if (!initialized || !sample.valid) return false;
-  const uint8_t payload[] = {0x40, 0, brightness, 0};
-  if (lgfx::i2c::transactionWrite(bus, address, payload, sizeof(payload), 100000).has_value()) return true;
+  const uint8_t payload[] = {uint8_t(classic ? 0x20 : 0x40), 0, brightness, 0};
+  if (M5.Ex_I2C.start(address, false, 100000)) {
+    const bool written = M5.Ex_I2C.write(payload, sizeof(payload));
+    const bool stopped = M5.Ex_I2C.stop();
+    if (written && stopped) return true;
+  }
   sample = {};
   recoverBus();
   return false;

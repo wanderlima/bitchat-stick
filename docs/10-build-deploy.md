@@ -40,7 +40,7 @@ Use the corresponding local path on another computer. Subsequent commands assume
 | Physical flash setting | 8 MB |
 | Application partition | 6 MiB factory, from `partitions.csv` |
 | PSRAM | Enabled through flags |
-| Libraries | M5Unified 0.3.0, M5GFX 0.3.0, NimBLE-Arduino 2.5.0 |
+| Libraries | M5Unified 0.2.8, M5GFX 0.2.36, NimBLE-Arduino 2.5.0 |
 | Upload speed | 460800 baud |
 | Serial monitor speed | 115200 baud |
 

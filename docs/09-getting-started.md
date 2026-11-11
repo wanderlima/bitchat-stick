@@ -33,8 +33,8 @@ Private-message sending, media/groups, arbitrary encrypted channels, Nostr, goss
 | PlatformIO Core used for validation | 6.1.19 |
 | espressif32 platform | 6.9.0 |
 | Arduino-ESP32 | 2.0.17, resolved package `3.20017.241212+sha.dcc1105b` |
-| M5Unified | 0.3.0 |
-| M5GFX | 0.3.0 |
+| M5Unified | 0.2.8 |
+| M5GFX | 0.2.36 |
 | NimBLE-Arduino | 2.5.0 |
 | Xtensa GCC | `8.4.0+2021r2-patch5` |
 

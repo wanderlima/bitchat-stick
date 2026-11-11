@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <M5GFX.h>
 constexpr uint16_t TFT_BLACK=0, TFT_WHITE=0xffff, TFT_YELLOW=0xffe0, TFT_RED=0xf800;
 namespace lgfx {
 struct IFont { int height; int kind; };
@@ -84,7 +85,44 @@ struct FakeSpeaker {
  bool tone(float frequency,uint32_t duration,int,bool){tones.push_back({frequency,duration});return true;}
  void stop(int){++stops;}
 };
-struct FakeM5 { FakeDisplay Display; FakeSpeaker Speaker; FakeButton BtnA,BtnB,BtnPWR; FakePower Power; };
+constexpr int I2C_NUM_0=0;
+struct FakeI2C {
+  bool reading=false, open=false;
+  bool begin(int port,int sda,int scl) {
+    assert(port==0&&sda==0&&scl==26);
+    return true;
+  }
+  bool start(uint8_t address,bool read,uint32_t frequency) {
+    assert(!open&&frequency==100000&&(address==0x54||address==0x38));
+    reading=read;
+    if(!read)++fake_joyc::probes;
+    open=fake_joyc::present&&address==fake_joyc::hardwareAddress;
+    return open;
+  }
+  bool write(uint8_t reg) {
+    assert(open&&!reading);
+    fake_joyc::selected=reg;
+    return true;
+  }
+  bool write(const uint8_t* bytes,size_t size) {
+    assert(open&&!reading&&size==4&&(bytes[0]==0x40||bytes[0]==0x20));
+    for(unsigned i=0;i<3;++i)fake_joyc::led[i]=bytes[i+1];
+    return true;
+  }
+  bool read(uint8_t* out,size_t size,bool lastNack) {
+    assert(open&&reading&&size==1&&lastNack);
+    if(!fake_joyc::complete)return false;
+    const auto reg=fake_joyc::selected;
+    if(reg==0x20||reg==0x21)out[0]=fake_joyc::axes[reg-0x20];
+    else if(reg==0x60||reg==0x61)out[0]=fake_joyc::axes[reg-0x60];
+    else {assert(reg==0x30||reg==0x64);++fake_joyc::buttonReads;out[0]=fake_joyc::button;}
+    return true;
+  }
+  bool stop(){open=false;return true;}
+  bool release(){open=false;++fake_joyc::releases;return true;}
+};
+
+struct FakeM5 { FakeI2C Ex_I2C; FakeDisplay Display; FakeSpeaker Speaker; FakeButton BtnA,BtnB,BtnPWR; FakePower Power; };
 inline FakeM5 M5;
 struct FakeESP { unsigned getFreeHeap() { return 123456; } };
 inline FakeESP ESP;
