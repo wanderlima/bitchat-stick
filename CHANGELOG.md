@@ -20,6 +20,8 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 ### Changed
 
+- Renamed the navigation page from Inbox to Channels; #bluetooth and Direct DMs retain their existing behavior.
+
 - Public inbox is named #bluetooth again and distinguishes public chat from Direct DMs, with unread counts and a global header envelope.
 - Settings places About last and retains five brightness presets: 5%, 25%, 50%, 75% and 100%.
 - M5GFX and M5Unified are pinned to 0.2.36 and 0.2.8 respectively, aligned with the supplied working HAT reference. RTC writes are verified through readback for that API.

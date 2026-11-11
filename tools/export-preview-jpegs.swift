@@ -15,7 +15,7 @@ func text(_ text:String,_ x:CGFloat,_ y:CGFloat,_ size:CGFloat,_ bold:Bool=false
 text("BITCHAT STICK",48,31,38,true)
 text("FreeMono / cream #EBDCBA / 135 × 240 / simulated data",50,86,19)
 let names=["07-splash","01-dashboard","02-nearby-peers","03-channels","04-channel-messages","05-infobot","06-settings","08-brightness","10-battery","09-about","11-diagnostics","12-sound","13-joyc-hat","14-reply","15-short-messages","16-keyboard","17-confirm"]
-let titles=["START","HOME","NEARBY","INBOX","MESSAGES","INFOBOT","SETTINGS","BRIGHTNESS","BATTERY","ABOUT","DIAGNOSTICS","SOUND","JOYC HAT","REPLY","SHORT MESSAGES","KEYBOARD","CONFIRM"]
+let titles=["START","HOME","NEARBY","CHANNELS","MESSAGES","INFOBOT","SETTINGS","BRIGHTNESS","BATTERY","ABOUT","DIAGNOSTICS","SOUND","JOYC HAT","REPLY","SHORT MESSAGES","KEYBOARD","CONFIRM"]
 for i in 0..<names.count {
  let x=CGFloat(50+(i%6)*360),y=CGFloat(145+(i/6)*470)
  text(titles[i],x,y,16,true)

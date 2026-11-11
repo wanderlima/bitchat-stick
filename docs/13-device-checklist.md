@@ -4,6 +4,8 @@ Updated: **2026-11-11**. Device name: **Bitchat Stick**. Supported context: publ
 
 ## Evidence already recorded
 
+- [x] Owner confirmed DM recovery and new public writing in #bluetooth after the session-pool correction.
+
 - [x] Production target builds and uploads with image hash verification.
 - [x] Native regression suites cover protocol, crypto/Noise vectors, persistence, mesh, UI and GATT bounds.
 - [x] Reproduced startup reboot loop fixed by pausing scanning during GATT registration.
@@ -61,8 +63,8 @@ Updated: **2026-11-11**. Device name: **Bitchat Stick**. Supported context: publ
 
 Use your own test phones and synthetic content. Public BLE messages are visible to nearby participants.
 
-- [ ] In Inbox, verify **#bluetooth** and **Direct DMs** are separate. The public inbox is the shared local conversation, not a room created by the Stick.
-- [ ] From Android, send a unique public message such as `android-stick-001` in #bluetooth; it appears in Inbox → #bluetooth on the Stick.
+- [ ] In Channels, verify **#bluetooth** and **Direct DMs** are separate. The public inbox is the shared local conversation, not a room created by the Stick.
+- [ ] From Android, send a unique public message such as `android-stick-001` in #bluetooth; it appears in Channels → #bluetooth on the Stick.
 - [ ] Repeat from iPhone with `ios-stick-001`. Verify sender name and actual content.
 - [ ] B/C changes message; A enters text scrolling; B/C scrolls long text; hold-B leaves detail, then Messages.
 - [ ] Send long text, accents and emoji: no crash, unsupported display glyphs are substituted, and truncation is indicated when applicable.
@@ -75,7 +77,7 @@ Use your own test phones and synthetic content. Public BLE messages are visible 
 ## 4a. Private-message reader
 
 - [ ] Wait for **Noise auth**, then send a new DM from Android directly to **Bitchat Stick**.
-- [ ] Open Inbox → Direct DMs: the message appears with a **DM** label and correct sender/content.
+- [ ] Open Channels → Direct DMs: the message appears with a **DM** label and correct sender/content.
 - [ ] Before opening the DM on the Stick, Android should show delivered only. Opening it sends the encrypted read receipt; verify Android changes to read within a few seconds while connected.
 - [ ] Repeat from iPhone; test long text and reconnect. Earlier DMs sent before the update are not automatically recovered.
 - [ ] Send `!info` as a DM: it is displayed privately and receives a private InfoBot reply, never a public reply.
@@ -108,5 +110,5 @@ See [InfoBot usage](15-infobot.md) for the changed public/private command gates,
 
 - [ ] With a connected phone, retry DM Send. If Connecting appears, wait for authentication and explicitly retry; record the final reason if it fails.
 - [ ] Repeat with at least three discovered identities and verify actual delivery in both directions.
-- [ ] Inbox → #bluetooth → Write msg sends new public text; per-user Reply remains private.
+- [ ] Channels → #bluetooth → Write msg sends new public text; per-user Reply remains private.
 - [ ] Cancel a public draft: no transmission; return to Read chat/Write msg with the previous focus.

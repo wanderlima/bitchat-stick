@@ -15,7 +15,7 @@ Updated: **2026-11-11**. English (en-US) firmware v0.2.0. Source implementation 
 | 7 | Home | Candidate/peer/unread totals, relay state, live header | State transitions, no erase/redraw flicker |
 | 8 | Nearby | Filtered candidates, signed peers, Noise authentication, stable candidate selection, IDs/details | Android/iOS foreground/background/reconnect behavior |
 | 9 | Messages | Signed public and authenticated private input, bounded history, paging and text scrolling | Real text, Unicode substitution, truncation, reconnect |
-| 10 | Inbox | Public #bluetooth and Direct DMs, unread counts and reply entry | Offline context and controlled indirect forwarding |
+| 10 | Channels | Public #bluetooth and Direct DMs, unread counts and reply entry | Offline context and controlled indirect forwarding |
 | 11 | InfoBot | Authenticated fresh commands, reply limits, ON/OFF control, welcomes OFF | Cross-platform replies, cooldown, no reply loops |
 | 12 | Sound | Persistent independent interaction/DM/channel checkboxes | Buzzer audibility and incoming alert behavior |
 | 13 | JoyC HAT | Corrected axes, optional click/LED, release-to-arm and repeat rules | Click/LED edge cases; directions confirmed by owner |
@@ -52,4 +52,4 @@ Each implementation group is committed separately; no push is part of this work.
 - **XL:** Nostr/internet contexts, OTA, persistent/out-of-band peer trust and secure-storage provisioning.
 - **Conditional:** welcomes only after an authoritative, tested entry signal exists. Reappearance, a BLE advert or a reconnect is insufficient.
 
-Completed implementation group: authenticated DM sending, delivery/read correlation, four-screen composer from Nearby/Inbox, bounded QWERTY/canned replies and confirmation/cancellation. The owner confirmed the installed sending flow worked well on 2026-11-11. Phone platform, individual input paths and receipt states were not specified; remaining detailed checks are in [the composer checklist](14-direct-message-composer.md).
+Completed implementation group: authenticated DM sending, delivery/read correlation, four-screen composer from Nearby/Channels, bounded QWERTY/canned replies and confirmation/cancellation. The owner confirmed the installed sending flow worked well on 2026-11-11. Phone platform, individual input paths and receipt states were not specified; remaining detailed checks are in [the composer checklist](14-direct-message-composer.md).

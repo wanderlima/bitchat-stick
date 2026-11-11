@@ -24,7 +24,7 @@ Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Fi
 | A held ≥700ms | Reserved; no confirmation on release |
 | C held ≥700ms | No down action on release; six-second hold retains power off |
 
-Messages returns to Inbox on hold-B. Splash leaves on short-A or JoyC right. Short physical-button actions occur on release, with no auto-repeat. The first press after the 30-second screen timeout only wakes the display; navigation stays suppressed until all buttons are released. Scanning continues on its normal schedule. Brightness is restored from a versioned NVS record on boot; invalid/missing records use 50%. Only explicit confirmations write flash; known unchanged saved values are skipped, while invalid/unknown records are repaired. Failed saves show `Not saved / RAM only` in Settings.
+Messages returns to Channels on hold-B. Splash leaves on short-A or JoyC right. Short physical-button actions occur on release, with no auto-repeat. The first press after the 30-second screen timeout only wakes the display; navigation stays suppressed until all buttons are released. Scanning continues on its normal schedule. Brightness is restored from a versioned NVS record on boot; invalid/missing records use 50%. Only explicit confirmations write flash; known unchanged saved values are skipped, while invalid/unknown records are repaired. Failed saves show `Not saved / RAM only` in Settings.
 
 ## Optional Mini JoyC HAT
 
@@ -48,8 +48,8 @@ Diagnostics shows `J:X,Y` when the HAT responds. It exposes the module's calibra
 | Start | Name, shared controls, A enters Home | Final logo remains a design asset task |
 | Home | Advertisement candidates, signed-peer/unread counts, envelope, real relay/transport state | Counts do not prove channel membership |
 | Nearby | Signed peers take priority when available; otherwise filtered candidates; A opens ID/address details | Signed-only and Noise-authenticated statuses are distinct; RSSI belongs only to observations |
-| Inbox | Separate #bluetooth and Direct DMs destinations with unread counts; A opens the selected history | No private groups or Nostr context |
-| Messages | Twelve-entry public/DM live history with BLE/DM labels; B/C cycle messages; A opens text-scroll mode; B/C scroll; A again replies; hold-B leaves detail, then returns to Inbox | RAM-only, 192 displayed bytes, truncation indicated; replies use a live authenticated session |
+| Channels | Separate #bluetooth and Direct DMs destinations with unread counts; A opens the selected history | No private groups or Nostr context |
+| Messages | Twelve-entry public/DM live history with BLE/DM labels; B/C cycle messages; A opens text-scroll mode; B/C scroll; A again replies; hold-B leaves detail, then returns to Channels | RAM-only, 192 displayed bytes, truncation indicated; replies use a live authenticated session |
 | InfoBot | Command reference, authentication readiness, immediate Bot ON/OFF switch | Toggle is per boot; Welcome OFF |
 | Settings | Brightness, Battery, Diagnostics, Sound, JoyC HAT, About | Choices use compact rows |
 | Sound | Independent Interact, DM alert and Channel square checkboxes | All default off |
@@ -111,7 +111,7 @@ The **95 × 95px** QR points to **https://github.com/wanderlima/bitchat-stick**.
 
 The [seventeen JPEG previews](screens/README.md) are generated from current drawing calls and pinned font bitmaps, using simulated measurements. They are not hardware screenshots or protocol evidence. The host UI regression checks controls, applied-versus-focused brightness, all screens, live status, ordinary/candidate/empty peers, large counters and text/rectangle bounds. Physical readability, battery behavior, radio scanning, and QR camera reading need a device pass after upload.
 
-## Inbox and read state
+## Channels and read state
 
 **#bluetooth** is the apps' existing public local mesh, not a new room created by the Stick. Multiple nearby participants share it. **Direct DMs** filters private messages addressed to the Stick. The shared header, including Start, shows an envelope whenever a retained incoming message is unread; Home and each inbox show counts. Viewing one message marks only that entry read. Incoming messages do not replace the message currently being read.
 
@@ -129,7 +129,7 @@ The driver follows the local working Nemo reference's M5Unified transaction sequ
 
 ## Private composer — four additional screens
 
-Nearby A selects the currently displayed identified user. Inbox A opens the text reader; A again starts a private reply to that message's user. Reply offers Short msg/Keyboard; Short msgs provides 32 ready-made English messages with a sliding five-row viewport and scrollbar; Keyboard puts the draft above a compact QWERTY layout; Confirm shows the recipient and paged draft, then Send/Cancel. Cancel is initially selected.
+Nearby A selects the currently displayed identified user. Channels A opens the text reader; A again starts a private reply to that message's user. Reply offers Short msg/Keyboard; Short msgs provides 32 ready-made English messages with a sliding five-row viewport and scrollbar; Keyboard puts the draft above a compact QWERTY layout; Confirm shows the recipient and paged draft, then Send/Cancel. Cancel is initially selected.
 
 B/C and JoyC up/down traverse the keyboard in reading order. A/right selects, left/hold-B backs out one step. ABC/123/abc switches case/numbers, SP inserts a space, DEL removes the last character, and OK opens confirmation. The confirmation text pages participate in the same focus cycle as Send and Cancel, allowing the full 192-character draft to be reviewed.
 
@@ -143,4 +143,4 @@ The public inbox is named #bluetooth again, with Public chat as its subtitle. Ho
 
 ## Public writing and DM recovery
 
-Inbox → #bluetooth now has Read chat/Write msg actions. Write msg opens the shared method/preset/keyboard/confirmation flow with an explicit public target. Existing per-user Reply remains private. A failed private send shows Not sent as the heading and its reason below: Connecting, Peer gone, or Link / queue. Connecting retains the draft and starts negotiation; the user must retry Send after authentication.
+Channels → #bluetooth now has Read chat/Write msg actions. Write msg opens the shared method/preset/keyboard/confirmation flow with an explicit public target. Existing per-user Reply remains private. A failed private send shows Not sent as the heading and its reason below: Connecting, Peer gone, or Link / queue. Connecting retains the draft and starts negotiation; the user must retry Send after authentication.

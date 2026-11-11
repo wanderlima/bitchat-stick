@@ -36,7 +36,7 @@ The preferred fallback is a user-requested `!info` response, not unsolicited mes
 
 ## Initial Pocket Messenger — implemented
 
-Nearby/Inbox entry, 32 short replies, a compact QWERTY editor, and explicit recipient/text confirmation are implemented. B/C navigate, A selects, and hold B returns/cancels; JoyC uses the same actions. Opening a message or choosing a phrase never transmits it. See [the composer](14-direct-message-composer.md).
+Nearby/Channels entry, 32 short replies, a compact QWERTY editor, and explicit recipient/text confirmation are implemented. B/C navigate, A selects, and hold B returns/cancels; JoyC uses the same actions. Opening a message or choosing a phrase never transmits it. See [the composer](14-direct-message-composer.md).
 
 ## Current InfoBot control
 

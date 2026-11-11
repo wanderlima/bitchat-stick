@@ -16,7 +16,7 @@ Firmware **v0.2.0**, English (en-US). Source implementation and physical accepta
 - Authenticated, recent public InfoBot commands and rate limits; immediate on-device Bot ON/OFF switch. This switch resets to ON at reboot; brightness and local identity persist.
 - Real repository QR, Wander Lima credits, BLE/heap/uptime counters and UTC RTC status. Serial telemetry contains counters, not message bodies or private keys.
 - Separate #bluetooth/Direct DMs inboxes, header unread envelope and per-message read state. Opening a DM schedules its encrypted read receipt; unopened messages remain unread.
-- Private composer from Nearby/Inbox: 32 scrolling short messages, QWERTY with case/numbers, 192-character drafts, explicit Send/Cancel, authenticated sending and delivery/read correlation.
+- Private composer from Nearby/Channels: 32 scrolling short messages, QWERTY with case/numbers, 192-character drafts, explicit Send/Cancel, authenticated sending and delivery/read correlation.
 - Persistent independent Sound/JoyC checkboxes, optional center click and LED pulse; About is last in Settings.
 
 ## Confirmed hardware evidence
@@ -110,7 +110,7 @@ The table test covers updates, address-type distinction, bounds/oldest replaceme
 | A short | Confirm/open; show/close detail; change selected brightness |
 | B short | Up / previous observation |
 | C short (`M5.BtnPWR`) | Down / next observation |
-| B held ≥700 ms | Back once; Messages→Inbox; Settings sub-screens→Settings; details→list; other pages→Home; Home→Start |
+| B held ≥700 ms | Back once; Messages→Channels; Settings sub-screens→Settings; details→list; other pages→Home; Home→Start |
 | A held ≥700 ms | Reserved; no confirmation on release |
 | C held ≥700 ms | No down action; 6-second hold retains power off |
 

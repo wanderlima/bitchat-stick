@@ -45,15 +45,15 @@ The interface uses FreeMono Regular/Bold, warm cream `#EBDCBA` instead of pure w
 
 ## Live features and remaining scope
 
-- Home, Nearby, Inbox, Messages, InfoBot, Settings, Brightness, Battery, About, and Diagnostics use real firmware state.
+- Home, Nearby, Channels, Messages, InfoBot, Settings, Brightness, Battery, About, and Diagnostics use real firmware state.
 - Nearby distinguishes service-advertisement candidates, signed peers, and Noise-authenticated peers. A signed name is not an out-of-band verified human identity.
-- Inbox separates **#bluetooth** (the shared public BLE `#bluetooth` context) and **Direct DMs** (private messages addressed to this Stick). It does not create a new channel. Messages reads signed public text and authenticated DMs, with explicit BLE/DM labels. It keeps twelve RAM-only entries, with message paging and text scrolling; at most 192 bytes are rendered per entry, with an explicit truncation mark.
+- Channels separates **#bluetooth** (the shared public BLE `#bluetooth` context) and **Direct DMs** (private messages addressed to this Stick). It does not create a new channel. Messages reads signed public text and authenticated DMs, with explicit BLE/DM labels. It keeps twelve RAM-only entries, with message paging and text scrolling; at most 192 bytes are rendered per entry, with an explicit truncation mark.
 - Signed public announcements and text are verified, deduplicated, and eligible for TTL-limited forwarding without echoing the ingress link. Queue acceptance is not a delivery acknowledgement.
 - InfoBot supports `!info`, `!rules`, `!help`, and `!about`, plus `!regras`/`!ajuda` aliases. Signed public commands receive public replies; authenticated DMs receive private replies. A three-second peer limit and one-second global limit prevent reply floods. The InfoBot screen shows its latest reply/block status. See [usage and troubleshooting](docs/15-infobot.md). The on-device `Bot: ON/OFF` switch applies immediately for the current boot.
 - Public channel-join greetings remain OFF because discovery/reconnection does not reliably prove channel entry. With Bot ON, the first fresh authenticated DM from each person receives a private introduction explaining !help/!about, once per boot for up to 32 identities.
 - An envelope in the header indicates unread incoming messages. Home and each inbox show unread counts; opening a DM sends an encrypted read receipt. New arrivals preserve the current reading position. Unread state is RAM-only.
-- Inbox → #bluetooth offers Read chat and Write msg; public drafts show the channel explicitly and use signed public sending. Replying to a user remains private.
-- Nearby users and Inbox messages open a private composer: 32 scrolling Short msg presets or a QWERTY keyboard, then Send/Cancel. Drafts are bounded to 192 ASCII characters. Sending requires an authenticated live session; Queued, Delivered and Read are distinct states. See the [composer and device checklist](docs/14-direct-message-composer.md).
+- Channels → #bluetooth offers Read chat and Write msg; public drafts show the channel explicitly and use signed public sending. Replying to a user remains private.
+- Nearby users and Channels messages open a private composer: 32 scrolling Short msg presets or a QWERTY keyboard, then Send/Cancel. Drafts are bounded to 192 ASCII characters. Sending requires an authenticated live session; Queued, Delivered and Read are distinct states. See the [composer and device checklist](docs/14-direct-message-composer.md).
 - Drawing uses a 135 × 240 offscreen framebuffer before updating the display, avoiding the visible erase/redraw cycle.
 
 Private media, private groups, Nostr, gossip/history synchronization, arbitrary routed Noise forwarding, OTA, persistent chat history remain future scope. See the [wire contract and security limits](docs/12-wire-contract.md) and [current implementation plan](docs/11-implementation-plan.md).

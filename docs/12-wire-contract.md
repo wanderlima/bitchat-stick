@@ -121,7 +121,7 @@ Noise payload type `0x01` is decoded as the official private-text TLV packet: on
 
 A successful store sends an encrypted `0x03` delivered receipt carrying the original message ID. Retransmissions can be acknowledged without duplicating history. Receipt means received/stored, not read. No DM is sent to the public relay or InfoBot. Private media/groups, courier envelopes and DM composition remain unsupported. Native tests cover private decoding, receipts, re-encrypted duplicates, malformed TLVs and isolation of `!info` inside a DM.
 
-## Inbox, unread state and read receipts
+## Channels, unread state and read receipts
 
 Each retained message has a local sequence ID and unread flag; public/private filters share the twelve-entry bound. Outgoing messages start read. The unread envelope/counts derive from retained incoming entries, so overwriting history also removes its old unread entry. UI focus follows the sequence ID rather than a shifting ring offset. Opening the wrong inbox or remaining on Home does not mark a DM read.
 

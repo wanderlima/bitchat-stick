@@ -153,3 +153,7 @@ The owner reported DM sending/receiving stopped while public chat continued. A y
 The session pool is now bounded to twelve, orphaned sessions are released and explicit DM sends initiate missing authentication while retaining the draft. Detailed send status distinguishes Connecting, expired peers and link/queue failures. Counter-only USB diagnostics report received writes/public/DM totals, transmit queue/notifies, clock and selected rejection reasons. No message bodies or keys are logged.
 
 Nineteen native suites and independent CryptoKit verification passed; the target built and uploaded with hash verification (990,336 bytes). UI tests exercise the new public Read chat/Write msg path, explicit public confirmation, actual public dispatch and cancellation without converting user replies to public traffic. Three additional software-rendered states were inspected. A post-upload observation found the loop/HAT active and heap stable at 137,088 bytes, but no phone was connected during that observation. Actual DM recovery and public reception await the owner's retry.
+
+## Owner confirmation and Channels label — 2026-11-11
+
+In response to the requested DM and #bluetooth Write msg checks, the owner confirmed that both worked correctly. This closes the general recovery/public-writing acceptance for the tested setup; no separate Android/iOS, endurance or all-peer receipt result is inferred. The navigation label was subsequently renamed from Inbox to Channels; public/private destinations and controls are unchanged.

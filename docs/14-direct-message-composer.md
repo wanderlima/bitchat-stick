@@ -2,7 +2,7 @@
 
 ## Scope and acceptance
 
-Selecting an identified user in Nearby or replying to a message in Inbox opens the private-message flow. Inbox → #bluetooth → Write msg opens a new public message using the same editor screens. Read chat opens the public history. BLE advertisements alone are not a verified user and keep their existing inspection view. The recipient is copied by its eight-byte peer ID; changing list order or arriving messages must never change it.
+Selecting an identified user in Nearby or replying to a message in Channels opens the private-message flow. Channels → #bluetooth → Write msg opens a new public message using the same editor screens. Read chat opens the public history. BLE advertisements alone are not a verified user and keep their existing inspection view. The recipient is copied by its eight-byte peer ID; changing list order or arriving messages must never change it.
 
 Four screens use the existing cream/green FreeMono style and 135×240 portrait display:
 
@@ -42,7 +42,7 @@ On 2026-11-11, the owner reported that the installed message-sending flow worked
 
 - [ ] Nearby → user → Short msg → scroll through movement/help presets → Cancel sends nothing.
 - [ ] Nearby → user → Short msg → Send arrives in the intended Android DM.
-- [ ] Inbox → open DM → Reply → Keyboard → type, switch case/numbers, space/delete → Done → Send arrives on iOS.
+- [ ] Channels → open DM → Reply → Keyboard → type, switch case/numbers, space/delete → Done → Send arrives on iOS.
 - [ ] New inbound messages while composing do not change recipient/draft.
 - [ ] Disconnect before Send: failure shown, draft retained; reconnect/authenticate and retry.
 - [ ] Queued changes only after an authenticated delivery/read receipt; duplicate confirmation does not send twice.
@@ -57,7 +57,7 @@ A known user without an authenticated session now triggers negotiation when Send
 
 The private-session pool now matches the twelve-peer table rather than the two physical BLE connections. Expired/orphaned sessions are released. The two-session configuration was reproduced failing a three-identity regression; the twelve-session configuration passes it. This source-level correction does not by itself confirm a particular phone exchange.
 
-Inbox → #bluetooth offers Read chat and Write msg. Public confirmation shows #bluetooth and Public chat, never a peer ID. Reply from a received message still selects that sender privately. Cancel returns to the original menu. Queued is not delivered; public messages have no private delivered/read receipt.
+Channels → #bluetooth offers Read chat and Write msg. Public confirmation shows #bluetooth and Public chat, never a peer ID. Reply from a received message still selects that sender privately. Cancel returns to the original menu. Queued is not delivered; public messages have no private delivered/read receipt.
 
 - [ ] With at least three discovered users, select a signed-only user and try a DM. If Connecting appears, allow negotiation and retry Send; confirm actual phone reception.
 - [ ] Receive a fresh DM and verify body, receipt and introduction behavior after recovery.

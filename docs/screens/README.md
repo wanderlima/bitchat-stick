@@ -22,7 +22,7 @@ The current revision restores grouped panels, the green Nearby card and left bor
 
 ![Nearby green observation card](02-nearby-peers.jpg)
 
-## Inbox
+## Channels
 
 ![Mesh and Direct DMs inboxes](03-channels.jpg)
 
@@ -100,4 +100,4 @@ Recipient and draft in these renders are synthetic. The firmware does not seed m
 
 ![Public destination confirmation](20-public-confirm.jpg)
 
-These are additional states of the existing Inbox/composer screens, rather than new top-level screens.
+These are additional states of the existing Channels/composer screens, rather than new top-level screens.
