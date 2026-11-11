@@ -10,6 +10,7 @@
 #include "Joyc.h"
 #include "Feedback.h"
 #include "MessageComposer.h"
+#include "InfoBot.h"
 #include <M5Unified.h>
 #include "assets/UiBitmaps.h"
 #include "assets/UiFonts.h"
@@ -269,8 +270,8 @@ void draw(const PeerTable& peers, uint32_t now) {
       break;
     }
     case Screen::Channels:
-      panel(54,76);item("Mesh",60,selection==0,26);
-      label("#bluetooth",94,fg,13,109,compact);
+      panel(54,76);item("#bluetooth",60,selection==0,26);
+      label("Public chat",94,fg,13,109,compact);
       std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,112,green,13,109,compact);
       panel(140,76);item("Direct DMs",146,selection==1,26);
       label("Private text",180,fg,13,109,compact);
@@ -307,7 +308,10 @@ void draw(const PeerTable& peers, uint32_t now) {
     case Screen::ShortMessages: {
       label(composer.recipientName,55,green,4,127,compact);
       std::snprintf(value,sizeof(value),"%u/%u",unsigned(selection+1),unsigned(MessageComposer::presetCount));label(value,76,muted,4,127,compact);
-      const size_t first=(selection/5)*5;
+      const size_t first=selection<5?0:selection-4;
+      const int thumb=123*5/int(MessageComposer::presetCount);
+      surface().fillRect(132,101,2,123,headerBorder);
+      surface().fillRect(132,101+int(first)*(123-thumb)/int(MessageComposer::presetCount-5),2,thumb,fg);
       panel(96,133);
       for(size_t row=0;row<5 && first+row<MessageComposer::presetCount;++row) {
         const int top=101+int(row)*25;
@@ -349,23 +353,20 @@ void draw(const PeerTable& peers, uint32_t now) {
       break;
     }
     case Screen::Bot: {
-      panel(54, 31);
-      label(!mesh().botEnabled() ? "Bot OFF" : mesh().authenticatedCount() ? "Bot ready" : "Needs auth", 61, mesh().botEnabled() && mesh().authenticatedCount() ? green : amber);
-      const char* commands[] = {"!info", "!rules", "!help"};
-      if (detail) {
-        panel(93, 139);
-        label(commands[selection], 102, green);
-        divider(129);
-        label("Public reply", 140, green, 13, 109, compact);
-        const char* lines[][3] = {{"Stick info", "BLE mesh", "Open-source"},
-                                 {"Respect all", "No spam", "No welcomes"},
-                                 {"!info !rules", "!help", "30s cooldown"}};
-        for (int i = 0; i < 3; ++i) label(lines[selection][i], 166 + i * 20, fg, 13, 109, compact);
-      } else {
-        panel(93, 114);
-        for (size_t i = 0; i < 3; ++i) item(commands[i], 98 + i * 26, i == selection, 22);
-        item(mesh().botEnabled() ? "Bot: ON" : "Bot: OFF",176,selection==3,22);
-        label("Welcome: OFF", 218, amber, 7, 123, compact);
+      panel(54,31);
+      label(mesh().botStatus(),61,mesh().botEnabled()?green:amber,13,109,compact);
+      if(detail) {
+        panel(93,139);label(kBotCommands[selection],102,green);divider(129);
+        label("Public + DM",140,fg,13,109,compact);
+        const char* lines[][3]={{"Stick info","BLE relay","Private text"},
+          {"Respect all","No spam","Public chat"},
+          {"Send command","in chat / DM","Wait 3s"},
+          {"Open-source","Wander Lima","Project link"}};
+        for(int i=0;i<3;++i)label(lines[selection][i],166+i*20,fg,13,109,compact);
+      }else{
+        panel(93,139);
+        for(size_t i=0;i<kBotCommandCount;++i)item(kBotCommands[i],98+int(i)*26,selection==i,22);
+        item(mesh().botEnabled()?"Bot: ON":"Bot: OFF",202,selection==kBotCommandCount,22);
       }
       break;
     }
@@ -374,7 +375,7 @@ void draw(const PeerTable& peers, uint32_t now) {
       if (!settingsSaved) label("Not saved", 219, amber, 13,109,compact);
       break;
     case Screen::Sound: {
-      const char* options[] = {"Interact", "DM alert", "Mesh msg"};
+      const char* options[] = {"Interact", "DM alert", "Channel"};
       const uint8_t flags[] = {SoundUi, SoundDm, SoundMesh};
       panel(54,105);
       for (size_t i=0; i<3; ++i) {
@@ -464,7 +465,7 @@ void move(int direction, const PeerTable& peers) {
   }
   const size_t count = screen == Screen::Dashboard ? 4 : screen == Screen::Settings ? settingsCount :
                        screen == Screen::Sound ? 3 : screen == Screen::Joystick ? 2 :
-                       screen == Screen::Channels ? 2 : screen == Screen::Bot ? 4 : screen == Screen::Brightness ? 5 : 0;
+                       screen == Screen::Channels ? 2 : screen == Screen::Bot ? kBotCommandCount+1 : screen == Screen::Brightness ? 5 : 0;
   if (count) selection = (selection + count + direction) % count;
   detail = false;
 }
@@ -517,7 +518,7 @@ void updateUi(const PeerTable& peers, uint32_t now) {
       screen = Screen::Settings;
     } else if (screen != Screen::Splash) {
       const bool directInbox=screen==Screen::Messages && messageScope==MessageScope::Direct;
-      screen = screen == Screen::Dashboard ? Screen::Settings :
+      screen = screen == Screen::Dashboard ? Screen::Splash :
                screen == Screen::Messages ? Screen::Channels : Screen::Dashboard;
       selection = directInbox ? 1 : 0;
     }
@@ -545,7 +546,7 @@ void updateUi(const PeerTable& peers, uint32_t now) {
       const Screen destinations[] = {Screen::Peers, Screen::Channels, Screen::Bot, Screen::Settings};
       screen = destinations[selection]; selection = 0;
     } else if (screen == Screen::Channels) { messageScope=selection==1?MessageScope::Direct:MessageScope::Public; screen = Screen::Messages; messageOffset=textLine=0; activeMessage=0; detail=false; }
-    else if (screen == Screen::Bot && selection==3) mesh().setBotEnabled(!mesh().botEnabled());
+    else if (screen == Screen::Bot && selection==kBotCommandCount) mesh().setBotEnabled(!mesh().botEnabled());
     else if (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages) { detail = !detail; textLine=0; }
     else if (screen == Screen::Settings) {
       screen = settingsPages[selection];

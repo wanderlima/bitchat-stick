@@ -9,7 +9,10 @@ namespace stick {
 class MessageComposer {
  public:
   static constexpr size_t capacity=192, keyCount=34;
-  inline static constexpr const char* presets[]={"Hello!", "Thanks!", "Yes.", "No.", "On my way.", "I'm here.", "Please wait.", "Need help."};
+  inline static constexpr const char* presets[]={"Hello!", "Thanks!", "Yes.", "No.", "On my way.", "I'm here.", "Please wait", "Need help.",
+    "Come here.", "Follow me.", "Go ahead.", "Stop.", "Wait here.", "Turn right.", "Turn left.", "Go back.",
+    "Meet here.", "Stay close.", "Over here!", "Call me.", "Are you OK?", "I'm OK.", "Need help!", "Help!",
+    "SOS!", "Emergency!", "Call help!", "I'm lost.", "Be careful.", "Danger!", "I see you.", "Got it."};
   static constexpr size_t presetCount=sizeof(presets)/sizeof(presets[0]);
   void open(const uint8_t id[8],const char* name) {
     clear();std::memcpy(recipient,id,8);std::snprintf(recipientName,sizeof(recipientName),"%s",name);

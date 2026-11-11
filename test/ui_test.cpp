@@ -54,7 +54,8 @@ int main() {
   press(0);assert(detail && has("AA:BB:CC") && has("DD:EE:FF"));
   press(1,true);assert(screen==Screen::Peers && !detail);
   press(1,true);assert(screen==Screen::Dashboard);
-  press(1,true);assert(screen==Screen::Settings);
+  press(1,true);assert(screen==Screen::Splash);
+  press(0);press(1);press(0);assert(screen==Screen::Settings);
   press(0);assert(screen==Screen::Brightness && selection==2);
   press(2);press(0);assert(brightness==191 && brightnessIndex==3 && screen==Screen::Settings);
   assert(fake_preferences::writes==1);
@@ -64,7 +65,7 @@ int main() {
   press(1,true);press(2);press(0);assert(screen==Screen::Diagnostics && has("BLE 123") && has("Drop 2"));
   press(1,true);press(2);press(2);press(2);press(0);assert(screen==Screen::About && has("Wander Lima") && !has("SOON"));
   // Visit the remaining primary screens and detail states with the same controls.
-  screen=Screen::Channels;draw(table,tick);check();assert(has("#bluetooth") && has("Mesh"));press(0);assert(screen==Screen::Messages);
+  screen=Screen::Channels;draw(table,tick);check();assert(has("#bluetooth") && has("Public chat") && !has("Mesh"));press(0);assert(screen==Screen::Messages);
   press(1,true);assert(screen==Screen::Channels);
   screen=Screen::Bot;selection=0;draw(table,tick);check();press(0);assert(detail);press(1,true);assert(!detail);
   // Verify all presets, header error/idle states, and low/unknown battery rendering.
@@ -88,8 +89,10 @@ int main() {
   peerSelection.move(-1,full);draw(full,tick);check();assert(has("Device 32/32"));
   screen=Screen::Settings;draw(table,tick);check();assert(has("Diagnostics"));
   screen=Screen::Bot;
-  for(selection=0;selection<3;++selection) {detail=true;draw(table,tick);check();assert(has("Public reply"));}
-  detail=false;selection=3;press(0);assert(!mesh().botEnabled());press(0);assert(mesh().botEnabled());
+  for(selection=0;selection<3;++selection) {detail=true;draw(table,tick);check();assert(has("Public + DM"));}
+  selection=3;detail=true;draw(table,tick);check();assert(has("!about")&&has("Project link"));
+  detail=false;draw(table,tick);check();assert(!has("Welcome: OFF"));
+  detail=false;selection=kBotCommandCount;press(0);assert(!mesh().botEnabled());press(0);assert(mesh().botEnabled());
   // Applied brightness and focus are distinct; inspecting a row never changes PWM.
   const auto applied=brightnessIndex;const auto pwm=M5.Display.brightness;
   screen=Screen::Brightness;brightnessIndex=2;selection=3;draw(table,tick);check();
@@ -129,7 +132,7 @@ int main() {
   messageScope=MessageScope::Direct; // Viewing an empty other inbox must not read the public message.
   for(auto page:notificationScreens){screen=page;selection=0;detail=false;draw(table,tick);check();assert(unreadIcon()&&mesh().unreadCount()==1);}
 
-  screen=Screen::Channels;selection=1;detail=false;draw(table,tick);check();assert(has("Mesh")&&has("Direct DMs"));
+  screen=Screen::Channels;selection=1;detail=false;draw(table,tick);check();assert(has("#bluetooth")&&has("Direct DMs"));
   press(0);assert(screen==Screen::Messages&&messageScope==MessageScope::Direct&&has("No messages")&&mesh().unreadCount()==1);
   press(1,true);assert(screen==Screen::Channels&&selection==1);press(1);assert(selection==0);press(0);
   assert(messageScope==MessageScope::Public&&has("Live")&&mesh().unreadCount()==0&&!unreadIcon());
@@ -166,6 +169,10 @@ int main() {
   // Compose from Nearby, keep recipient/draft through navigation and fail closed without auth.
   fakeJoyc=JoycSample{};screen=Screen::Peers;selection=0;detail=false;press(0);
   assert(screen==Screen::Reply&&has("Short msg")&&has("Keyboard"));
+  screen=Screen::ShortMessages;
+  for(selection=0;selection<MessageComposer::presetCount;++selection){draw(table,tick);check();assert(has(MessageComposer::presets[selection]));}
+  selection=MessageComposer::presetCount-1;press(2);assert(selection==0);press(1);assert(selection==MessageComposer::presetCount-1);
+  screen=Screen::Reply;selection=0;
   uint8_t target[8];std::memcpy(target,composer.recipient,8);
   press(0);assert(screen==Screen::ShortMessages);press(0);
   assert(screen==Screen::Confirm&&selection==reviewPages()+1); // Safe default: Cancel.
