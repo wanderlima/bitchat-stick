@@ -16,7 +16,7 @@ Firmware **v0.2.0**, English (en-US). Source implementation and physical accepta
 - Authenticated, recent public InfoBot commands and rate limits; immediate on-device Bot ON/OFF switch. This switch resets to ON at reboot; brightness and local identity persist.
 - Real repository QR, Wander Lima credits, BLE/heap/uptime counters and UTC RTC status. Serial telemetry contains counters, not message bodies or private keys.
 - Separate #bluetooth/Direct DMs inboxes, header unread envelope and per-message read state. Opening a DM schedules its encrypted read receipt; unopened messages remain unread.
-- Private composer from Nearby/Channels: 32 scrolling short messages, QWERTY with case/numbers, 192-character drafts, explicit Send/Cancel, authenticated sending and delivery/read correlation.
+- Private composer from Nearby/Channels: 32 scrolling short messages, QWERTY with case/numbers, manual Welcome msg, 192-character drafts, explicit Send/Cancel, authenticated sending and delivery/read correlation.
 - Persistent independent Sound/JoyC checkboxes, optional center click and LED pulse; About is last in Settings.
 
 ## Confirmed hardware evidence

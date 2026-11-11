@@ -101,3 +101,5 @@ Recipient and draft in these renders are synthetic. The firmware does not seed m
 ![Public destination confirmation](20-public-confirm.jpg)
 
 These are additional states of the existing Channels/composer screens, rather than new top-level screens.
+
+The private Reply and public Write previews now show three method choices: Short msg, Keyboard and Welcome msg. Welcome msg reuses the introduction and opens ordinary destination/text confirmation. The related Figma frames were updated with welcome confirmation examples; the neutral About remains a design proposal.

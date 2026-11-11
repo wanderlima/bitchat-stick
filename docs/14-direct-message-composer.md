@@ -38,8 +38,7 @@ On 2026-11-11, the owner reported that the installed message-sending flow worked
 
 ## Device checklist
 
-- [x] Owner confirmed that the installed message-sending flow worked well.
-
+- [x] Owner confirmed the installed message-sending flow and the later DM recovery/public writing checks.
 - [ ] Nearby → user → Short msg → scroll through movement/help presets → Cancel sends nothing.
 - [ ] Nearby → user → Short msg → Send arrives in the intended Android DM.
 - [ ] Channels → open DM → Reply → Keyboard → type, switch case/numbers, space/delete → Done → Send arrives on iOS.
@@ -55,7 +54,7 @@ The 32 presets include Come here, Follow me, On my way, Turn right, Turn left, H
 
 A known user without an authenticated session now triggers negotiation when Send is selected. The draft remains unsent with Connecting; wait for authentication and explicitly select Send again. Peer gone means the recipient has expired from the table; Link / queue means the current link or bounded outgoing queue did not accept the packet. No failed private draft is sent publicly.
 
-The private-session pool now matches the twelve-peer table rather than the two physical BLE connections. Expired/orphaned sessions are released. The two-session configuration was reproduced failing a three-identity regression; the twelve-session configuration passes it. This source-level correction does not by itself confirm a particular phone exchange.
+The private-session pool now matches the twelve-peer table rather than the two physical BLE connections. Expired/orphaned sessions are released. The two-session configuration was reproduced failing a three-identity regression; the twelve-session configuration passes it. The owner subsequently confirmed that DM and public writing both worked correctly in the tested setup; individual phone platforms and receipt transitions were not specified.
 
 Channels → #bluetooth offers Read chat and Write msg. Public confirmation shows #bluetooth and Public chat, never a peer ID. Reply from a received message still selects that sender privately. Cancel returns to the original menu. Queued is not delivered; public messages have no private delivered/read receipt.
 
@@ -67,3 +66,14 @@ Channels → #bluetooth offers Read chat and Write msg. Public confirmation show
 ## Manual Welcome msg
 
 The method picker includes Welcome msg below Short msg and Keyboard. It copies the same InfoBot introduction into the draft and opens confirmation; choosing it does not transmit. Back returns to the method picker with Welcome msg focused, and Cancel returns to the original screen. Send follows the selected destination: encrypted DM for a user, signed public text for #bluetooth. Manual welcome sends do not change the one-time automatic-introduction record.
+
+The same welcome text is reused by the automatic first-contact reply and the manual option:
+
+> Hi! I am Bitchat Stick, an open-source Bitchat device. Send !help for commands or !about for the project.
+
+Manual Welcome msg does not require Bot ON; it is a normal user-confirmed send. Automatic first-contact introductions do require Bot ON. Native tests cover text reuse, no send before confirmation, Back/Cancel, and public dispatch. Manual reception on the phone still needs validation.
+
+- [ ] Nearby → user → Welcome msg → Cancel: no message sent.
+- [ ] Nearby → user → Welcome msg → Send: exact introduction received privately.
+- [ ] Channels → #bluetooth → Write msg → Welcome msg → Send: introduction received publicly.
+- [ ] Back from confirmation returns to Welcome msg; public/private destination remains correct.

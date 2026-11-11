@@ -60,4 +60,8 @@ A first DM containing a recognized command still receives its normal private com
 - [ ] Test !help as first contact: command response and introduction both stay private.
 - [ ] Restart: the next fresh DM can introduce the Stick again.
 
+## Manual Welcome msg
+
 The composer also offers Welcome msg to send this introduction manually. It uses the ordinary destination/text confirmation and may be sent publicly or privately by explicit user action. It is independent of the automatic introduction cache.
+
+Unlike the automatic introduction, manual Welcome msg is available with Bot OFF because it is a user-confirmed ordinary message. It neither marks a peer as automatically introduced nor consumes the command cooldown. Cancel/Back send nothing. Use [the composer checklist](14-direct-message-composer.md#manual-welcome-msg) for private/public acceptance.

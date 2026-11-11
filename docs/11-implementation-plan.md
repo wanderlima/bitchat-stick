@@ -16,11 +16,11 @@ Updated: **2026-11-11**. English (en-US) firmware v0.2.0. Source implementation 
 | 8 | Nearby | Filtered candidates, signed peers, Noise authentication, stable candidate selection, IDs/details | Android/iOS foreground/background/reconnect behavior |
 | 9 | Messages | Signed public and authenticated private input, bounded history, paging and text scrolling | Real text, Unicode substitution, truncation, reconnect |
 | 10 | Channels | Public #bluetooth and Direct DMs, unread counts and reply entry | Offline context and controlled indirect forwarding |
-| 11 | InfoBot | Authenticated fresh commands, reply limits, ON/OFF control, welcomes OFF | Cross-platform replies, cooldown, no reply loops |
+| 11 | InfoBot | Signed public/private commands, !about, ON/OFF control and private first-DM introduction | Cross-platform replies, cooldown, no reply loops |
 | 12 | Sound | Persistent independent interaction/DM/channel checkboxes | Buzzer audibility and incoming alert behavior |
 | 13 | JoyC HAT | Corrected axes, optional click/LED, release-to-arm and repeat rules | Click/LED edge cases; directions confirmed by owner |
-| 14 | Reply | Captured recipient ID, Short msg/Keyboard choice | Entry paths individually recorded |
-| 15 | Short msgs | Eight English presets and confirmation | Presets individually recorded |
+| 14 | Reply | Captured recipient ID or public channel, Short msg/Keyboard/Welcome msg choices | Entry paths individually recorded |
+| 15 | Short msgs | 32 English presets, sliding list and confirmation | Presets individually recorded |
 | 16 | Keyboard | Bounded 192-character draft, case/numbers, space/delete | Full limit/key usability checks |
 | 17 | Confirm | Send/Cancel, retained draft on failure, authenticated receipt state | Platform-specific receipt and disconnect checks |
 
@@ -50,6 +50,8 @@ Each implementation group is committed separately; no push is part of this work.
 - **L:** persistent history only after an explicit retention decision; the initial private composer and confirmed canned replies are implemented.
 - **L–XL:** private media/groups, protected-channel participation, gossip synchronization, general encrypted routing and central-role connection scheduling.
 - **XL:** Nostr/internet contexts, OTA, persistent/out-of-band peer trust and secure-storage provisioning.
-- **Conditional:** welcomes only after an authoritative, tested entry signal exists. Reappearance, a BLE advert or a reconnect is insufficient.
+- **Conditional:** public channel-join greetings only after an authoritative, tested entry signal exists. Reappearance, a BLE advert or a reconnect is insufficient.
 
 Completed implementation group: authenticated DM sending, delivery/read correlation, four-screen composer from Nearby/Channels, bounded QWERTY/canned replies and confirmation/cancellation. The owner confirmed the installed sending flow worked well on 2026-11-11. Phone platform, individual input paths and receipt states were not specified; remaining detailed checks are in [the composer checklist](14-direct-message-composer.md).
+
+Manual Welcome msg is implemented using the shared introduction text. It requires explicit Send/Cancel, retains the chosen public/private destination and is independent of automatic first-DM introductions. Native/build/upload checks passed; manual welcome reception on the phone remains open.

@@ -72,7 +72,7 @@ Use your own test phones and synthetic content. Public BLE messages are visible 
 - [ ] Wait at least three seconds between commands from the same peer; check `!rules`, `!help`, `!about`, and aliases `!regras`, `!ajuda`.
 - [ ] Send ordinary text, `!info extra`, and repeated commands: no unintended replies or reply flood.
 - [ ] In InfoBot select Bot ON/OFF with A. OFF suppresses replies immediately; ON restores them after cooldown. The switch returns to ON after reboot.
-- [ ] Reconnect/reopen apps: no welcome spam and no replay-triggered replies. Welcome remains OFF.
+- [ ] Reconnect/reopen apps: no welcome spam and no replay-triggered replies. Public join greetings stay disabled; private introductions are once per peer per boot.
 
 ## 4a. Private-message reader
 
@@ -112,3 +112,12 @@ See [InfoBot usage](15-infobot.md) for the changed public/private command gates,
 - [ ] Repeat with at least three discovered identities and verify actual delivery in both directions.
 - [ ] Channels → #bluetooth → Write msg sends new public text; per-user Reply remains private.
 - [ ] Cancel a public draft: no transmission; return to Read chat/Write msg with the previous focus.
+
+## Manual Welcome msg
+
+- [ ] Verify the method picker shows Short msg, Keyboard and Welcome msg.
+- [ ] Select Welcome msg: review the shared introduction and destination; nothing is sent yet.
+- [ ] Back restores Welcome msg focus; Cancel exits without transmission.
+- [ ] Confirm a private welcome and verify the phone receives it only as a DM.
+- [ ] Confirm a public welcome in #bluetooth and verify public reception.
+- [ ] With Bot OFF, manual welcome remains available; automatic first-contact introduction stays suppressed.
