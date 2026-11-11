@@ -1,5 +1,6 @@
 #include "Mesh.h"
 #include "PacketSecurity.h"
+#include "InfoBot.h"
 #include <cstring>
 #include <cstdio>
 namespace stick {
@@ -145,7 +146,7 @@ void Mesh::process(wire::FrameView& f,uint16_t link){
     if(!p||!wire::verifyPacket(f,p->signingKey,scratch_,sizeof(scratch_))){++stats_.rejected;return;}
     if(f.type==2 && (!size||!textValid({plain_,size}))){++stats_.rejected;return;}
     if(duplicate(f))return;p->seen=now_;
-    if(f.type==2){++stats_.receivedMesh;auto* message=store(p->name,{plain_,size},false);std::memcpy(message->senderId,p->id,8);if(f.timestamp+30000>=epoch_ && f.timestamp<=epoch_+5000)bot(*p,{plain_,size});}
+    if(f.type==2){++stats_.receivedMesh;auto* message=store(p->name,{plain_,size},false);std::memcpy(message->senderId,p->id,8);bot(*p,{plain_,size},f.timestamp);}
     else {p->authenticated=false;}
   }
   ++stats_.accepted;
@@ -188,7 +189,7 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
     if(!s||!s->noise.ready()||!s->noise.decrypt(f.payload,plain_,sizeof(plain_),n)){++stats_.rejected;return;}
     struct ClearPlain {uint8_t* data;size_t size;~ClearPlain(){crypto::wipe(data,size);}} clear{plain_,sizeof(plain_)};
     if(n && plain_[0]==0x01){
-      // Private text stays private: never pass this branch to public relay/InfoBot.
+      // Private text stays private: bot replies must use the same private context.
       wire::Bytes id,content;size_t at=1;bool valid=p->authenticated;
       while(at<n && valid){if(at+2>n){valid=false;break;}uint8_t type=plain_[at++],len=plain_[at++];if(at+len>n){valid=false;break;}
         wire::Bytes* field=type==0?&id:type==1?&content:nullptr;
@@ -196,7 +197,8 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
       }
       if(!valid||!id.size||id.size>64||!content.size||!textValid(id)||!textValid(content)){++stats_.rejected;return;}
       uint8_t digest[32];crypto::hash({p->id,8},id,digest);
-      if(!rememberDigest(digest)){
+      const bool isNew=!rememberDigest(digest);
+      if(isNew){
         ++stats_.receivedDm;
         auto* message=store(p->name,content,false,true);std::memcpy(message->senderId,p->id,8);
         std::memcpy(message->messageId,id.data,id.size);message->messageIdLength=uint8_t(id.size);
@@ -207,6 +209,7 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
       if(s->noise.encrypt({receipt,id.size+1},encrypted,sizeof(encrypted),written)){
         wire::FrameView reply;reply.type=0x11;reply.ttl=7;reply.sender={identity_->id(),8};reply.recipient={p->id,8};reply.timestamp=epoch_;reply.payload={encrypted,written};emit(reply,link,kAnyLink,false);
       }
+      if(isNew)bot(*p,content,f.timestamp,true);
       return;
     }
     if(n>=2&&(plain_[0]==0x02||plain_[0]==0x03)) {
@@ -230,13 +233,16 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
   }
 }
 void Mesh::disconnected(uint16_t link){for(auto& s:sessions_)if(s.used&&s.link==link){auto* p=find(s.id);if(p)p->authenticated=false;s.noise.reset();s.used=false;}}
-void Mesh::bot(MeshPeer& p,wire::Bytes text){
-  if(!botEnabled_ || !p.authenticated || (p.botReplied&&uint32_t(now_-p.lastBot)<30000) || (replied_&&uint32_t(now_-lastBot_)<3000))return;
-  const char* reply=nullptr;
-  auto is=[&](const char* command){return text.size==std::strlen(command)&&!std::memcmp(text.data,command,text.size);};
-  if(is("!info"))reply="Bitchat Stick | M5StickC Plus2 | BLE local relay | github.com/wanderlima/bitchat-stick";
-  else if(is("!rules")||is("!regras"))reply="Respect others. No spam. Public BLE messages are not private. Welcome messages are disabled.";
-  else if(is("!help")||is("!ajuda"))reply="InfoBot: !info !rules !help (aliases: !regras !ajuda). Replies require an authenticated live peer.";
-  if(reply && sendText(reply)){p.botReplied=true;p.lastBot=now_;lastBot_=now_;replied_=true;++stats_.botReplies;}
+void Mesh::bot(MeshPeer& p,wire::Bytes text,uint64_t timestamp,bool direct){
+  const char* reply=infoBotReply(text);if(!reply)return;
+  if(!botEnabled_){botStatus_="Bot OFF";return;}
+  // Public callers already verified the packet signature; only DMs need Noise auth.
+  if(direct&&!p.authenticated){botStatus_="Needs auth";return;}
+  // Tolerate ordinary clock skew, but do not answer delayed history as a live command.
+  if((timestamp<epoch_&&epoch_-timestamp>120000)||(timestamp>epoch_&&timestamp-epoch_>120000)){botStatus_="Check clock";return;}
+  if((p.botReplied&&uint32_t(now_-p.lastBot)<3000)||(replied_&&uint32_t(now_-lastBot_)<1000)){botStatus_="Wait 3s";return;}
+  if(direct?sendDirect(p.id,reply):sendText(reply)){
+    p.botReplied=true;p.lastBot=now_;lastBot_=now_;replied_=true;++stats_.botReplies;botStatus_=direct?"DM reply":"Public reply";
+  }else botStatus_="Queue busy";
 }
 }

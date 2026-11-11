@@ -29,7 +29,8 @@ class Mesh {
   // Queues only through a live authenticated private session. Never broadcasts plaintext.
   bool sendDirect(const uint8_t recipient[8],const char* text);
   bool botEnabled() const {return botEnabled_;}
-  void setBotEnabled(bool enabled) {botEnabled_=enabled;}
+  void setBotEnabled(bool enabled) {botEnabled_=enabled;botStatus_=enabled?"Waiting":"Bot OFF";}
+  const char* botStatus() const {return botEnabled_?botStatus_:"Bot OFF";}
   size_t peerCount() const;
   size_t authenticatedCount() const;
   const MeshPeer* peer(size_t ordinal) const;
@@ -51,7 +52,7 @@ class Mesh {
   bool sendReadReceipt(ChatMessage& message);
   void startNoise(MeshPeer& peer,uint16_t link);
   void handleNoise(const wire::FrameView& frame,uint16_t link);
-  void bot(MeshPeer& peer,wire::Bytes text);
+  void bot(MeshPeer& peer,wire::Bytes text,uint64_t timestamp,bool direct=false);
   Identity* identity_=nullptr;Identity::Entropy entropy_=nullptr;Send send_=nullptr;
   uint32_t now_=0,lastAnnounce_=0,lastBot_=0,lastReceiptAttempt_=0;uint64_t epoch_=0,lastStamp_=0;bool replied_=false,botEnabled_=true;
   std::array<MeshPeer,12> peers_{};std::array<Session,2> sessions_{};
@@ -59,6 +60,7 @@ class Mesh {
   std::array<std::array<uint8_t,16>,64> dedup_{};size_t dedupCount_=0,dedupNext_=0;
   wire::FragmentAssembler assembler_;
   uint8_t assembled_[4096]{},scratch_[4096]{},out_[4096]{},plain_[2048]{};
+  const char* botStatus_="Waiting";
   MeshStats stats_{};
 };
 Mesh& mesh();

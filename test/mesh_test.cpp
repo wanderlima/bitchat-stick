@@ -40,13 +40,13 @@ int main(){
  uint8_t state[39]={0x21,1,1,1,0,2,32};std::memcpy(state+7,remote.signingPublic(),32);
  assert(phone.encrypt({state,sizeof(state)},handshake,sizeof(handshake),n));receive(m,packet(remote,0x11,{handshake,n},1800000000000ULL,{local.id(),8},false));assert(m.authenticatedCount()==1);
  // Receive an authenticated private TLV message and verify the encrypted delivery receipt.
- uint8_t dm[]={1,0,4,'d','m','0','1',1,5,'!','i','n','f','o'};
+ uint8_t dm[]={1,0,4,'d','m','0','1',1,5,'h','e','l','l','o'};
  assert(phone.encrypt({dm,sizeof(dm)},handshake,sizeof(handshake),n));
  receive(m,packet(remote,0x11,{handshake,n},1800000000001ULL,{local.id(),8},false));
  assert(m.unreadCount(MessageScope::Direct)==1&&m.unreadCount(MessageScope::Public)==1);
  m.markRead(m.message(0)->sequence);assert(m.unreadCount(MessageScope::Direct)==0&&m.unreadCount()==1);
  assert(m.stats().receivedDm==1);
- assert(m.message(0)->privateMessage && std::strcmp(m.message(0)->text,"!info")==0);assert(m.stats().botReplies==0);
+ assert(m.message(0)->privateMessage && std::strcmp(m.message(0)->text,"hello")==0);assert(m.stats().botReplies==0);
  assert(wire::decode({sent.back().data(),sent.back().size()},reply)==wire::Error::None);assert(reply.type==0x11);
  assert(phone.decrypt(reply.payload,response,sizeof(response),r));assert(r==5&&response[0]==3&&std::memcmp(response+1,"dm01",4)==0);
  const auto beforeRead=sent.size();
@@ -96,8 +96,21 @@ int main(){
  m.setBotEnabled(false);m.tick(40000,1800000040000ULL);
  receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!rules"),6},1800000040000ULL));assert(m.stats().botReplies==1);
  m.setBotEnabled(true);receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!help"),5},1800000040001ULL));assert(m.stats().botReplies==2);
+ // New private commands receive only encrypted private replies, after the delivered receipt.
+ m.tick(44000,1800000044000ULL);
+ uint8_t privateAbout[]={1,0,4,'b','o','t','1',1,6,'!','a','b','o','u','t'};
+ const auto beforePrivate=sent.size();
+ assert(phone.encrypt({privateAbout,sizeof(privateAbout)},handshake,sizeof(handshake),n));
+ receive(m,packet(remote,0x11,{handshake,n},1800000044000ULL,{local.id(),8},false));
+ assert(sent.size()==beforePrivate+2&&m.stats().botReplies==3&&std::strcmp(m.botStatus(),"DM reply")==0);
+ for(size_t i=beforePrivate;i<sent.size();++i){assert(wire::decode({sent[i].data(),sent[i].size()},reply)==wire::Error::None);assert(reply.type==0x11&&std::memcmp(reply.recipient.data,remote.id(),8)==0);
+   assert(phone.decrypt(reply.payload,decrypted,sizeof(decrypted),r));
+   if(i==beforePrivate)assert(decrypted[0]==3);else {assert(decrypted[0]==1);decrypted[r]=0;assert(std::strstr(reinterpret_cast<char*>(decrypted+37),"https://github.com/wanderlima/bitchat-stick"));}}
+ const auto afterPrivate=sent.size();assert(phone.encrypt({privateAbout,sizeof(privateAbout)},handshake,sizeof(handshake),n));
+ receive(m,packet(remote,0x11,{handshake,n},1800000044001ULL,{local.id(),8},false));
+ assert(sent.size()==afterPrivate+1&&m.stats().botReplies==3); // Duplicate gets a receipt, never another reply.
  m.disconnected(1);assert(m.authenticatedCount()==0);assert(!m.sendDirect(remote.id(),"offline"));
- receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!rules"),6},1700000000000ULL));assert(m.stats().botReplies==2);
+ receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!rules"),6},1700000000000ULL));assert(m.stats().botReplies==3);
  for(unsigned i=0;i<20;++i)assert(m.sendText("outgoing"));
  assert(m.messageCount()==12&&m.messageCount(MessageScope::Direct)==0&&m.unreadCount()==0);
  std::puts("Mesh: signed discovery/chat, forgery/replay rejection, Noise key binding, authenticated state, relay and bot cooldown passed");
