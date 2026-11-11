@@ -10,7 +10,7 @@ int main(){
   characteristic.callback->onSubscribe(&characteristic,info,1);
   assert(transportLinks()==0);mesh().tick(1,1800000000000ULL);pollTransport(20);assert(transportLinks()==1);
   for(unsigned now=40;now<500;now+=20)pollTransport(now);
-  assert(!characteristic.notifications.empty());wire::FrameView frame;
+  assert(!characteristic.notifications.empty());assert(transportDiagnostics().notified>0&&transportDiagnostics().notifyFailed==0);wire::FrameView frame;
   assert(wire::decode({characteristic.notifications[0].data(),characteristic.notifications[0].size()},frame)==wire::Error::None);assert(frame.type==1);
   NimBLEDevice::advertising.active=false;pollTransport(1000);assert(NimBLEDevice::advertising.isAdvertising());
   // Force MTU fragmentation, then independently recover and verify the complete frame.
@@ -23,7 +23,7 @@ int main(){
   // Callbacks cannot directly mutate application state; floods are bounded.
   characteristic.value={1};auto errors=mesh().stats().rejected;
   for(unsigned i=0;i<20;++i)characteristic.callback->onWrite(&characteristic,info);
-  assert(mesh().stats().rejected==errors);assert(transportDrops()>0);pollTransport(1700);assert(mesh().stats().rejected>errors);
+  assert(transportDiagnostics().writes==20);assert(mesh().stats().rejected==errors);assert(transportDrops()>0);pollTransport(1700);assert(mesh().stats().rejected>errors);
   server.callback->onDisconnect(&server,info,0);pollTransport(1800);pollTransport(1820);assert(transportLinks()==0);
   std::puts("Transport: idle-GAP startup guard, queued callbacks, subscriptions, MTU fragmentation and overflow passed");
 }

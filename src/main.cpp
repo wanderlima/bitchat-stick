@@ -48,11 +48,11 @@ void loop() {
   if (M5.BtnPWR.pressedFor(6000)) M5.Power.powerOff();
   static uint32_t lastReport=0;
   if(uint32_t(now-lastReport)>=10000){
-    lastReport=now;const auto& stats=stick::mesh().stats();
-    Serial.printf("mesh links=%u peers=%u auth=%u accepted=%lu rejected=%lu queued=%lu relay=%lu bot=%lu botState=%s intros=%lu drops=%lu heap=%u clock=%s joyc=%s\n",
+    lastReport=now;const auto& stats=stick::mesh().stats();const auto radio=stick::transportDiagnostics();
+    Serial.printf("mesh links=%u peers=%u auth=%u accepted=%lu rejected=%lu queued=%lu relay=%lu bot=%lu botState=%s intros=%lu drops=%lu heap=%u clock=%s joyc=%s up=%lu epoch=%llu rx=%lu pub=%lu dm=%lu txq=%u notify=%lu fail=%lu reject=%s send=%s\n",
       unsigned(stick::transportLinks()),unsigned(stick::mesh().peerCount()),unsigned(stick::mesh().authenticatedCount()),
       (unsigned long)stats.accepted,(unsigned long)stats.rejected,(unsigned long)stats.sent,(unsigned long)stats.relayed,
-      (unsigned long)stats.botReplies,stick::mesh().botStatus(),(unsigned long)stats.botIntroductions,(unsigned long)(stats.dropped+stick::transportDrops()),unsigned(ESP.getFreeHeap()),stick::clockRtc()?"RTC":"build",stick::pollJoyc(now).valid?"present":"absent");
+      (unsigned long)stats.botReplies,stick::mesh().botStatus(),(unsigned long)stats.botIntroductions,(unsigned long)(stats.dropped+stick::transportDrops()),unsigned(ESP.getFreeHeap()),stick::clockRtc()?"RTC":"build",stick::pollJoyc(now).valid?"present":"absent",(unsigned long)now,(unsigned long long)stick::clockMilliseconds(),(unsigned long)radio.writes,(unsigned long)stats.receivedMesh,(unsigned long)stats.receivedDm,unsigned(radio.pending),(unsigned long)radio.notified,(unsigned long)radio.notifyFailed,stick::mesh().lastReject(),stick::mesh().sendStatus());
   }
   delay(10);
 }

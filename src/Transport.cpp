@@ -16,7 +16,8 @@ struct Tx {uint16_t target=kAnyLink,excluded=kAnyLink;size_t length=0;uint8_t by
 Identity identity;
 NimBLEServer* server=nullptr;NimBLECharacteristic* characteristic=nullptr;
 QueueHandle_t events=nullptr;
-std::atomic<uint32_t> drops{0};
+std::atomic<uint32_t> drops{0},writes{0};
+uint32_t notified=0,notifyFailed=0;
 Link links[2];Tx tx[6];size_t head=0,tail=0,count=0,txLink=0,txOffset=0;uint32_t lastSend=0,lastAdvertise=0;uint8_t fragmentBytes[512]{};bool started=false;
 void entropy(void* out,size_t n){esp_fill_random(out,n);}
 void queueEvent(Event& event){if(xQueueSend(events,&event,0)!=pdTRUE){++drops;server->disconnect(event.handle);}}
@@ -29,7 +30,7 @@ class ServerCallbacks:public NimBLEServerCallbacks {
 } serverCallbacks;
 class CharacteristicCallbacks:public NimBLECharacteristicCallbacks {
  void onWrite(NimBLECharacteristic* c,NimBLEConnInfo& info) override {
-   const auto value=c->getValue();if(!value.size()||value.size()>512){++drops;return;}
+   ++writes;const auto value=c->getValue();if(!value.size()||value.size()>512){++drops;return;}
    Event event;event.kind=3;event.handle=info.getConnHandle();event.length=value.size();std::memcpy(event.bytes,value.data(),event.length);queueEvent(event);
  }
  void onSubscribe(NimBLECharacteristic*,NimBLEConnInfo& info,uint16_t value) override {Event event;event.kind=value&1?4:5;event.handle=info.getConnHandle();queueEvent(event);}
@@ -39,6 +40,7 @@ bool enqueue(wire::Bytes bytes,uint16_t target,uint16_t excluded){
  if(!destination||bytes.size>4096||count==6){return false;}
  auto& item=tx[tail];item.target=target;item.excluded=excluded;item.length=bytes.size;std::memcpy(item.bytes,bytes.data,bytes.size);tail=(tail+1)%6;++count;return true;
 }
+bool notifyBytes(const uint8_t* data,size_t size,uint16_t handle){const bool ok=characteristic->notify(data,size,handle);if(ok)++notified;else ++notifyFailed;return ok;}
 void drainTx(uint32_t now){
  if(!count||uint32_t(now-lastSend)<20)return;lastSend=now;
  auto& item=tx[head];
@@ -46,7 +48,7 @@ void drainTx(uint32_t now){
  auto& link=links[txLink];
  if(!link.subscribed||link.handle==item.excluded||(item.target!=kAnyLink&&item.target!=link.handle)){++txLink;txOffset=0;return;}
  const size_t mtu=server->getPeerMTU(link.handle);const size_t capacity=mtu>3?mtu-3:0;
- if(item.length<=capacity){if(!characteristic->notify(item.bytes,item.length,link.handle))++drops;++txLink;txOffset=0;return;}
+ if(item.length<=capacity){if(!notifyBytes(item.bytes,item.length,link.handle))++drops;++txLink;txOffset=0;return;}
  // Fragment header: wire(14+8) + stream(8)+index(2)+count(2)+type(1).
  const size_t overhead=35;
  if(capacity<=overhead){++drops;++txLink;txOffset=0;return;}
@@ -58,7 +60,7 @@ void drainTx(uint32_t now){
  size_t n=item.length-txOffset;if(n>chunk)n=chunk;std::memcpy(payload+13,item.bytes+txOffset,n);
  wire::FrameView original;if(wire::decode({item.bytes,item.length},original)!=wire::Error::None){++drops;++txLink;txOffset=0;return;}
  wire::FrameView fragment;fragment.type=0x20;fragment.ttl=original.ttl;fragment.timestamp=original.timestamp;fragment.sender=original.sender;fragment.payload={payload,n+13};
- size_t written=0;if(wire::encode(fragment,fragmentBytes,sizeof(fragmentBytes),written)!=wire::Error::None||!characteristic->notify(fragmentBytes,written,link.handle)){++drops;++txLink;txOffset=0;return;}
+ size_t written=0;if(wire::encode(fragment,fragmentBytes,sizeof(fragmentBytes),written)!=wire::Error::None||!notifyBytes(fragmentBytes,written,link.handle)){++drops;++txLink;txOffset=0;return;}
  txOffset+=n;if(txOffset==item.length){++txLink;txOffset=0;}
 }
 }
@@ -96,6 +98,7 @@ void pollTransport(uint32_t now){if(!started)return;
  }
  drainTx(now);
 }
+TransportDiagnostics transportDiagnostics(){TransportDiagnostics value;value.writes=writes.load();value.notified=notified;value.notifyFailed=notifyFailed;value.pending=count;return value;}
 bool transportReady(){return started;}
 size_t transportLinks(){size_t n=0;for(const auto& link:links)n+=link.subscribed;return n;}
 uint32_t transportDrops(){return drops.load();}

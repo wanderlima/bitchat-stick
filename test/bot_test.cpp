@@ -5,9 +5,9 @@
 #include <cstdio>
 #include <cstring>
 using namespace stick;
-static unsigned seed=11;static bool sendAllowed=true;
+static unsigned seed=11;static unsigned handshakes=0;static bool sendAllowed=true;
 void entropy(void* data,size_t n){for(size_t i=0;i<n;++i)static_cast<uint8_t*>(data)[i]=uint8_t(i+seed);}
-bool send(wire::Bytes,uint16_t,uint16_t){return sendAllowed;}
+bool send(wire::Bytes bytes,uint16_t,uint16_t){if(!sendAllowed)return false;wire::FrameView frame;assert(wire::decode(bytes,frame)==wire::Error::None);if(frame.type==0x10&&frame.payload.size==32)++handshakes;return true;}
 int main(){
   Identity local,phone;assert(local.begin(entropy));fake_preferences::identityExists=false;fake_preferences::identityLength=0;++seed;assert(phone.begin(entropy));
   static Mesh model;model.begin(local,entropy,send);constexpr uint64_t epoch=1800000000000ULL;model.tick(100,epoch);
@@ -31,6 +31,15 @@ int main(){
   model.tick(203100,epoch+203100);stamp=epoch+203100;sendAllowed=false;command("!help");
   assert(model.stats().botReplies==5&&std::strcmp(model.botStatus(),"Queue busy")==0);
   sendAllowed=true;command("!help");assert(model.stats().botReplies==6);
+  // Discovery can contain more identities than physical BLE links. A third identity
+  // must not be permanently excluded by the old two-session pool.
+  const auto beforeSessions=handshakes;
+  for(unsigned i=0;i<3;++i){Identity extra;fake_preferences::identityExists=false;fake_preferences::identityLength=0;++seed;assert(extra.begin(entropy));
+    uint8_t payload[80]={1,4,'T','e','s','t',2,32},out[4096],scratch[4096],sig[64];std::memcpy(payload+8,extra.dhPublic(),32);payload[40]=3;payload[41]=32;std::memcpy(payload+42,extra.signingPublic(),32);
+    wire::FrameView frame;frame.type=1;frame.ttl=7;frame.sender={extra.id(),8};frame.timestamp=epoch+203100+i;frame.payload={payload,74};assert(wire::signPacket(frame,extra.signingSecret(),scratch,sizeof(scratch),sig));frame.signature={sig,64};size_t n=0;assert(wire::encode(frame,out,sizeof(out),n)==wire::Error::None);model.receive({out,n},1);
+    assert(!model.sendDirect(extra.id(),"hi")&&std::strcmp(model.sendStatus(),"Connecting")==0);
+  }
+  assert(handshakes==beforeSessions+3);
   assert(model.stats().botIntroductions==0); // Public chat never triggers a private introduction.
   std::puts("InfoBot: signed public commands without a private session passed");
 }

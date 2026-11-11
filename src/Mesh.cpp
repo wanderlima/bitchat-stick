@@ -25,7 +25,7 @@ void displayText(char* out,size_t capacity,wire::Bytes text){size_t n=text.size<
 Mesh& mesh(){static Mesh value;return value;}
 void Mesh::begin(Identity& identity,Identity::Entropy entropy,Send send){identity_=&identity;entropy_=entropy;send_=send;}
 void Mesh::tick(uint32_t now,uint64_t epochMs){now_=now;epoch_=epochMs;assembler_.expire(now);
-  for(auto& s:sessions_)if(s.used && uint32_t(now-s.started)>(s.noise.ready()?3600000u:15000u)){auto* p=find(s.id);if(p)p->authenticated=false;s.noise.reset();s.used=false;}
+  for(auto& s:sessions_)if(s.used && (!find(s.id)||uint32_t(now-s.started)>(s.noise.ready()?3600000u:15000u))){auto* p=find(s.id);if(p)p->authenticated=false;s.noise.reset();s.used=false;}
   for(auto& p:peers_)if(p.used && uint32_t(now-p.seen)>900000){p=MeshPeer{};}
   if(uint32_t(now-lastReceiptAttempt_)>=1000){
     lastReceiptAttempt_=now;
@@ -87,15 +87,18 @@ bool Mesh::sendText(const char* text){if(!text)return false;size_t n=std::strlen
   wire::FrameView f;f.type=2;f.ttl=7;f.payload={reinterpret_cast<const uint8_t*>(text),n};if(!emit(f))return false;store("You",f.payload,true);return true;
 }
 bool Mesh::sendDirect(const uint8_t recipient[8],const char* text) {
-  if(!ready()||!recipient||!text||!entropy_)return false;
+  sendStatus_="Not ready";
+  if(!ready()||!entropy_)return false;
+  sendStatus_="Bad text";if(!recipient||!text)return false;
   const size_t length=strnlen(text,193);
   if(!length||length>192||!textValid({reinterpret_cast<const uint8_t*>(text),length}))return false;
   bool visible=false;for(size_t i=0;i<length;++i)visible|=uint8_t(text[i])>32;
   if(!visible)return false;
-  auto* peer=find(recipient);if(!peer||!peer->authenticated)return false;
+  auto* peer=find(recipient);if(!peer){sendStatus_="Peer gone";return false;}
+  if(!peer->authenticated){startNoise(*peer,peer->link);sendStatus_="Connecting";return false;}
   Session* live=nullptr;
   for(auto& s:sessions_)if(s.used&&s.noise.ready()&&same(s.id,recipient)){live=&s;break;}
-  if(!live)return false;
+  if(!live){peer->authenticated=false;startNoise(*peer,peer->link);sendStatus_="Connecting";return false;}
   uint8_t random[16];entropy_(random,sizeof(random));char id[33];
   constexpr char hex[]="0123456789abcdef";
   for(size_t i=0;i<sizeof(random);++i){id[2*i]=hex[random[i]>>4];id[2*i+1]=hex[random[i]&15];}id[32]=0;
@@ -104,12 +107,12 @@ bool Mesh::sendDirect(const uint8_t recipient[8],const char* text) {
   std::memcpy(payload+3,id,32);payload[35]=1;payload[36]=uint8_t(length);std::memcpy(payload+37,text,length);
   size_t written=0;const bool encryptedOk=live->noise.encrypt({payload,37+length},encrypted,sizeof(encrypted),written);
   crypto::wipe(payload,sizeof(payload));
-  if(!encryptedOk)return false;
+  if(!encryptedOk){peer->authenticated=false;live->noise.reset();live->used=false;startNoise(*peer,peer->link);sendStatus_="Connecting";return false;}
   wire::FrameView frame;frame.type=0x11;frame.ttl=7;frame.sender={identity_->id(),8};frame.recipient={recipient,8};frame.timestamp=epoch_;frame.payload={encrypted,written};
-  if(!emit(frame,live->link,kAnyLink,false))return false;
+  if(!emit(frame,live->link,kAnyLink,false)){sendStatus_="Link / queue";return false;}
   auto* message=store(peer->name,{reinterpret_cast<const uint8_t*>(text),length},true,true);
   std::memcpy(message->senderId,recipient,8);std::memcpy(message->messageId,id,32);message->messageIdLength=32;
-  message->readReceiptSent=true;return true;
+  message->readReceiptSent=true;sendStatus_="Queued";return true;
 }
 bool Mesh::duplicate(const wire::FrameView& f){size_t n=0;if(!wire::canonical(f,scratch_,sizeof(scratch_),n))return true;uint8_t digest[32];crypto::hash({scratch_,n},f.signature,digest);return rememberDigest(digest);
 }
@@ -118,7 +121,7 @@ bool Mesh::rememberDigest(const uint8_t digest[32]){
   std::memcpy(dedup_[dedupNext_].data(),digest,16);dedupNext_=(dedupNext_+1)%dedup_.size();if(dedupCount_<dedup_.size())++dedupCount_;return false;
 }
 void Mesh::receive(wire::Bytes bytes,uint16_t link){if(!ready())return;wire::FrameView frame;
-  if(wire::decode(bytes,frame)!=wire::Error::None){++stats_.rejected;return;}
+  if(wire::decode(bytes,frame)!=wire::Error::None){lastReject_="frame";++stats_.rejected;return;}
   if(frame.type==0x20){size_t n=0;auto r=assembler_.append(frame,now_,assembled_,sizeof(assembled_),n);
     if(r==wire::AssemblyResult::Complete){if(wire::decode({assembled_,n},frame)!=wire::Error::None){++stats_.rejected;return;}}
     else {if(r!=wire::AssemblyResult::Stored && r!=wire::AssemblyResult::Duplicate)++stats_.rejected;return;}}
@@ -126,7 +129,7 @@ void Mesh::receive(wire::Bytes bytes,uint16_t link){if(!ready())return;wire::Fra
 }
 void Mesh::process(wire::FrameView& f,uint16_t link){
   if(same(f.sender.data,identity_->id()) || !f.ttl || f.ttl>7)return;
-  if(f.timestamp+900000<epoch_ || f.timestamp>epoch_+300000){++stats_.rejected;return;}
+  if(f.timestamp+900000<epoch_ || f.timestamp>epoch_+300000){lastReject_="clock";++stats_.rejected;return;}
   if(f.type==0x10||f.type==0x11){handleNoise(f,link);return;}
   if(!broadcast(f.recipient) || (f.type!=1 && f.type!=2 && f.type!=3)){++stats_.rejected;return;}
   MeshPeer* p=find(f.sender.data);size_t size=0;
@@ -141,10 +144,10 @@ void Mesh::process(wire::FrameView& f,uint16_t link){
     if(duplicate(f))return;
     if(!p){for(auto& slot:peers_)if(!slot.used){p=&slot;break;}}
     if(!p){++stats_.dropped;return;}
-    p->used=true;std::memcpy(p->id,f.sender.data,8);std::memcpy(p->noiseKey,key.data,32);std::memcpy(p->signingKey,signing.data,32);displayText(p->name,sizeof(p->name),name);p->seen=now_;
+    p->used=true;std::memcpy(p->id,f.sender.data,8);std::memcpy(p->noiseKey,key.data,32);std::memcpy(p->signingKey,signing.data,32);displayText(p->name,sizeof(p->name),name);p->seen=now_;p->link=link;
     startNoise(*p,link);
   }else{
-    if(!p||!wire::verifyPacket(f,p->signingKey,scratch_,sizeof(scratch_))){++stats_.rejected;return;}
+    if(!p||!wire::verifyPacket(f,p->signingKey,scratch_,sizeof(scratch_))){lastReject_="signature";++stats_.rejected;return;}
     if(f.type==2 && (!size||!textValid({plain_,size}))){++stats_.rejected;return;}
     if(duplicate(f))return;p->seen=now_;
     if(f.type==2){++stats_.receivedMesh;auto* message=store(p->name,{plain_,size},false);std::memcpy(message->senderId,p->id,8);bot(*p,{plain_,size},f.timestamp);}
@@ -155,7 +158,12 @@ void Mesh::process(wire::FrameView& f,uint16_t link){
 }
 Mesh::Session* Mesh::session(const uint8_t* id,uint16_t link){for(auto& s:sessions_)if(s.used&&same(s.id,id)&&s.link==link)return &s;return nullptr;}
 void Mesh::startNoise(MeshPeer& p,uint16_t link){
-  if(session(p.id,link))return;
+  if(link==kAnyLink)return;
+  if(auto* existing=session(p.id,link)){
+    if(existing->noise.state()==NoiseSession::State::Failed || (existing->noise.ready()&&!p.authenticated)){
+      existing->noise.reset();existing->used=false;
+    }else return;
+  }
   Session* s=nullptr;for(auto& slot:sessions_)if(!slot.used){s=&slot;break;}if(!s)return;
   uint8_t ephemeral[32],response[128];size_t n=0;entropy_(ephemeral,32);
   s->noise.reset();s->used=true;s->initiator=true;s->link=link;s->started=now_;std::memcpy(s->id,p.id,8);
@@ -179,7 +187,7 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
       s->noise.reset();s->used=true;s->initiator=false;s->link=link;s->started=now_;std::memcpy(s->id,f.sender.data,8);p->authenticated=false;
       uint8_t ephemeral[32];entropy_(ephemeral,32);bool ok=s->noise.begin(false,identity_->dhSecret(),ephemeral,p->id,response,sizeof(response),n);crypto::wipe(ephemeral,sizeof(ephemeral));if(!ok){s->used=false;return;}
     }
-    if(!s||!s->noise.receive(f.payload,response,sizeof(response),n)){++stats_.rejected;return;}
+    if(!s||!s->noise.receive(f.payload,response,sizeof(response),n)){lastReject_="handshake";++stats_.rejected;return;}
     if(n){wire::FrameView reply;reply.type=0x10;reply.ttl=7;reply.sender={identity_->id(),8};reply.recipient={p->id,8};reply.timestamp=epoch_;reply.payload={response,n};emit(reply,link,kAnyLink,false);}
     if(s->noise.ready()){
       if(!same(s->noise.remoteKey(),p->noiseKey,32)){s->noise.reset();s->used=false;++stats_.rejected;return;}
@@ -187,7 +195,8 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
       if(s->noise.encrypt({state,sizeof(state)},response,sizeof(response),encrypted)){wire::FrameView reply;reply.type=0x11;reply.ttl=7;reply.sender={identity_->id(),8};reply.recipient={p->id,8};reply.timestamp=epoch_;reply.payload={response,encrypted};emit(reply,link,kAnyLink,false);}
     }
   }else{
-    if(!s||!s->noise.ready()||!s->noise.decrypt(f.payload,plain_,sizeof(plain_),n)){++stats_.rejected;return;}
+    if(!s||!s->noise.ready()){lastReject_="no-session";++stats_.rejected;return;}
+    if(!s->noise.decrypt(f.payload,plain_,sizeof(plain_),n)){lastReject_="decrypt";++stats_.rejected;return;}
     struct ClearPlain {uint8_t* data;size_t size;~ClearPlain(){crypto::wipe(data,size);}} clear{plain_,sizeof(plain_)};
     if(n && plain_[0]==0x01){
       // Private text stays private: bot replies must use the same private context.
@@ -196,7 +205,7 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
         wire::Bytes* field=type==0?&id:type==1?&content:nullptr;
         if(!field||field->data){valid=false;break;}*field={plain_+at,len};at+=len;
       }
-      if(!valid||!id.size||id.size>64||!content.size||!textValid(id)||!textValid(content)){++stats_.rejected;return;}
+      if(!valid||!id.size||id.size>64||!content.size||!textValid(id)||!textValid(content)){lastReject_=p->authenticated?"dm-payload":"unauth-dm";++stats_.rejected;return;}
       uint8_t digest[32];crypto::hash({p->id,8},id,digest);
       const bool isNew=!rememberDigest(digest);
       if(isNew){
@@ -230,7 +239,7 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
       if(type==1){if(caps||!len||len>8||(len>1&&plain_[at+len-1]==0)){++stats_.rejected;return;}caps=true;}
       if(type==2){if(key||len!=32||!same(plain_+at,p->signingKey,32)){++stats_.rejected;return;}key=true;}at+=len;
     }
-    if(!caps||!key){++stats_.rejected;return;}p->authenticated=true;p->seen=now_;++stats_.accepted;
+    if(!caps||!key){++stats_.rejected;return;}p->authenticated=true;p->seen=now_;p->link=link;++stats_.accepted;
   }
 }
 void Mesh::disconnected(uint16_t link){for(auto& s:sessions_)if(s.used&&s.link==link){auto* p=find(s.id);if(p)p->authenticated=false;s.noise.reset();s.used=false;}}
