@@ -163,6 +163,34 @@ int main() {
   screen=Screen::Settings;draw(table,tick);check();assert(has("Sound")&&has("JoyC HAT"));
   screen=Screen::Sound;selection=0;draw(table,tick);check();screen=Screen::Joystick;draw(table,tick);check();
   assert(settingsPages[settingsCount-1]==Screen::About);
+  // Compose from Nearby, keep recipient/draft through navigation and fail closed without auth.
+  fakeJoyc=JoycSample{};screen=Screen::Peers;selection=0;detail=false;press(0);
+  assert(screen==Screen::Reply&&has("Short msg")&&has("Keyboard"));
+  uint8_t target[8];std::memcpy(target,composer.recipient,8);
+  press(0);assert(screen==Screen::ShortMessages);press(0);
+  assert(screen==Screen::Confirm&&selection==reviewPages()+1); // Safe default: Cancel.
+  press(1);press(0);assert(sendFailed&&has("Not sent")&&screen==Screen::Confirm);
+  assert(std::memcmp(composer.recipient,target,8)==0&&std::strcmp(composer.draft,"Hello!")==0);
+  press(1,true);assert(screen==Screen::ShortMessages);press(1,true);assert(screen==Screen::Reply);
+  press(2);press(0);assert(screen==Screen::Keyboard);
+  for(size_t mode=0;mode<3;++mode) {
+    for(selection=0;selection<MessageComposer::keyCount;++selection){draw(table,tick);check();}
+    composer.selectKey(30);
+  }
+  selection=32;for(int i=0;i<6;++i)press(0);assert(!composer.ready());
+  selection=33;press(0);assert(screen==Screen::Keyboard); // Empty Done cannot confirm.
+  selection=0;press(0);assert(std::strcmp(composer.draft,"q")==0);
+  selection=33;press(0);assert(screen==Screen::Confirm);press(0);assert(screen==Screen::Peers&&!composer.ready());
+  // Reply via Inbox preserves the original peer and reading position.
+  screen=Screen::Messages;messageScope=MessageScope::Public;messageOffset=0;activeMessage=0;detail=true;draw(table,tick);
+  press(0);assert(screen==Screen::Reply&&std::memcmp(composer.recipient,other.id(),8)==0);
+  press(1,true);assert(screen==Screen::Messages&&detail);
+  // Long confirmation pages and full keyboard drafts remain within 135x240.
+  openComposer(other.id(),"A recipient with a long name");
+  for(unsigned i=0;i<192;++i)composer.selectKey(0);
+  screen=Screen::Keyboard;selection=0;draw(table,tick);check();confirmDraft();
+  for(selection=0;selection<reviewPages()+2;++selection){draw(table,tick);check();}
+  closeComposer();
   assert(buffered && M5.Display.clears==0 && M5.Display.frames>10);
   std::puts("UI: navigation, presets, credits, live header/data, grouping and text bounds passed");
 }
