@@ -33,3 +33,39 @@ bool saveBrightnessIndex(uint8_t index) {
   return saved;
 }
 } // namespace stick
+
+namespace stick {
+namespace {
+constexpr uint32_t flagsVersion = 0xBC520100;
+constexpr uint8_t validFlags = SoundUi | SoundDm | SoundMesh | JoycClick | JoycLed;
+uint8_t savedFlags = 0;
+bool flagsKnown = false;
+}
+uint8_t loadPreferenceFlags() {
+  savedFlags = 0;
+  flagsKnown = false;
+  Preferences prefs;
+  if (!prefs.begin("bitchat-stick", true)) return savedFlags;
+  const uint32_t record = prefs.getUInt("opts-v1", 0);
+  prefs.end();
+  const uint8_t flags = uint8_t(record);
+  if ((record & 0xFFFFFF00) == flagsVersion && !(flags & ~validFlags)) {
+    savedFlags = flags;
+    flagsKnown = true;
+  }
+  return savedFlags;
+}
+bool savePreferenceFlags(uint8_t flags) {
+  if (flags & ~validFlags) return false;
+  if (flagsKnown && flags == savedFlags) return true;
+  Preferences prefs;
+  if (!prefs.begin("bitchat-stick", false)) return false;
+  const bool saved = prefs.putUInt("opts-v1", flagsVersion | flags) == sizeof(uint32_t);
+  prefs.end();
+  if (saved) {
+    savedFlags = flags;
+    flagsKnown = true;
+  }
+  return saved;
+}
+}

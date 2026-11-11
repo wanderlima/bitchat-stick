@@ -28,5 +28,12 @@ int main() {
   record = 0xFFFFFFFF;assert(loadBrightnessIndex()==2);
   assert(saveBrightnessIndex(2) && record==0xBC510102); // Explicit apply repairs an invalid record.
   const auto unchangedWrites=writes;assert(saveBrightnessIndex(2) && writes==unchangedWrites);
+  assert(loadPreferenceFlags()==0);
+  assert(savePreferenceFlags(SoundUi|JoycLed));assert(loadPreferenceFlags()==(SoundUi|JoycLed));
+  const auto flagWrites=writes;assert(savePreferenceFlags(SoundUi|JoycLed)&&writes==flagWrites);
+  assert(!savePreferenceFlags(0x80));assert(record==0xBC510102);
+  writeSucceeds=false;assert(!savePreferenceFlags(JoycClick));assert(loadPreferenceFlags()==(SoundUi|JoycLed));
+  writeSucceeds=true;assert(savePreferenceFlags(JoycClick));assert(loadPreferenceFlags()==JoycClick);
+  flagsRecord=0xBC5201FF;assert(loadPreferenceFlags()==0);assert(savePreferenceFlags(0));assert(loadPreferenceFlags()==0);
   std::puts("Settings: reboot, validation, schema, unchanged values and storage failures passed");
 }

@@ -5,7 +5,7 @@
 #include <cstring>
 namespace fake_preferences {
 inline bool readable = true, writable = true, writeSucceeds = true;
-inline uint32_t record = 0;
+inline uint32_t record = 0, flagsRecord = 0;
 inline uint8_t identity[65]{};
 inline size_t identityLength=0;
 inline bool identityExists=false;
@@ -18,14 +18,16 @@ class Preferences {
     return readOnly ? fake_preferences::readable : fake_preferences::writable;
   }
   uint32_t getUInt(const char* key, uint32_t fallback) {
+    if (std::strcmp(key, "opts-v1") == 0) return fake_preferences::flagsRecord ? fake_preferences::flagsRecord : fallback;
     assert(std::strcmp(key, "ui-v1") == 0);
     return fake_preferences::record ? fake_preferences::record : fallback;
   }
   size_t putUInt(const char* key, uint32_t value) {
-    assert(std::strcmp(key, "ui-v1") == 0);
+    assert(std::strcmp(key, "ui-v1") == 0 || std::strcmp(key, "opts-v1") == 0);
     ++fake_preferences::writes;
     if (!fake_preferences::writeSucceeds) return 0;
-    fake_preferences::record = value;
+    if (std::strcmp(key, "opts-v1") == 0) fake_preferences::flagsRecord = value;
+    else fake_preferences::record = value;
     return sizeof(value);
   }
   bool isKey(const char*) { return fake_preferences::identityExists; }
