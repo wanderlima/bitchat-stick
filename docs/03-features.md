@@ -20,21 +20,11 @@ Do not promise discovery of every channel or a complete participant list. Show o
 
 ## InfoBot — planned
 
-Enable only by local action after compatible reception and transmission have been demonstrated for the selected context. Use a clearly identified bot identity, such as `StickInfoBot`; do not impersonate a phone user.
+The device replies under its advertised Bitchat Stick identity. Bot defaults to ON for each boot and can be disabled locally. The installed bot behavior is described below; physical acceptance of newly added paths is recorded separately.
 
-| Command token | Proposed configurable response |
-|---|---|
-| `!info` | “About this context: [description]. Use !rules or !help.” |
-| `!rules` | “Respect others. Avoid spam. Do not share other people's personal data.” |
-| `!help` | “Commands: !info, !rules, !help. Automated replies from StickInfoBot.” |
+InfoBot implements `!info`, `!rules`, `!help`, `!about`, and aliases `!regras`/`!ajuda`. It accepts a complete command with surrounding whitespace and ASCII case differences. Public replies require a verified signed public packet; private commands require an authenticated Noise session and receive encrypted private replies. Arguments, URLs and shell text are never executed.
 
-English command tokens and reply templates are the new default. The originally requested `!regras` and `!ajuda` may be retained as optional compatibility aliases for `!rules` and `!help` when the bot is implemented. None of these are official Bitchat protocol commands.
-
-Accept only an exact complete command; the current implementation does not trim whitespace. Do not execute arguments, URLs, or shell text. Ignore synchronized history, duplicate relays, own messages, recognized automated replies, private messages, and unapproved contexts. Reply only in the validated input context. Keep counters rather than message content by default.
-
-Starting spam policy: one reply per sender/context per 30 seconds, no more than six replies globally per minute, one short message per response, and a proposed 160-byte UTF-8 ceiling without splitting code points. Validate that ceiling against the actual codec. Drop/count automated replies when queues fill; do not accumulate an unlimited backlog across reconnections. Prefer verified identities for limits. Without them, leave the bot disabled or require an explicit conservative global policy.
-
-Configuration will be local in a future phase. No command grants privileges or changes the rules. Informational rules are not network moderation.
+The peer cooldown is three seconds and the global interval is one second. Commands must be within two minutes of the local clock. Duplicate/history/self traffic must not cause repeated replies. Failed enqueue shows Queue busy and does not create an unbounded retry backlog. The on-device switch is ON by default after boot. See [InfoBot usage and troubleshooting](15-infobot.md).
 
 ## Conditional welcome messages
 
@@ -44,10 +34,10 @@ Require an authenticatable event carrying identity and context. Discovery, annou
 
 The preferred fallback is a user-requested `!info` response, not unsolicited messages to every nearby radio.
 
-## Future Pocket Messenger
+## Initial Pocket Messenger — implemented
 
-Paged reading, canned replies such as “Received” or “On my way,” context/recipient selection, and explicit confirmation before transmission. Keep the same controls: B up, C down, A select/confirm, hold B to return/cancel. Opening a message must not send anything. Free-text composition and DMs follow only after input usability, identity, sessions, and destination confirmation are validated.
+Nearby/Inbox entry, 32 short replies, a compact QWERTY editor, and explicit recipient/text confirmation are implemented. B/C navigate, A selects, and hold B returns/cancels; JoyC uses the same actions. Opening a message or choosing a phrase never transmits it. See [the composer](14-direct-message-composer.md).
 
 ## Current InfoBot control
 
-InfoBot accepts recent signed public `!info`, `!rules`, `!help`, `!regras`, and `!ajuda` only after Noise-authenticated peer state binds the signing key. Commands with arguments are ignored. Rate limits are 30 seconds per peer and 3 seconds globally; duplicates and self traffic do not cause replies. The InfoBot screen includes an immediate ON/OFF switch for the current boot. Welcomes remain disabled.
+The screen lists four commands and Bot: ON/OFF. Command rows explain usage; they do not transmit a request. The top status distinguishes Waiting, queued Public/DM replies, cooldown, disabled state, clock mismatch and queue failure. The former Welcome: OFF footer was not editable and has been removed; automatic welcomes remain disabled.

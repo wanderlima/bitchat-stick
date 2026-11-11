@@ -15,9 +15,9 @@ Updated: **2026-11-11**. English (en-US) firmware v0.2.0. Source implementation 
 | 7 | Home | Candidate/peer/unread totals, relay state, live header | State transitions, no erase/redraw flicker |
 | 8 | Nearby | Filtered candidates, signed peers, Noise authentication, stable candidate selection, IDs/details | Android/iOS foreground/background/reconnect behavior |
 | 9 | Messages | Signed public and authenticated private input, bounded history, paging and text scrolling | Real text, Unicode substitution, truncation, reconnect |
-| 10 | Inbox | Mesh/public #bluetooth and Direct DMs, unread counts and reply entry | Offline context and controlled indirect forwarding |
+| 10 | Inbox | Public #bluetooth and Direct DMs, unread counts and reply entry | Offline context and controlled indirect forwarding |
 | 11 | InfoBot | Authenticated fresh commands, reply limits, ON/OFF control, welcomes OFF | Cross-platform replies, cooldown, no reply loops |
-| 12 | Sound | Persistent independent interaction/DM/Mesh checkboxes | Buzzer audibility and incoming alert behavior |
+| 12 | Sound | Persistent independent interaction/DM/channel checkboxes | Buzzer audibility and incoming alert behavior |
 | 13 | JoyC HAT | Corrected axes, optional click/LED, release-to-arm and repeat rules | Click/LED edge cases; directions confirmed by owner |
 | 14 | Reply | Captured recipient ID, Short msg/Keyboard choice | Entry paths individually recorded |
 | 15 | Short msgs | Eight English presets and confirmation | Presets individually recorded |
@@ -38,7 +38,7 @@ Updated: **2026-11-11**. English (en-US) firmware v0.2.0. Source implementation 
 10. Automatically initiate Noise after discovery; verify Android announcement and handshake on hardware.
 11. Connect all current screens to real state, add the bot switch, buffer display updates, and document acceptance limits.
 12. Decode received DMs and send encrypted delivered receipts without exposing private text to InfoBot.
-13. Separate Mesh/Direct DMs inboxes; add unread envelope/counts and stable per-message read state.
+13. Separate #bluetooth/Direct DMs inboxes; add unread envelope/counts and stable per-message read state.
 14. Send encrypted read receipts when a DM is displayed, with bounded retries and explicit mobile acceptance checks.
 
 Each implementation group is committed separately; no push is part of this work. Native success and upload verification do not turn the remaining physical checks into passes.

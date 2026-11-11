@@ -20,7 +20,7 @@ Updated: **2026-11-11**. Device name: **Bitchat Stick**. Supported context: publ
 - [ ] Boot from USB, then battery only: one splash, no repeated resets.
 - [ ] Remain on Home/Nearby for at least one minute: no visible black erase/redraw flashes; text and header remain stable.
 - [ ] A confirms/selects, B moves up, C moves down; hold-B backs out; hold-C for six seconds powers off without an extra down action.
-- [ ] Open all eleven screens; verify grouping, dividers, cream text and the green Nearby border.
+- [ ] Open all seventeen screens; verify grouping, dividers, cream text and the green Nearby border.
 - [ ] Wait 30 seconds: display turns off. First press only wakes it; selected screen/brightness remain intact.
 
 ## 1a. Mini JoyC HAT
@@ -36,7 +36,7 @@ Updated: **2026-11-11**. Device name: **Bitchat Stick**. Supported context: publ
 
 - [ ] Start with all Sound and JoyC checkboxes off. Confirm normal navigation with the HAT attached, then disconnected.
 - [ ] Sound → Interact plays one short beep on movement/back and two on confirmation.
-- [ ] Test DM alert and Mesh msg independently with fresh incoming messages. Duplicate transmissions and own replies stay quiet.
+- [ ] Test DM alert and Channel independently with fresh incoming messages. Duplicate transmissions and own replies stay quiet.
 - [ ] Confirm Click is off by default. A stuck button must not prevent axis or physical-button navigation while Click is off.
 - [ ] Enable Click, release it, then press again to confirm once. Holding it must not repeat. Test a press held while enabling.
 - [ ] Enable LED pulse and interact. Check a short green pulse and return to off. Disable it and verify pulses stop.
@@ -61,13 +61,13 @@ Updated: **2026-11-11**. Device name: **Bitchat Stick**. Supported context: publ
 
 Use your own test phones and synthetic content. Public BLE messages are visible to nearby participants.
 
-- [ ] In Inbox, verify **Mesh** and **Direct DMs** are separate. Mesh is the shared local public conversation, not a room created by the Stick.
-- [ ] From Android, send a unique public message such as `android-stick-001` in #bluetooth; it appears in Inbox → Mesh on the Stick.
+- [ ] In Inbox, verify **#bluetooth** and **Direct DMs** are separate. The public inbox is the shared local conversation, not a room created by the Stick.
+- [ ] From Android, send a unique public message such as `android-stick-001` in #bluetooth; it appears in Inbox → #bluetooth on the Stick.
 - [ ] Repeat from iPhone with `ios-stick-001`. Verify sender name and actual content.
 - [ ] B/C changes message; A enters text scrolling; B/C scrolls long text; hold-B leaves detail, then Messages.
 - [ ] Send long text, accents and emoji: no crash, unsupported display glyphs are substituted, and truncation is indicated when applicable.
-- [ ] With a **Noise auth** peer and Bot ON, send `!info`; receive one signed public reply from Bitchat Stick.
-- [ ] Wait at least 30 seconds between commands from the same peer; check `!rules`, `!help`, and aliases `!regras`, `!ajuda`.
+- [ ] With a signed public peer and Bot ON, send `!info`; receive one signed public reply from Bitchat Stick.
+- [ ] Wait at least three seconds between commands from the same peer; check `!rules`, `!help`, `!about`, and aliases `!regras`, `!ajuda`.
 - [ ] Send ordinary text, `!info extra`, and repeated commands: no unintended replies or reply flood.
 - [ ] In InfoBot select Bot ON/OFF with A. OFF suppresses replies immediately; ON restores them after cooldown. The switch returns to ON after reboot.
 - [ ] Reconnect/reopen apps: no welcome spam and no replay-triggered replies. Welcome remains OFF.
@@ -78,8 +78,8 @@ Use your own test phones and synthetic content. Public BLE messages are visible 
 - [ ] Open Inbox → Direct DMs: the message appears with a **DM** label and correct sender/content.
 - [ ] Before opening the DM on the Stick, Android should show delivered only. Opening it sends the encrypted read receipt; verify Android changes to read within a few seconds while connected.
 - [ ] Repeat from iPhone; test long text and reconnect. Earlier DMs sent before the update are not automatically recovered.
-- [ ] Send `!info` as a DM: it is displayed privately and never produces a public InfoBot reply.
-- [ ] A new incoming message shows the envelope on every screen, including Start, and increments unread counts. Reading one entry clears only that entry; opening Mesh must not clear unread DMs.
+- [ ] Send `!info` as a DM: it is displayed privately and receives a private InfoBot reply, never a public reply.
+- [ ] A new incoming message shows the envelope on every screen, including Start, and increments unread counts. Reading one entry clears only that entry; opening #bluetooth must not clear unread DMs.
 - [ ] While reading an older message, a new arrival preserves focus and remains unread.
 - [ ] Repeat the delivered → read transition on iPhone; test reconnect before opening the DM.
 
@@ -101,3 +101,5 @@ Use your own test phones and synthetic content. Public BLE messages are visible 
 ## Limits that are not failures of this version
 
 Private media/groups, geographic/Nostr channels, sync/history recovery and OTA are not implemented. Private-message sending with a QWERTY/canned-reply composer is implemented; validate it using [the composer checklist](14-direct-message-composer.md). History and peer pins are in RAM; local identity and brightness persist in unencrypted NVS. Outgoing public sending is currently exercised through InfoBot and public relay; private sending supports confirmed text DMs and protocol delivery/read receipts. Queue/notification acceptance is not end-to-end delivery confirmation; the sender app must actually receive the encrypted delivered/read receipt. Welcome automation intentionally stays disabled.
+
+See [InfoBot usage](15-infobot.md) for the changed public/private command gates, statuses and automatic-welcome explanation. Test Home → Back → Start and scroll through all 32 Short msgs, including Help/SOS, before confirming a send.

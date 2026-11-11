@@ -7,7 +7,7 @@ User-visible changes and validation evidence are recorded here in English (en-US
 ### Added
 
 - Private message composition from identified Nearby users and Inbox messages, using a shared four-screen flow: Reply, Short msgs, Keyboard and Confirm.
-- Eight ready-made English replies and a compact QWERTY editor with lower/uppercase letters, numbers, punctuation, space and delete. Drafts are limited to 192 ASCII characters and kept in RAM.
+- Thirty-two scrolling ready-made English replies and a compact QWERTY editor with lower/uppercase letters, numbers, punctuation, space and delete. Drafts are limited to 192 ASCII characters and kept in RAM.
 - Authenticated Noise DM sending with random message IDs, explicit recipient confirmation, Send/Cancel, draft retention after send failure and protection against repeat submission after queue acceptance.
 - Distinct Queued, Delivered and Read states, with incoming receipts matched to both message ID and peer ID.
 - Mini JoyC HAT navigation: left returns, right confirms, up/down navigate beyond ±80; horizontal gestures require recentering to ±10 and vertical actions repeat every 1.5 seconds.
@@ -16,11 +16,15 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 ### Changed
 
-- Inbox distinguishes Mesh (the shared public BLE context) from Direct DMs, with unread counts and a global header envelope.
+- Public inbox is named #bluetooth again and distinguishes public chat from Direct DMs, with unread counts and a global header envelope.
 - Settings places About last and retains five brightness presets: 5%, 25%, 50%, 75% and 100%.
 - M5GFX and M5Unified are pinned to 0.2.36 and 0.2.8 respectively, aligned with the supplied working HAT reference. RTC writes are verified through readback for that API.
 
 ### Fixed
+
+- InfoBot now answers signed public commands without requiring a private Noise session and answers authenticated DM commands privately. Added !about with the project link, case/whitespace handling, three-second peer cooldown and visible reply/block status.
+- Removed the misleading noninteractive Welcome: OFF footer; automatic greetings remain disabled.
+- Back from Home returns to Start. Added movement/direction/help/SOS presets with a sliding list and scrollbar.
 
 - HAT register reads request one byte per axis and use STOP-separated M5Unified external-I2C transactions, with Mini/classic discovery and recovery. Optional click reads stay disabled unless explicitly enabled.
 - Corrected both joystick directions for the physical Plus2 orientation. The owner confirmed HAT readiness after a full power cycle/remount and then confirmed correct navigation.
@@ -28,7 +32,7 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 ### Validation — 2026-11-11
 
-- Eighteen native suites and independent CryptoKit signature verification passed for the composer firmware. The Plus2 build and USB upload completed with flash hash verification.
+- The composer revision passed eighteen native suites; the subsequent InfoBot/navigation revision passed nineteen suites, including the reproduced public-command regression. Independent CryptoKit signature verification passed. The Plus2 build and USB upload completed with flash hash verification.
 - The owner reported that the installed message-sending flow worked well. The report did not identify a phone platform, entry path, input method or delivered/read state; these are not inferred as separate passes.
 - Earlier owner reports confirmed Android discovery, incoming DM display and HAT navigation. See [recorded tests](docs/06-testing.md) and the [device checklist](docs/13-device-checklist.md).
 

@@ -7,7 +7,7 @@ Selecting an identified user in Nearby or replying to a message in Inbox opens t
 Four screens use the existing cream/green FreeMono style and 135×240 portrait display:
 
 1. **Reply**: recipient, Short msg, Keyboard. Back returns to the exact source screen.
-2. **Short msgs**: scrollable English presets, with full selected text preview. Selecting one opens confirmation.
+2. **Short msgs**: 32 English presets with a sliding five-row viewport and scrollbar. Selecting one opens confirmation.
 3. **Keyboard**: draft above a small three-row QWERTY grid. A/right selects; B/C or up/down traverse keys in reading order. A fourth row offers case/numbers, space, delete and Done. Back returns to the method picker and preserves the draft. Limit: 192 ASCII characters; empty/space-only messages cannot proceed.
 4. **Confirm**: recipient, scrollable full message, Send/Cancel. Cancel is initially selected. Back returns to editing without sending. Cancel discards and returns to the source. Send requires a current authenticated Noise session and successful transport enqueue. Failure keeps the draft for retry. Queued means transport accepted, not delivered. The same screen displays authenticated delivery/read receipts if received.
 
@@ -40,7 +40,7 @@ On 2026-11-11, the owner reported that the installed message-sending flow worked
 
 - [x] Owner confirmed that the installed message-sending flow worked well.
 
-- [ ] Nearby → user → Short msg → Cancel sends nothing.
+- [ ] Nearby → user → Short msg → scroll through movement/help presets → Cancel sends nothing.
 - [ ] Nearby → user → Short msg → Send arrives in the intended Android DM.
 - [ ] Inbox → open DM → Reply → Keyboard → type, switch case/numbers, space/delete → Done → Send arrives on iOS.
 - [ ] New inbound messages while composing do not change recipient/draft.
@@ -48,3 +48,5 @@ On 2026-11-11, the owner reported that the installed message-sending flow worked
 - [ ] Queued changes only after an authenticated delivery/read receipt; duplicate confirmation does not send twice.
 - [ ] Verify every key and the 192-character limit using buttons and JoyC.
 - [x] Owner confirmed HAT detection and all four directions before this feature.
+
+The 32 presets include Come here, Follow me, On my way, Turn right, Turn left, Help, SOS and Emergency. These send normal private text after the same confirmation step; selecting a preset alone sends nothing.

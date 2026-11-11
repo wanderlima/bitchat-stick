@@ -133,3 +133,11 @@ The updated firmware upload completed with flash hash verification (981,952 byte
 On 2026-11-11, the owner reported that the installed message-sending flow worked well on the device. This confirms the tested flow at owner-observed level; the report did not identify which phone/OS, entry path, input method or receipt state was exercised. Platform-specific and edge-case checks below remain open until individually recorded.
 
 The owner also explicitly confirmed successful JoyC navigation after both axis directions were corrected. Existing eighteen-suite/CryptoKit results and the verified upload remain the latest software checks; this documentation update does not represent another test or flash run.
+
+## InfoBot and navigation correction — 2026-11-11
+
+A new native regression reproduced the original signed-public/no-private-session command being ignored. Public commands now rely on the existing signature verification instead of an additional private-auth gate. Private commands receive only encrypted private replies after the delivery acknowledgement; replaying the same message ID never emits another bot reply. Tests cover !about/project link, aliases, case/whitespace, cooldown, disabled state, stale clocks, invalid signatures and enqueue failure.
+
+UI tests cover Home Back to Start, #bluetooth naming, all four command details plus the bot switch, absence of the former welcome footer, and every one of the 32 presets without text clipping. The selected row remains visible through a sliding five-item viewport and wraps at both ends. Physical acceptance of these new bot paths remains pending; earlier owner confirmation of ordinary outgoing DMs does not establish it.
+
+This revision passed nineteen native suites plus independent CryptoKit verification. The Plus2 build/upload passed with flash hash verification (983,056 bytes). A post-upload USB sample reported `links=2 peers=2 auth=2 bot=0 botState=Waiting rejected=1 drops=7 heap=142188 clock=RTC joyc=present`. It confirms active transport/authentication/HAT detection, not an on-phone bot response; no new command had been observed by the bot in that sample.

@@ -14,8 +14,8 @@ Firmware **v0.2.0**, English (en-US). Source implementation and physical accepta
 - Signature-checked public relay with TTL reduction, deduplication and ingress exclusion; paced MTU-aware notifications with bounded queues.
 - Authenticated, recent public InfoBot commands and rate limits; immediate on-device Bot ON/OFF switch. This switch resets to ON at reboot; brightness and local identity persist.
 - Real repository QR, Wander Lima credits, BLE/heap/uptime counters and UTC RTC status. Serial telemetry contains counters, not message bodies or private keys.
-- Separate Mesh/Direct DMs inboxes, header unread envelope and per-message read state. Opening a DM schedules its encrypted read receipt; unopened messages remain unread.
-- Private composer from Nearby/Inbox: eight short messages, QWERTY with case/numbers, 192-character drafts, explicit Send/Cancel, authenticated sending and delivery/read correlation.
+- Separate #bluetooth/Direct DMs inboxes, header unread envelope and per-message read state. Opening a DM schedules its encrypted read receipt; unopened messages remain unread.
+- Private composer from Nearby/Inbox: 32 scrolling short messages, QWERTY with case/numbers, 192-character drafts, explicit Send/Cancel, authenticated sending and delivery/read correlation.
 - Persistent independent Sound/JoyC checkboxes, optional center click and LED pulse; About is last in Settings.
 
 ## Confirmed hardware evidence
@@ -109,7 +109,7 @@ The table test covers updates, address-type distinction, bounds/oldest replaceme
 | A short | Confirm/open; show/close detail; change selected brightness |
 | B short | Up / previous observation |
 | C short (`M5.BtnPWR`) | Down / next observation |
-| B held ≥700 ms | Back once; Messages→Channels; Settings sub-screens→Settings; details→list; other pages→Home; Home→Settings |
+| B held ≥700 ms | Back once; Messages→Inbox; Settings sub-screens→Settings; details→list; other pages→Home; Home→Start |
 | A held ≥700 ms | Reserved; no confirmation on release |
 | C held ≥700 ms | No down action; 6-second hold retains power off |
 
@@ -136,7 +136,7 @@ Only the loop mutates PeerTable. BLE callbacks enqueue fixed-size observations w
 
 ## Evidence and hardware checklist
 
-The v0.2 target built and uploaded successfully. Native tests now cover eighteen suites plus an independent CryptoKit signature check. The hardware-reproduced GATT startup assertion was corrected, Android verified the announcement and Noise session, and the owner confirmed network visibility. Buffered drawing replaces normal direct erase/redraw; visual acceptance remains a device check.
+The v0.2 target built and uploaded successfully. Native tests now cover nineteen suites plus an independent CryptoKit signature check. The hardware-reproduced GATT startup assertion was corrected, Android verified the announcement and Noise session, and the owner confirmed network visibility. Buffered drawing replaces normal direct erase/redraw; visual acceptance remains a device check.
 
 The owner initially tested a DM while the reader supported only public BLE text. Authenticated private-text decoding, encrypted delivery receipts and DM labels were subsequently added. DMs remain separate from public InfoBot processing; DM commands never generate public replies. Direct-message composition and sending were subsequently added; see [the composer flow](14-direct-message-composer.md). The owner confirmed Android delivery status and reading the DM on the Stick; encrypted read acknowledgements were added afterward and still require final app-side acceptance.
 
