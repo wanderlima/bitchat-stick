@@ -24,8 +24,10 @@ The active gate is physical acceptance: iOS message exchange, controlled two-pho
 
 Use the existing Plus2 Arduino/NimBLE stack with a bounded local protocol model. Cryptography uses pinned Monocypher 4.0.2 and ESP32 mbedTLS SHA-256; host tests cross-check official Swift/Android behavior. The exact SHAs and limitations are recorded in the [wire contract](12-wire-contract.md). No C3/C6/S3 firmware port is claimed.
 
-Private groups/media, Nostr, general encrypted routing, synchronization and Pocket Messenger composition remain separate future milestones. Welcome automation remains blocked by the lack of a reliable entry event.
+Private groups/media, Nostr, general encrypted routing, synchronization and persistent Pocket Messenger history remain separate future milestones. Welcome automation remains blocked by the lack of a reliable entry event.
 
 ## Future definition of done
 
 Record builds and compatibility results, run the test matrix, measure runtime/heap/queues, review licenses, document limitations, and make the bot locally disableable. Two nearby phones receiving the same text is not proof that the Stick relayed it.
+
+The initial Pocket Messenger composer is implemented: canned replies, QWERTY draft entry and explicit destination confirmation. Actual outbound Android/iOS acceptance remains on the [device checklist](14-direct-message-composer.md).

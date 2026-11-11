@@ -63,16 +63,10 @@ Firmware uses FreeMono Regular/Bold. Primary cream is #EBDCBA (RGB565 0xEEF7 on 
 Build once with PlatformIO to install the pinned M5GFX font sources. From the root, on macOS with Python 3, a C++ compiler and Swift:
 
 ```sh
-python3 tools/generate-ui-bitmaps.py
-python3 tools/generate-ui-fonts.py
-mkdir -p /tmp/bitchat-ui-previews
-c++ -std=c++17 -Wall -Wextra -Werror -I test/fakes -I include test/ui_preview.cpp src/PeerTable.cpp src/PeerSelection.cpp src/Settings.cpp -o /tmp/bitchat-ui-preview
-/tmp/bitchat-ui-preview /tmp/bitchat-ui-previews
-python3 tools/render-previews.py /tmp/bitchat-ui-previews
-swift -module-cache-path /tmp/bitchat-swift-cache tools/export-preview-jpegs.swift /tmp/bitchat-ui-previews docs/screens
+sh tools/render-device-previews.sh
 ```
 
-All thirteen views use the actual drawing code. Simulated measurements are confined to the host harness; the firmware never seeds its observation table with mock peers.
+All seventeen views use the actual drawing code. Simulated measurements are confined to the host harness; the firmware never seeds its observation table with mock peers.
 
 ## Reproduce exports
 
@@ -85,3 +79,15 @@ After installing the pinned PlatformIO dependencies, run `sh tools/render-device
 ## JoyC HAT
 
 ![Optional joystick click and LED controls](13-joyc-hat.jpg)
+
+## Private message composer
+
+![Reply method](14-reply.jpg)
+
+![Short messages](15-short-messages.jpg)
+
+![QWERTY editor](16-keyboard.jpg)
+
+![Send or cancel](17-confirm.jpg)
+
+Recipient and draft in these renders are synthetic. The firmware does not seed mock chats. The confirmation preview focuses Cancel, matching entry behavior.

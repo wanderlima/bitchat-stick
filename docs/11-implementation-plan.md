@@ -41,7 +41,9 @@ Each implementation group is committed separately; no push is part of this work.
 
 - **M:** final logo asset; persistent bot preference; explicit local identity reset; build-information expansion.
 - **M–L:** charging/source indication where supported, battery calibration/hysteresis and measured autonomy.
-- **L:** Pocket Messenger composition and confirmed canned replies; persistent history only after an explicit retention decision.
-- **L–XL:** private-message sending, media/groups, protected-channel participation, gossip synchronization, general encrypted routing and central-role connection scheduling.
+- **L:** persistent history only after an explicit retention decision; the initial private composer and confirmed canned replies are implemented.
+- **L–XL:** private media/groups, protected-channel participation, gossip synchronization, general encrypted routing and central-role connection scheduling.
 - **XL:** Nostr/internet contexts, OTA, persistent/out-of-band peer trust and secure-storage provisioning.
 - **Conditional:** welcomes only after an authoritative, tested entry signal exists. Reappearance, a BLE advert or a reconnect is insufficient.
+
+Completed implementation group: authenticated DM sending, delivery/read correlation, four-screen composer from Nearby/Inbox, bounded QWERTY/canned replies and confirmation/cancellation. Mobile reception remains a physical acceptance check in [the composer checklist](14-direct-message-composer.md).

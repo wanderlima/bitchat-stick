@@ -119,3 +119,11 @@ Settings now places About last. The supplied local `m5stick-nemo-wl` reference u
 A temporary address/pin diagnostic found no acknowledgement and observed the GPIO26 line low. The probe was removed and normal firmware restored. Seventeen native suites passed, and the target built/uploaded successfully, with RTC and the application loop alive. The captured runtime still showed `joyc=absent`. A full power cycle/remount was requested to check for a stalled accessory. Successful physical HAT navigation is not claimed.
 
 The owner subsequently confirmed Hat ready and working navigation after powering down and remounting the HAT. Both axes were reported reversed. The driver now uses raw X and inverted raw Y, with host assertions covering both signs. The updated physical direction check remains pending; click, LED and sound have not been independently confirmed.
+
+## Private composer — 2026-11-11
+
+The owner confirmed the corrected JoyC directions. Eighteen native suites and independent CryptoKit signature verification passed after the private composer update. Tests decrypt an outgoing maximum-length private TLV, verify recipient addressing, require an authenticated session, preserve history on failed enqueue, correlate delivery/read receipts and prevent read-state downgrade. UI tests cover Nearby and Inbox entry, stable recipient capture, cancel/back, empty Done, every keyboard mode/key, long drafts and all confirmation pages within 135×240.
+
+The target build passed. Software JPEG previews include all seventeen screens. Actual outbound Android/iOS reception and delivery/read presentation remain manual acceptance checks; build/upload and host decryption do not establish those results. See [the composer checklist](14-direct-message-composer.md).
+
+The updated firmware upload completed with flash hash verification (981,952 bytes). A short USB read produced no telemetry; no post-upload session/delivery result is inferred from that read.

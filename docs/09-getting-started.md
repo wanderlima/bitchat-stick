@@ -24,7 +24,7 @@ Full two-phone messaging/relay, iOS payload exchange, display flicker/readabilit
 
 ## Future scope
 
-Private-message sending, media/groups, arbitrary encrypted channels, Nostr, gossip synchronization, general routed Noise forwarding, OTA, persistent chat history and Pocket Messenger sending are not implemented. Welcomes remain disabled until reliable entry detection exists. Keys are stored in unencrypted NVS; peer key pins/history are RAM-only.
+Private media/groups, arbitrary encrypted channels, Nostr, gossip synchronization, general routed Noise forwarding, OTA, persistent chat history are not implemented. Welcomes remain disabled until reliable entry detection exists. Keys are stored in unencrypted NVS; peer key pins/history are RAM-only.
 
 ## Pinned dependencies
 
@@ -136,6 +136,6 @@ Only the loop mutates PeerTable. BLE callbacks enqueue fixed-size observations w
 
 The v0.2 target built and uploaded successfully. Native tests cover fourteen suites plus an independent CryptoKit signature check. The hardware-reproduced GATT startup assertion was corrected, Android verified the announcement and Noise session, and the owner confirmed network visibility. Buffered drawing replaces normal direct erase/redraw; visual acceptance remains a device check.
 
-The owner initially tested a DM while the reader supported only public BLE text. Authenticated private-text decoding, encrypted delivery receipts and DM labels were subsequently added. DMs remain separate from public InfoBot processing; DM commands never generate public replies. Direct-message sending/composition is still future scope. The owner confirmed Android delivery status and reading the DM on the Stick; encrypted read acknowledgements were added afterward and still require final app-side acceptance.
+The owner initially tested a DM while the reader supported only public BLE text. Authenticated private-text decoding, encrypted delivery receipts and DM labels were subsequently added. DMs remain separate from public InfoBot processing; DM commands never generate public replies. Direct-message composition and sending were subsequently added; see [the composer flow](14-direct-message-composer.md). The owner confirmed Android delivery status and reading the DM on the Stick; encrypted read acknowledgements were added afterward and still require final app-side acceptance.
 
 The earlier brightness self-test verified NVS readback across ESP32 restart and restored the original setting. Use the [complete acceptance checklist](13-device-checklist.md) for final display, Android/iOS message reception, controlled relay, reconnect and battery tests. Upload verification does not mark those tests as passed.

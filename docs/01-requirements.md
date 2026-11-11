@@ -16,7 +16,7 @@ Bitchat Stick is an experimental offline accessory for the M5StickC Plus2. The o
 | RF06 | InfoBot: `!info`, `!rules`, `!help` | Compatible reception/transmission plus spam controls |
 | RF07 | Join-triggered welcome message | Reliable, authenticated context-and-identity association event |
 | RF08 | Power, errors, and statistics | Use available measurements or show “Unavailable” |
-| RF09 | Future Pocket Messenger | Read messages, choose a reply, and confirm its destination before sending |
+| RF09 | Initial Pocket Messenger composer | Read messages, choose a reply, and confirm its destination before sending |
 
 RF03–RF07 remain gated by protocol investigation. Discovery, announcements, reconnections, a new nickname, or a first message must not be substituted for a channel join.
 

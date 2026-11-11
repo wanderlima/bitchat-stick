@@ -41,7 +41,7 @@ Settings → Sound offers independent checkboxes for interaction beeps, received
 
 Settings offers 5%, 25%, 50%, 75%, and 100% brightness, with 50% as the default. About credits **Wander Lima** and includes a real QR code for [the project repository](https://github.com/wanderlima/bitchat-stick). A radio mark shows the applied brightness; the cream highlight shows the focused option.
 
-The interface uses FreeMono Regular/Bold, warm cream `#EBDCBA` instead of pure white, an outlined BLE header, high-contrast selection, grouped panels, and dividers between menu items and information groups. Nearby retains a dark-green peer card and a bright-green left border. The [screen previews](docs/screens/README.md) illustrate the current direction; they are software renders of all thirteen screens, not photographs or hardware captures.
+The interface uses FreeMono Regular/Bold, warm cream `#EBDCBA` instead of pure white, an outlined BLE header, high-contrast selection, grouped panels, and dividers between menu items and information groups. Nearby retains a dark-green peer card and a bright-green left border. The [screen previews](docs/screens/README.md) illustrate the current direction; they are software renders of all seventeen screens, not photographs or hardware captures.
 
 ## Live features and remaining scope
 
@@ -52,9 +52,10 @@ The interface uses FreeMono Regular/Bold, warm cream `#EBDCBA` instead of pure w
 - InfoBot supports `!info`, `!rules`, and `!help`, plus `!regras`/`!ajuda` aliases. Commands require an authenticated peer and recent signed public text. Per-peer/global limits prevent reply floods. The on-device `Bot: ON/OFF` switch applies immediately for the current boot.
 - Welcome messages remain OFF because discovery/reconnection does not reliably prove channel entry.
 - An envelope in the header indicates unread incoming messages. Home and each inbox show unread counts; opening a DM sends an encrypted read receipt. New arrivals preserve the current reading position. Unread state is RAM-only.
+- Nearby users and Inbox messages open a private composer: Short msg presets or a QWERTY keyboard, then Send/Cancel. Drafts are bounded to 192 ASCII characters. Sending requires an authenticated live session; Queued, Delivered and Read are distinct states. See the [composer and device checklist](docs/14-direct-message-composer.md).
 - Drawing uses a 135 × 240 offscreen framebuffer before updating the display, avoiding the visible erase/redraw cycle.
 
-Private-message composition/media, private groups, Nostr, gossip/history synchronization, arbitrary routed Noise forwarding, OTA, persistent chat history, and Pocket Messenger composition/canned replies remain future scope. See the [wire contract and security limits](docs/12-wire-contract.md) and [current implementation plan](docs/11-implementation-plan.md).
+Private media, private groups, Nostr, gossip/history synchronization, arbitrary routed Noise forwarding, OTA, persistent chat history remain future scope. See the [wire contract and security limits](docs/12-wire-contract.md) and [current implementation plan](docs/11-implementation-plan.md).
 
 The official project distinguishes the offline BLE `#bluetooth` context from geographic channels carried over Nostr and the internet. Do not assume arbitrary channels, passwords, or historical `/j` and `/pass` commands work in installed versions. See the [official channel description](https://github.com/permissionlesstech/bitchat#channel-types).
 
@@ -73,6 +74,7 @@ The official project distinguishes the offline BLE `#bluetooth` context from geo
 - [Implementation plan by screen and complexity](docs/11-implementation-plan.md)
 - [Wire contract and interoperability evidence](docs/12-wire-contract.md)
 - [Device acceptance checklist](docs/13-device-checklist.md)
+- [Private composer and validation checklist](docs/14-direct-message-composer.md)
 
 ## Hardware and evidence
 

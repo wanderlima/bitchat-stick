@@ -1,6 +1,6 @@
 # Screens, layout, and controls
 
-Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All thirteen screens are present in the firmware. Live device information is never replaced with sample peers or chat.
+Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All seventeen screens are present in the firmware. Live device information is never replaced with sample peers or chat.
 
 ## Shared visual system
 
@@ -49,7 +49,7 @@ Diagnostics shows `J:X,Y` when the HAT responds. It exposes the module's calibra
 | Home | Advertisement candidates, signed-peer/unread counts, envelope, real relay/transport state | Counts do not prove channel membership |
 | Nearby | Signed peers take priority when available; otherwise filtered candidates; A opens ID/address details | Signed-only and Noise-authenticated statuses are distinct; RSSI belongs only to observations |
 | Inbox | Separate Mesh (`#bluetooth`) and Direct DMs destinations with unread counts; A opens the selected history | No private groups or Nostr context |
-| Messages | Twelve-entry public/DM live history with BLE/DM labels; B/C cycle messages; A opens text-scroll mode; B/C scroll; hold-B leaves detail, then returns to Inbox | RAM-only, 192 displayed bytes, truncation indicated; no composer |
+| Messages | Twelve-entry public/DM live history with BLE/DM labels; B/C cycle messages; A opens text-scroll mode; B/C scroll; A again replies; hold-B leaves detail, then returns to Inbox | RAM-only, 192 displayed bytes, truncation indicated; replies use a live authenticated session |
 | InfoBot | Command reference, authentication readiness, immediate Bot ON/OFF switch | Toggle is per boot; Welcome OFF |
 | Settings | Brightness, Battery, Diagnostics, Sound, JoyC HAT, About | Choices use compact rows |
 | Sound | Independent Interact, DM alert and Mesh msg square checkboxes | All default off |
@@ -109,7 +109,7 @@ The **95 × 95px** QR points to **https://github.com/wanderlima/bitchat-stick**.
 
 ## Verification and previews
 
-The [thirteen JPEG previews](screens/README.md) are generated from current drawing calls and pinned font bitmaps, using simulated measurements. They are not hardware screenshots or protocol evidence. The host UI regression checks controls, applied-versus-focused brightness, all screens, live status, ordinary/candidate/empty peers, large counters and text/rectangle bounds. Physical readability, battery behavior, radio scanning, and QR camera reading need a device pass after upload.
+The [seventeen JPEG previews](screens/README.md) are generated from current drawing calls and pinned font bitmaps, using simulated measurements. They are not hardware screenshots or protocol evidence. The host UI regression checks controls, applied-versus-focused brightness, all screens, live status, ordinary/candidate/empty peers, large counters and text/rectangle bounds. Physical readability, battery behavior, radio scanning, and QR camera reading need a device pass after upload.
 
 ## Inbox and read state
 
@@ -126,3 +126,11 @@ Settings → JoyC HAT has Click and LED pulse. Click reads the active-low button
 ### HAT reference integration — 2026-11-11
 
 The driver follows the local working Nemo reference's M5Unified transaction sequence, including STOP between register selection and reading. It probes Mini JoyC at 0x54 and classic JoyC at 0x38, using their respective axis/button/LED registers. After a full power cycle and HAT remount, the owner confirmed Hat ready and working navigation. The initial portrait transform reversed both directions on this physical device. The corrected mapping uses raw X and inverted raw Y: left returns, right confirms, and up/down navigate. Physical confirmation of the corrected directions is pending.
+
+## Private composer — four additional screens
+
+Nearby A selects the currently displayed identified user. Inbox A opens the text reader; A again starts a private reply to that message's user. Reply offers Short msg/Keyboard; Short msgs provides eight ready-made English messages; Keyboard puts the draft above a compact QWERTY layout; Confirm shows the recipient and paged draft, then Send/Cancel. Cancel is initially selected.
+
+B/C and JoyC up/down traverse the keyboard in reading order. A/right selects, left/hold-B backs out one step. ABC/123/abc switches case/numbers, SP inserts a space, DEL removes the last character, and OK opens confirmation. The confirmation text pages participate in the same focus cycle as Send and Cancel, allowing the full 192-character draft to be reviewed.
+
+The composer captures a peer ID, not a list position. Failed sends preserve the draft and show Not sent; successful enqueues show Queued and cannot be submitted twice. Delivered/Read require an authenticated receipt. See [behavior and acceptance checks](14-direct-message-composer.md).
