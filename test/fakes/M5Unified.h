@@ -76,7 +76,15 @@ struct M5Canvas:FakeDisplay {
 };
 struct FakeButton { bool down=false; bool isPressed() const { return down; } };
 struct FakePower { int getBatteryVoltage() { return 4000; } int getBatteryLevel() { return 74; } };
-struct FakeM5 { FakeDisplay Display; FakeButton BtnA,BtnB,BtnPWR; FakePower Power; };
+struct FakeSpeaker {
+ struct Tone {float frequency;uint32_t duration;};
+ std::vector<Tone> tones;
+ unsigned stops=0;
+ void setVolume(uint8_t){}
+ bool tone(float frequency,uint32_t duration,int,bool){tones.push_back({frequency,duration});return true;}
+ void stop(int){++stops;}
+};
+struct FakeM5 { FakeDisplay Display; FakeSpeaker Speaker; FakeButton BtnA,BtnB,BtnPWR; FakePower Power; };
 inline FakeM5 M5;
 struct FakeESP { unsigned getFreeHeap() { return 123456; } };
 inline FakeESP ESP;

@@ -15,6 +15,11 @@ int main(){
   fake_joyc::complete=true;fake_joyc::axes[0]=fake_joyc::axes[1]=0;
   assert(!pollJoyc(2039).valid);assert(pollJoyc(2040).valid);
   fake_joyc::present=false;assert(!pollJoyc(2060).valid);
+  assert(fake_joyc::buttonReads==0);
+  fake_joyc::present=true;fake_joyc::button=0;
+  sample=pollJoyc(3060,true);assert(sample.valid&&sample.buttonValid&&sample.pressed&&fake_joyc::buttonReads==1);
+  assert(stick::setJoycLed(42)&&fake_joyc::led[1]==42);
+  sample=pollJoyc(3080,false);assert(sample.valid&&!sample.buttonValid&&fake_joyc::buttonReads==1);
   assert(fake_joyc::releases>=3);
   std::puts("Mini JoyC driver: signed I2C axes, bounded polling, missing/short reads and recovery passed");
 }

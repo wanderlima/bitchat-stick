@@ -56,4 +56,32 @@ class JoycNavigation {
   NavigationAction held_ = NavigationAction::None;
   uint32_t lastRepeat_ = 0;
 };
+// A click starts armed only after a stable release, including after enabling it.
+class JoycClickInput {
+ public:
+  NavigationAction update(bool pressed, bool valid, bool enabled, uint32_t now,
+                          bool sleeping, bool buttonsBusy) {
+    if (!enabled || !valid || buttonsBusy) {
+      initialized_ = false;
+      armed_ = false;
+      return NavigationAction::None;
+    }
+    if (!initialized_ || pressed != rawPressed_) {
+      rawPressed_ = pressed;
+      changedAt_ = now;
+      initialized_ = true;
+    }
+    if (uint32_t(now - changedAt_) < 30) return NavigationAction::None;
+    if (!pressed) armed_ = true;
+    else if (armed_) {
+      armed_ = false;
+      return sleeping ? NavigationAction::Wake : NavigationAction::Select;
+    }
+    return NavigationAction::None;
+  }
+ private:
+  bool initialized_ = false, rawPressed_ = false, armed_ = false;
+  uint32_t changedAt_ = 0;
+};
+
 }

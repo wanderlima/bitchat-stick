@@ -8,6 +8,7 @@
 #include "NavigationInput.h"
 #include "JoycNavigation.h"
 #include "Joyc.h"
+#include "Feedback.h"
 #include <M5Unified.h>
 #include "assets/UiBitmaps.h"
 #include "assets/UiFonts.h"
@@ -21,8 +22,12 @@ constexpr uint16_t bg = TFT_BLACK, fg = 0xEEF7, muted = 0xDEFB;
 constexpr uint16_t green = 0x87F0, amber = TFT_YELLOW;
 constexpr uint16_t headerBorder = 0x41C6;
 constexpr uint32_t screenTimeout = 30000;
-enum class Screen { Splash, Dashboard, Peers, Channels, Messages, Bot, Settings, Brightness, Battery, About, Diagnostics };
+enum class Screen { Splash, Dashboard, Peers, Channels, Messages, Bot, Settings, Brightness, Battery, About, Diagnostics, Sound, Joystick };
+constexpr Screen settingsPages[] = {Screen::Brightness, Screen::Battery, Screen::About, Screen::Diagnostics, Screen::Sound, Screen::Joystick};
+constexpr const char* settingsLabels[] = {"Brightness", "Battery", "About", "Diagnostics", "Sound", "JoyC HAT"};
+constexpr size_t settingsCount = sizeof(settingsPages) / sizeof(settingsPages[0]);
 Screen screen = Screen::Splash;
+uint8_t preferenceFlags = 0;
 size_t selection = 0;
 PeerSelection peerSelection;
 constexpr uint8_t brightnessLevels[] = {13, 64, 128, 191, 255};
@@ -37,6 +42,7 @@ uint32_t lastInput = 0, lastDraw = 0, lastBattery = 0;
 int battery = -1, voltage = 0;
 NavigationInput input;
 JoycNavigation joycInput;
+JoycClickInput joycClick;
 JoycSample joycAxes;
 M5Canvas canvas(&M5.Display);
 bool buffered = false;
@@ -89,6 +95,17 @@ void item(const char* text, int top, bool selected, int height = 24, bool radio 
   if (radio) bitmap(checked ? assets::radioChecked : assets::radioUnchecked,
                     13, top + (height - 10) / 2, 10, 10, selected ? bg : fg);
   label(text, top + (height - 16) / 2, selected ? bg : fg, radio ? 29 : 13, radio ? 93 : 111);
+}
+void checkbox(const char* text, int top, bool selected, bool checked) {
+  if (selected) surface().fillRect(5, top, 125, 30, fg);
+  const uint16_t ink = selected ? bg : fg;
+  surface().drawRect(13, top + 9, 12, 12, ink);
+  if (checked) surface().fillRect(16, top + 12, 6, 6, ink);
+  label(text, top + 7, ink, 30, 92);
+}
+int settingsPageIndex(Screen page) {
+  for (size_t i = 0; i < settingsCount; ++i) if (settingsPages[i] == page) return int(i);
+  return -1;
 }
 void panel(int top, int height, bool peer = false) {
   surface().fillRect(4, top, 127, height, peer ? 0x0964 : 0x10A3);
@@ -158,6 +175,8 @@ void draw(const PeerTable& peers, uint32_t now) {
     case Screen::Battery: title = "Battery"; break;
     case Screen::About: title = "About"; break;
     case Screen::Diagnostics: title = "Diagnostics"; break;
+    case Screen::Sound: title = "Sound"; break;
+    case Screen::Joystick: title = "JoyC HAT"; break;
     default: break;
   }
   label(title, 26, fg, 4, 127, &fonts::FreeMonoBold9pt7b);
@@ -273,16 +292,32 @@ void draw(const PeerTable& peers, uint32_t now) {
       }
       break;
     }
-    case Screen::Settings: {
-      const char* options[] = {"Brightness", "Battery", "About", "Diagnostics"};
-      menu(options, 4, 54, 30);
-      if (!settingsSaved) {
-        panel(195, 40);
-        label("Not saved", 200, amber, 13, 109, compact);
-        label("RAM only", 218, muted, 13, 109, compact);
+    case Screen::Settings:
+      menu(settingsLabels, settingsCount, 54, 24);
+      if (!settingsSaved) label("Not saved", 219, amber, 13,109,compact);
+      break;
+    case Screen::Sound: {
+      const char* options[] = {"Interact", "DM alert", "Mesh msg"};
+      const uint8_t flags[] = {SoundUi, SoundDm, SoundMesh};
+      panel(54,105);
+      for (size_t i=0; i<3; ++i) {
+        checkbox(options[i],59+int(i)*32,selection==i,preferenceFlags & flags[i]);
+        if (i<2) divider(90+int(i)*32,5,125);
       }
+      if (!settingsSaved) label("Not saved",219,amber,13,109,compact);
       break;
     }
+    case Screen::Joystick:
+      panel(54,73);
+      checkbox("Click",59,selection==0,preferenceFlags & JoycClick);
+      divider(90,5,125);
+      checkbox("LED pulse",91,selection==1,preferenceFlags & JoycLed);
+      panel(140,68);
+      label(joycAxes.valid ? "Hat ready" : "No HAT",150,joycAxes.valid?green:amber);
+      if (preferenceFlags & JoycClick) label(!joycAxes.buttonValid ? "Click error" : joycAxes.pressed ? "Pressed" : "Released",180,muted,13,109,compact);
+      else label("Click off",180,muted,13,109,compact);
+      if (!settingsSaved) label("Not saved",219,amber,13,109,compact);
+      break;
     case Screen::Brightness:
       panel(54, 164);
       for (size_t i = 0; i < 5; ++i) {
@@ -346,13 +381,15 @@ void move(int direction, const PeerTable& peers) {
     detail = false;
     return;
   }
-  const size_t count = screen == Screen::Dashboard || screen == Screen::Settings ? 4 :
+  const size_t count = screen == Screen::Dashboard ? 4 : screen == Screen::Settings ? settingsCount :
+                       screen == Screen::Sound ? 3 : screen == Screen::Joystick ? 2 :
                        screen == Screen::Channels ? 2 : screen == Screen::Bot ? 4 : screen == Screen::Brightness ? 5 : 0;
   if (count) selection = (selection + count + direction) % count;
   detail = false;
 }
 } // namespace
 void beginUi() {
+  preferenceFlags = loadPreferenceFlags();
   brightnessIndex = loadBrightnessIndex();
   brightness = brightnessLevels[brightnessIndex];
   M5.Display.setRotation(0);
@@ -371,10 +408,15 @@ void updateUi(const PeerTable& peers, uint32_t now) {
   const bool bDown = M5.BtnB.isPressed();
   const bool cDown = M5.BtnPWR.isPressed();
   const auto buttons = input.update(aDown, bDown, cDown, now, sleeping);
-  joycAxes = pollJoyc(now);
+  const bool buttonsBusy = aDown || bDown || cDown || buttons != NavigationAction::None;
+  joycAxes = pollJoyc(now, preferenceFlags & JoycClick);
+  const auto click = joycClick.update(joycAxes.pressed, joycAxes.valid && joycAxes.buttonValid,
+                                     preferenceFlags & JoycClick, now, sleeping, buttonsBusy);
   const auto joystick = joycInput.update(joycAxes.x, joycAxes.y, joycAxes.valid, now, sleeping,
-                                        aDown || bDown || cDown || buttons != NavigationAction::None);
-  const auto action = buttons != NavigationAction::None ? buttons : joystick;
+                                        buttonsBusy || click != NavigationAction::None);
+  auto action = joystick;
+  if (click != NavigationAction::None) action = click;
+  if (buttons != NavigationAction::None) action = buttons;
   if (aDown || bDown || cDown || action != NavigationAction::None) lastInput = now;
   if (action == NavigationAction::Wake) {
     sleeping = false;
@@ -384,8 +426,8 @@ void updateUi(const PeerTable& peers, uint32_t now) {
   else if (action == NavigationAction::Down) move(1, peers);
   else if (action == NavigationAction::Back) {
     if (detail && (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages)) detail = false;
-    else if (screen == Screen::Brightness || screen == Screen::Battery || screen == Screen::About || screen == Screen::Diagnostics) {
-      selection = screen == Screen::Brightness ? 0 : screen == Screen::Battery ? 1 : screen == Screen::About ? 2 : 3;
+    else if (settingsPageIndex(screen) >= 0) {
+      selection = size_t(settingsPageIndex(screen));
       screen = Screen::Settings;
     } else if (screen != Screen::Splash) {
       const bool directInbox=screen==Screen::Messages && messageScope==MessageScope::Direct;
@@ -402,9 +444,13 @@ void updateUi(const PeerTable& peers, uint32_t now) {
     else if (screen == Screen::Bot && selection==3) mesh().setBotEnabled(!mesh().botEnabled());
     else if (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages) { detail = !detail; textLine=0; }
     else if (screen == Screen::Settings) {
-      const Screen destinations[] = {Screen::Brightness, Screen::Battery, Screen::About, Screen::Diagnostics};
-      screen = destinations[selection];
+      screen = settingsPages[selection];
       selection = screen == Screen::Brightness ? brightnessIndex : 0;
+    } else if (screen == Screen::Sound || screen == Screen::Joystick) {
+      const uint8_t flags[] = {SoundUi, SoundDm, SoundMesh, JoycClick, JoycLed};
+      const size_t index = screen == Screen::Sound ? selection : selection + 3;
+      preferenceFlags ^= flags[index];
+      settingsSaved = savePreferenceFlags(preferenceFlags);
     } else if (screen == Screen::Brightness) {
       settingsSaved = saveBrightnessIndex(uint8_t(selection));
       brightnessIndex = selection;
@@ -414,6 +460,8 @@ void updateUi(const PeerTable& peers, uint32_t now) {
       selection = 0;
     }
   }
+  const auto& feedbackStats = mesh().stats();
+  updateFeedback(now, preferenceFlags, action, feedbackStats.receivedDm, feedbackStats.receivedMesh);
   if (!sleeping && uint32_t(now - lastInput) >= screenTimeout) {
     sleeping = true;
     M5.Display.setBrightness(0);

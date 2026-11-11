@@ -20,7 +20,7 @@ int main(){
  static Mesh m;m.begin(local,entropy,send);m.tick(100,1800000000000ULL);
  uint8_t announce[80]={1,4,'T','e','s','t',2,32};std::memcpy(announce+8,remote.dhPublic(),32);announce[40]=3;announce[41]=32;std::memcpy(announce+42,remote.signingPublic(),32);
  auto a=packet(remote,1,{announce,74});receive(m,a);assert(m.peerCount()==1&&m.authenticatedCount()==0);
- auto text=packet(remote,2,{reinterpret_cast<const uint8_t*>("hello"),5});receive(m,text);assert(m.messageCount()==1);receive(m,text);assert(m.messageCount()==1);
+ auto text=packet(remote,2,{reinterpret_cast<const uint8_t*>("hello"),5});receive(m,text);assert(m.messageCount()==1&&m.stats().receivedMesh==1);receive(m,text);assert(m.messageCount()==1&&m.stats().receivedMesh==1);
  text.back()^=1;auto rejected=m.stats().rejected;receive(m,text);assert(m.stats().rejected>rejected);
  NoiseSession phone;uint8_t ephemeral[32],handshake[128],response[128];entropy(ephemeral,32);size_t n=0,r=0;
  wire::FrameView reply;
@@ -45,6 +45,7 @@ int main(){
  receive(m,packet(remote,0x11,{handshake,n},1800000000001ULL,{local.id(),8},false));
  assert(m.unreadCount(MessageScope::Direct)==1&&m.unreadCount(MessageScope::Public)==1);
  m.markRead(m.message(0)->sequence);assert(m.unreadCount(MessageScope::Direct)==0&&m.unreadCount()==1);
+ assert(m.stats().receivedDm==1);
  assert(m.message(0)->privateMessage && std::strcmp(m.message(0)->text,"!info")==0);assert(m.stats().botReplies==0);
  assert(wire::decode({sent.back().data(),sent.back().size()},reply)==wire::Error::None);assert(reply.type==0x11);
  assert(phone.decrypt(reply.payload,response,sizeof(response),r));assert(r==5&&response[0]==3&&std::memcmp(response+1,"dm01",4)==0);

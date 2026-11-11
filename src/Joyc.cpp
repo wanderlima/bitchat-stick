@@ -14,9 +14,17 @@ bool initialized = false, polled = false;
 uint32_t lastPoll = 0;
 
 int16_t signedAxis(int raw) { return raw < 128 ? raw : raw - 256; }
+bool readRegister(uint8_t reg, uint8_t& value) {
+  return lgfx::i2c::transactionWrite(bus, address, &reg, 1, 100000).has_value()
+      && lgfx::i2c::transactionRead(bus, address, &value, 1, 100000).has_value();
+}
+void recoverBus() {
+  lgfx::i2c::release(bus);
+  initialized = false;
+}
 }
 
-JoycSample pollJoyc(uint32_t now) {
+JoycSample pollJoyc(uint32_t now, bool readButton) {
   if (polled && uint32_t(now - lastPoll) < (sample.valid ? sampleInterval : retryInterval)) return sample;
   polled = true;
   lastPoll = now;
@@ -27,12 +35,8 @@ JoycSample pollJoyc(uint32_t now) {
   }
   uint8_t axes[2]{};
   for (uint8_t axis = 0; axis < 2; ++axis) {
-    const uint8_t reg = position + axis;
-    const bool selected = lgfx::i2c::transactionWrite(bus, address, &reg, 1, 100000).has_value();
-    const bool received = selected && lgfx::i2c::transactionRead(bus, address, &axes[axis], 1, 100000).has_value();
-    if (!received) {
-      lgfx::i2c::release(bus);
-      initialized = false;
+    if (!readRegister(position + axis, axes[axis])) {
+      recoverBus();
       return sample;
     }
   }
@@ -40,6 +44,22 @@ JoycSample pollJoyc(uint32_t now) {
   sample.x = signedAxis(x);
   sample.y = signedAxis(y);
   sample.valid = true;
+  if (readButton) {
+    uint8_t button = 1;
+    if (readRegister(0x30, button) && button <= 1) {
+      sample.buttonValid = true;
+      sample.pressed = button == 0;
+    } else recoverBus();
+  }
   return sample;
 }
+bool setJoycLed(uint8_t brightness) {
+  if (!initialized || !sample.valid) return false;
+  const uint8_t payload[] = {0x40, 0, brightness, 0};
+  if (lgfx::i2c::transactionWrite(bus, address, payload, sizeof(payload), 100000).has_value()) return true;
+  sample = {};
+  recoverBus();
+  return false;
+}
+
 }

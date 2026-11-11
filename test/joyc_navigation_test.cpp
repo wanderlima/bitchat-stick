@@ -29,5 +29,14 @@ int main(){
   assert(input(90,0,800)==A::None);input(0,0);assert(input(90,0,900)==A::Select);
   input(0,0);assert(input(0,100,UINT32_MAX-1000)==A::Down);
   assert(input(0,100,498)==A::None);assert(input(0,100,499)==A::Down);
+  stick::JoycClickInput click;
+  assert(click.update(true,true,false,0,false,false)==A::None);
+  assert(click.update(true,true,true,100,false,false)==A::None);
+  assert(click.update(true,true,true,200,false,false)==A::None);
+  click.update(false,true,true,300,false,false);click.update(false,true,true,330,false,false);
+  click.update(true,true,true,400,false,false);assert(click.update(true,true,true,429,false,false)==A::None);
+  assert(click.update(true,true,true,430,false,false)==A::Select);assert(click.update(true,true,true,900,false,false)==A::None);
+  click.update(false,true,true,1000,false,false);click.update(false,true,true,1030,false,false);
+  click.update(true,true,true,1100,true,false);assert(click.update(true,true,true,1130,true,false)==A::Wake);
   std::puts("JoyC navigation: strict thresholds, center latch, 1500ms repeat, diagonals, wake, disconnect, buttons and wrap passed");
 }

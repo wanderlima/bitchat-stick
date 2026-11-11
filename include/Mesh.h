@@ -14,7 +14,7 @@ struct MeshPeer {
 };
 enum class MessageScope {All, Public, Direct};
 struct ChatMessage {uint32_t sequence=0;bool unread=false,readReceiptSent=false;uint8_t senderId[8]{},messageId[64]{},messageIdLength=0; char name[25]{}, text[193]{}; bool outgoing=false, truncated=false, privateMessage=false; };
-struct MeshStats { uint32_t accepted=0,rejected=0,relayed=0,sent=0,dropped=0,botReplies=0; };
+struct MeshStats { uint32_t accepted=0,rejected=0,relayed=0,sent=0,dropped=0,botReplies=0,receivedDm=0,receivedMesh=0; };
 // Single-owner loop model. Callbacks must enqueue before calling receive().
 class Mesh {
  public:

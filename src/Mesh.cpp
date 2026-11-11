@@ -120,7 +120,7 @@ void Mesh::process(wire::FrameView& f,uint16_t link){
     if(!p||!wire::verifyPacket(f,p->signingKey,scratch_,sizeof(scratch_))){++stats_.rejected;return;}
     if(f.type==2 && (!size||!textValid({plain_,size}))){++stats_.rejected;return;}
     if(duplicate(f))return;p->seen=now_;
-    if(f.type==2){store(p->name,{plain_,size},false);if(f.timestamp+30000>=epoch_ && f.timestamp<=epoch_+5000)bot(*p,{plain_,size});}
+    if(f.type==2){++stats_.receivedMesh;store(p->name,{plain_,size},false);if(f.timestamp+30000>=epoch_ && f.timestamp<=epoch_+5000)bot(*p,{plain_,size});}
     else {p->authenticated=false;}
   }
   ++stats_.accepted;
@@ -172,6 +172,7 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
       if(!valid||!id.size||id.size>64||!content.size||!textValid(id)||!textValid(content)){++stats_.rejected;return;}
       uint8_t digest[32];crypto::hash({p->id,8},id,digest);
       if(!rememberDigest(digest)){
+        ++stats_.receivedDm;
         auto* message=store(p->name,content,false,true);std::memcpy(message->senderId,p->id,8);
         std::memcpy(message->messageId,id.data,id.size);message->messageIdLength=uint8_t(id.size);
         p->seen=now_;++stats_.accepted;

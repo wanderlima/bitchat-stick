@@ -17,7 +17,7 @@ void setup() {
   cfg.serial_baudrate = 115200;
   cfg.fallback_board = m5::board_t::board_M5StickCPlus2;
   cfg.internal_mic = false;
-  cfg.internal_spk = false;
+  cfg.internal_spk = true;
   cfg.internal_imu = false;
   cfg.internal_rtc = true;
   M5.begin(cfg);

@@ -6,7 +6,8 @@
 #include <cstring>
 namespace stick {
 JoycSample fakeJoyc;
-JoycSample pollJoyc(uint32_t) { return fakeJoyc; }
+JoycSample pollJoyc(uint32_t, bool) { return fakeJoyc; }
+bool setJoycLed(uint8_t) { return true; }
 bool active=true, faulted=false;
 bool transportReady() { return active && !faulted; }
 size_t transportLinks() { return 0; }
@@ -147,6 +148,20 @@ int main() {
   joy(100,0);assert(screen==Screen::Dashboard);joy(0,0);joy(100,0);assert(screen==Screen::Peers);
   screen=Screen::Diagnostics;joy(0,0);joy(0,127);assert(has("J:0,127"));
   fakeJoyc.valid=false;press(1,true);assert(screen==Screen::Settings);
+  // New settings use independent persistent square checkboxes.
+  fakeJoyc=JoycSample{};screen=Screen::Settings;selection=4;detail=false;press(0);assert(screen==Screen::Sound);
+  assert(preferenceFlags==0);press(0);assert(preferenceFlags==SoundUi&&fake_preferences::flagsRecord==0xBC520101);
+  bool squareCheckbox=false;for(const auto& rect:M5.Display.rects)if(rect.x==13&&rect.w==12&&rect.h==1)squareCheckbox=true;
+  assert(squareCheckbox);press(2);press(0);assert(preferenceFlags==(SoundUi|SoundDm));
+  press(1,true);assert(screen==Screen::Settings&&selection==4);press(2);press(0);assert(screen==Screen::Joystick);
+  assert(!(preferenceFlags&JoycClick));fakeJoyc.valid=true;fakeJoyc.buttonValid=true;fakeJoyc.pressed=true;
+  press(0);assert(preferenceFlags&JoycClick);tick+=100;updateUi(table,tick);assert(preferenceFlags&JoycClick);
+  // A stuck press present while enabling never confirms until released and pressed again.
+  fakeJoyc.pressed=false;tick+=40;updateUi(table,tick);tick+=40;updateUi(table,tick);
+  fakeJoyc.pressed=true;tick+=40;updateUi(table,tick);tick+=40;updateUi(table,tick);assert(!(preferenceFlags&JoycClick));
+  press(2);press(0);assert(preferenceFlags&JoycLed);assert(has("Hat ready"));
+  screen=Screen::Settings;draw(table,tick);check();assert(has("Sound")&&has("JoyC HAT"));
+  screen=Screen::Sound;selection=0;draw(table,tick);check();screen=Screen::Joystick;draw(table,tick);check();
   assert(buffered && M5.Display.clears==0 && M5.Display.frames>10);
   std::puts("UI: navigation, presets, credits, live header/data, grouping and text bounds passed");
 }
