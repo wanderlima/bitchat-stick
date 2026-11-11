@@ -6,6 +6,8 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 ### Added
 
+- Welcome msg in the composer method picker, using the shared introduction text and explicit confirmation for private or public destinations.
+
 - Read chat/Write msg actions in #bluetooth, using the shared composer with explicit public destination confirmation.
 
 - First-DM private introduction explaining !help/!about, controlled by Bot ON/OFF and remembered by authenticated peer ID for the current boot (32 identities, no eviction). Public traffic/reconnections never trigger it; queue failures can retry on the next new DM.

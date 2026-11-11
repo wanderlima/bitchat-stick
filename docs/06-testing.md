@@ -157,3 +157,7 @@ Nineteen native suites and independent CryptoKit verification passed; the target
 ## Owner confirmation and Channels label — 2026-11-11
 
 In response to the requested DM and #bluetooth Write msg checks, the owner confirmed that both worked correctly. This closes the general recovery/public-writing acceptance for the tested setup; no separate Android/iOS, endurance or all-peer receipt result is inferred. The navigation label was subsequently renamed from Inbox to Channels; public/private destinations and controls are unchanged.
+
+## Manual Welcome msg — 2026-11-11
+
+Nineteen native suites and independent CryptoKit verification passed. UI coverage confirms that selecting Welcome msg copies the exact shared introduction without sending, Back restores the third method selection, Cancel transmits nothing, and an explicitly confirmed public welcome stays public. The Plus2 target compiled successfully; private/public method pickers and welcome confirmation states were also updated and visually reviewed in Figma. Actual phone reception of a manually selected welcome remains a device acceptance check.

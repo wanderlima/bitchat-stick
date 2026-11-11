@@ -310,7 +310,7 @@ void draw(const PeerTable& peers, uint32_t now) {
       panel(54,68,true);label(composer.recipientName,60,fg,13,109,compact);
       std::snprintf(value,sizeof(value),"%02x%02x%02x%02x",composer.recipient[0],composer.recipient[1],composer.recipient[2],composer.recipient[3]);
       label(privateDraft?value:"Public chat",84,muted,13,109,compact);label(privateDraft?"Private DM":"Everyone",103,green,13,109,compact);
-      const char* options[]={"Short msg", "Keyboard"};menu(options,2,137,32);
+      const char* options[]={"Short msg", "Keyboard", "Welcome msg"};menu(options,3,125,30);
       break;
     }
     case Screen::ShortMessages: {
@@ -457,7 +457,7 @@ void draw(const PeerTable& peers, uint32_t now) {
 void move(int direction, const PeerTable& peers) {
   if(screen==Screen::Channels&&detail){selection=(selection+2+direction)%2;return;}
   if(composing()) {
-    const size_t count=screen==Screen::Reply?2:screen==Screen::ShortMessages?MessageComposer::presetCount:screen==Screen::Keyboard?MessageComposer::keyCount:queuedMessage?1:reviewPages()+2;
+    const size_t count=screen==Screen::Reply?3:screen==Screen::ShortMessages?MessageComposer::presetCount:screen==Screen::Keyboard?MessageComposer::keyCount:queuedMessage?1:reviewPages()+2;
     selection=(selection+count+direction)%count;return;
   }
   if (screen == Screen::Messages) {
@@ -534,7 +534,10 @@ void updateUi(const PeerTable& peers, uint32_t now) {
       if(screen==Screen::Channels)detail=!directInbox;
     }
   } else if (action == NavigationAction::Select) {
-    if(screen==Screen::Reply){screen=selection==0?Screen::ShortMessages:Screen::Keyboard;selection=0;}
+    if(screen==Screen::Reply){
+      if(selection==2){std::snprintf(composer.draft,sizeof(composer.draft),"%s",kBotIntroduction);confirmDraft();}
+      else {screen=selection==0?Screen::ShortMessages:Screen::Keyboard;selection=0;}
+    }
     else if(screen==Screen::ShortMessages){composer.preset(selection);confirmDraft();}
     else if(screen==Screen::Keyboard){if(composer.selectKey(selection))confirmDraft();}
     else if(screen==Screen::Confirm){

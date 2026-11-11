@@ -6,7 +6,7 @@ Selecting an identified user in Nearby or replying to a message in Channels open
 
 Four screens use the existing cream/green FreeMono style and 135×240 portrait display:
 
-1. **Reply**: recipient, Short msg, Keyboard. Back returns to the exact source screen.
+1. **Reply**: recipient, Short msg, Keyboard and Welcome msg. Back returns to the exact source screen.
 2. **Short msgs**: 32 English presets with a sliding five-row viewport and scrollbar. Selecting one opens confirmation.
 3. **Keyboard**: draft above a small three-row QWERTY grid. A/right selects; B/C or up/down traverse keys in reading order. A fourth row offers case/numbers, space, delete and Done. Back returns to the method picker and preserves the draft. Limit: 192 ASCII characters; empty/space-only messages cannot proceed.
 4. **Confirm**: recipient, scrollable full message, Send/Cancel. Cancel is initially selected. Back returns to editing without sending. Cancel discards and returns to the source. Private Send requires a current authenticated Noise session and successful transport enqueue. Public Send requires an available subscribed BLE link and queues a signed public message. The destination is explicitly #bluetooth/Public chat for public drafts and a named peer/ID for DMs. Failure keeps the draft for retry. Queued means transport accepted, not delivered. The same screen displays authenticated delivery/read receipts if received.
@@ -63,3 +63,7 @@ Channels → #bluetooth offers Read chat and Write msg. Public confirmation show
 - [ ] Receive a fresh DM and verify body, receipt and introduction behavior after recovery.
 - [ ] #bluetooth → Write msg → choose/type text → Send: all connected phones receive a public message.
 - [ ] Public Cancel sends nothing; user Reply still sends only a DM.
+
+## Manual Welcome msg
+
+The method picker includes Welcome msg below Short msg and Keyboard. It copies the same InfoBot introduction into the draft and opens confirmation; choosing it does not transmit. Back returns to the method picker with Welcome msg focused, and Cancel returns to the original screen. Send follows the selected destination: encrypted DM for a user, signed public text for #bluetooth. Manual welcome sends do not change the one-time automatic-introduction record.

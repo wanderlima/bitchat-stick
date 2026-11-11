@@ -129,7 +129,7 @@ The driver follows the local working Nemo reference's M5Unified transaction sequ
 
 ## Private composer — four additional screens
 
-Nearby A selects the currently displayed identified user. Channels A opens the text reader; A again starts a private reply to that message's user. Reply offers Short msg/Keyboard; Short msgs provides 32 ready-made English messages with a sliding five-row viewport and scrollbar; Keyboard puts the draft above a compact QWERTY layout; Confirm shows the recipient and paged draft, then Send/Cancel. Cancel is initially selected.
+Nearby A selects the currently displayed identified user. Channels A opens the text reader; A again starts a private reply to that message's user. Reply offers Short msg/Keyboard/Welcome msg; Short msgs provides 32 ready-made English messages with a sliding five-row viewport and scrollbar; Keyboard puts the draft above a compact QWERTY layout; Confirm shows the recipient and paged draft, then Send/Cancel. Cancel is initially selected.
 
 B/C and JoyC up/down traverse the keyboard in reading order. A/right selects, left/hold-B backs out one step. ABC/123/abc switches case/numbers, SP inserts a space, DEL removes the last character, and OK opens confirmation. The confirmation text pages participate in the same focus cycle as Send and Cancel, allowing the full 192-character draft to be reviewed.
 

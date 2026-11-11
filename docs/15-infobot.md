@@ -59,3 +59,5 @@ A first DM containing a recognized command still receives its normal private com
 - [ ] Try Bot OFF, then ON and another new DM: introduction is suppressed while OFF.
 - [ ] Test !help as first contact: command response and introduction both stay private.
 - [ ] Restart: the next fresh DM can introduce the Stick again.
+
+The composer also offers Welcome msg to send this introduction manually. It uses the ordinary destination/text confirmation and may be sent publicly or privately by explicit user action. It is independent of the automatic introduction cache.

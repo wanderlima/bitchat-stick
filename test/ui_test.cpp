@@ -168,7 +168,11 @@ int main() {
   assert(settingsPages[settingsCount-1]==Screen::About);
   // Compose from Nearby, keep recipient/draft through navigation and fail closed without auth.
   fakeJoyc=JoycSample{};screen=Screen::Peers;selection=0;detail=false;press(0);
-  assert(screen==Screen::Reply&&has("Short msg")&&has("Keyboard"));
+  assert(screen==Screen::Reply&&has("Short msg")&&has("Keyboard")&&has("Welcome msg"));
+  const auto beforeWelcome=mesh().stats().sent;
+  selection=2;press(0);assert(screen==Screen::Confirm&&std::strcmp(composer.draft,kBotIntroduction)==0&&mesh().stats().sent==beforeWelcome);
+  press(1,true);assert(screen==Screen::Reply&&selection==2);press(0);press(0);assert(screen==Screen::Peers&&mesh().stats().sent==beforeWelcome);
+  press(0);assert(screen==Screen::Reply);
   screen=Screen::ShortMessages;
   for(selection=0;selection<MessageComposer::presetCount;++selection){draw(table,tick);check();assert(has(MessageComposer::presets[selection]));}
   selection=MessageComposer::presetCount-1;press(2);assert(selection==0);press(1);assert(selection==MessageComposer::presetCount-1);
@@ -196,7 +200,7 @@ int main() {
   screen=Screen::Channels;detail=false;selection=0;press(0);assert(detail&&has("Write msg"));
   press(2);press(0);assert(screen==Screen::Reply&&!privateDraft&&has("Public chat")&&has("#bluetooth"));
   press(0);press(0);assert(screen==Screen::Confirm&&!privateDraft);press(0);assert(screen==Screen::Channels&&detail&&!composer.ready());
-  selection=1;press(0);press(0);press(0);assert(screen==Screen::Confirm);press(1);press(0);
+  selection=1;press(0);selection=2;press(0);assert(screen==Screen::Confirm&&std::strcmp(composer.draft,kBotIntroduction)==0);press(1);press(0);
   assert(queuedMessage&&mesh().message(0)->outgoing&&!mesh().message(0)->privateMessage&&has("Done"));
   press(0);assert(screen==Screen::Channels&&detail&&selection==1);press(1,true);assert(!detail&&screen==Screen::Channels);
   // Long confirmation pages and full keyboard drafts remain within 135x240.
