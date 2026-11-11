@@ -125,7 +125,7 @@ Settings → JoyC HAT has Click and LED pulse. Click reads the active-low button
 
 ### HAT reference integration — 2026-11-11
 
-The driver follows the local working Nemo reference's M5Unified transaction sequence, including STOP between register selection and reading. It probes Mini JoyC at 0x54 and classic JoyC at 0x38, using their respective axis/button/LED registers. After a full power cycle and HAT remount, the owner confirmed Hat ready and working navigation. The initial portrait transform reversed both directions on this physical device. The corrected mapping uses raw X and inverted raw Y: left returns, right confirms, and up/down navigate. Physical confirmation of the corrected directions is pending.
+The driver follows the local working Nemo reference's M5Unified transaction sequence, including STOP between register selection and reading. It probes Mini JoyC at 0x54 and classic JoyC at 0x38, using their respective axis/button/LED registers. After a full power cycle and HAT remount, the owner confirmed Hat ready and working navigation. The initial portrait transform reversed both directions on this physical device. The corrected mapping uses raw X and inverted raw Y: left returns, right confirms, and up/down navigate. The owner subsequently confirmed success with the corrected directions.
 
 ## Private composer — four additional screens
 
@@ -134,3 +134,5 @@ Nearby A selects the currently displayed identified user. Inbox A opens the text
 B/C and JoyC up/down traverse the keyboard in reading order. A/right selects, left/hold-B backs out one step. ABC/123/abc switches case/numbers, SP inserts a space, DEL removes the last character, and OK opens confirmation. The confirmation text pages participate in the same focus cycle as Send and Cancel, allowing the full 192-character draft to be reviewed.
 
 The composer captures a peer ID, not a list position. Failed sends preserve the draft and show Not sent; successful enqueues show Queued and cannot be submitted twice. Delivered/Read require an authenticated receipt. See [behavior and acceptance checks](14-direct-message-composer.md).
+
+Owner acceptance on 2026-11-11: the installed sending flow worked well. This general confirmation does not individually close the platform, receipt-state or edge-case items in the composer checklist.

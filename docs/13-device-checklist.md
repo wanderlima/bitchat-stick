@@ -1,6 +1,6 @@
 # Device acceptance checklist — v0.2.0
 
-Date: **2026-11-10**. Device name: **Bitchat Stick**. Supported context: public BLE **#bluetooth**. Record the firmware commit/image hash, both phone models/OS/app versions, power source and test time. Start with both apps in the foreground and Bluetooth permissions granted.
+Updated: **2026-11-11**. Device name: **Bitchat Stick**. Supported context: public BLE **#bluetooth** and authenticated direct text messages. Record the firmware commit/image hash, both phone models/OS/app versions, power source and test time. Start with both apps in the foreground and Bluetooth permissions granted.
 
 ## Evidence already recorded
 
@@ -11,6 +11,8 @@ Date: **2026-11-10**. Device name: **Bitchat Stick**. Supported context: public 
 - [x] Owner confirmed that the device appeared in the network.
 - [x] Final short USB observation showed two subscribed links and two authenticated peers; this is not indirect-relay proof.
 - [x] Owner confirmed Android DM delivery status and reading the DM on the Stick.
+- [x] Owner confirmed JoyC HAT detection and correct navigation in all four directions.
+- [x] Owner confirmed the installed message-sending flow worked well; phone platform, individual input paths and receipt states were not specified.
 - [ ] Final display, unread/read-status acceptance, full iOS messaging, controlled relay and endurance below.
 
 ## 1. Display and navigation

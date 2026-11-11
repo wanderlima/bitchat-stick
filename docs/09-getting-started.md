@@ -5,22 +5,24 @@ Firmware **v0.2.0**, English (en-US). Source implementation and physical accepta
 ## Implemented
 
 - PlatformIO/Arduino firmware for Plus2, early power HOLD, physical navigation, real voltage/estimated battery, screen timeout and wake suppression.
-- Eleven working screens with FreeMono, warm cream, grouped panels, dividers, green Nearby styling, and buffered rendering to remove erase/redraw flicker.
+- Seventeen working screens with FreeMono, warm cream, grouped panels, dividers, green Nearby styling, and buffered rendering to remove erase/redraw flicker.
 - Persistent brightness: 5/25/50/75/100%, default 50%; explicit apply writes NVS and storage failures are visible.
 - Passive UUID-filtered candidate scanning alongside mainnet GATT advertising. At most two subscribed peripheral links; mobiles initiate the BLE connection.
 - Persistent Noise/signing identity, bounded v1/v2 codec, signed packets, raw-DEFLATE expansion, fragment reassembly, automatic Noise XX and authenticated peer-state binding.
 - Twelve signed peer records; candidate, signed-only, and Noise-authenticated statuses are distinct.
-- Twelve public/private received messages in RAM, 192 displayed bytes each, paging and text scrolling. Unsupported display glyphs are substituted; malformed UTF-8 is rejected.
+- Twelve incoming/outgoing public/private messages in RAM, 192 displayed bytes each, paging and text scrolling. Unsupported display glyphs are substituted; malformed UTF-8 is rejected.
 - Signature-checked public relay with TTL reduction, deduplication and ingress exclusion; paced MTU-aware notifications with bounded queues.
 - Authenticated, recent public InfoBot commands and rate limits; immediate on-device Bot ON/OFF switch. This switch resets to ON at reboot; brightness and local identity persist.
 - Real repository QR, Wander Lima credits, BLE/heap/uptime counters and UTC RTC status. Serial telemetry contains counters, not message bodies or private keys.
 - Separate Mesh/Direct DMs inboxes, header unread envelope and per-message read state. Opening a DM schedules its encrypted read receipt; unopened messages remain unread.
+- Private composer from Nearby/Inbox: eight short messages, QWERTY with case/numbers, 192-character drafts, explicit Send/Cancel, authenticated sending and delivery/read correlation.
+- Persistent independent Sound/JoyC checkboxes, optional center click and LED pulse; About is last in Settings.
 
 ## Confirmed hardware evidence
 
 The earlier brightness self-test saved/read back a changed value across ESP32 restart and restored the original setting. The integrated firmware exposed an initialization assertion when GATT was registered during scanning; pausing scanning before registration fixed the reproduced reboot loop. After correction the Stick stayed running with an active RTC, a subscribed Android link, a verified signed announcement and an authenticated Noise peer. Android Bitchat 2.2.0 independently logged successful signature verification and Noise establishment. The owner confirmed network visibility.
 
-Full two-phone messaging/relay, iOS payload exchange, display flicker/readability, battery-only operation, and endurance remain physical acceptance items, not claimed passes. Use the [checklist](13-device-checklist.md).
+The owner confirmed corrected HAT navigation and successful use of the installed sending flow on 2026-11-11, without identifying a specific phone platform or receipt state. Full two-phone messaging/relay, iOS payload exchange, display flicker/readability, battery-only operation, and endurance remain physical acceptance items, not claimed passes. Use the [checklist](13-device-checklist.md).
 
 ## Future scope
 
@@ -134,7 +136,7 @@ Only the loop mutates PeerTable. BLE callbacks enqueue fixed-size observations w
 
 ## Evidence and hardware checklist
 
-The v0.2 target built and uploaded successfully. Native tests cover fourteen suites plus an independent CryptoKit signature check. The hardware-reproduced GATT startup assertion was corrected, Android verified the announcement and Noise session, and the owner confirmed network visibility. Buffered drawing replaces normal direct erase/redraw; visual acceptance remains a device check.
+The v0.2 target built and uploaded successfully. Native tests now cover eighteen suites plus an independent CryptoKit signature check. The hardware-reproduced GATT startup assertion was corrected, Android verified the announcement and Noise session, and the owner confirmed network visibility. Buffered drawing replaces normal direct erase/redraw; visual acceptance remains a device check.
 
 The owner initially tested a DM while the reader supported only public BLE text. Authenticated private-text decoding, encrypted delivery receipts and DM labels were subsequently added. DMs remain separate from public InfoBot processing; DM commands never generate public replies. Direct-message composition and sending were subsequently added; see [the composer flow](14-direct-message-composer.md). The owner confirmed Android delivery status and reading the DM on the Stick; encrypted read acknowledgements were added afterward and still require final app-side acceptance.
 

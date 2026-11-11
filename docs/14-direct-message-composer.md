@@ -17,9 +17,9 @@ Message-reading behavior remains: A opens text scrolling; A again starts a reply
 
 Firmware lives in `src/`, public mesh contracts in `include/`, native checks in `test/`; dependencies remain pinned in `platformio.ini`. Drafts/history are RAM-only. Use fixed buffers and validate text before encryption. Emit the official Noise private type 0x01 containing TLV 0x00 message ID and 0x01 content, inside an addressed 0x11 packet. Generate a random 128-bit hex message ID and correlate incoming 0x02/0x03 receipts with both recipient and message ID. Outgoing history never triggers local read receipts.
 
-Reference: [official Android NoiseEncrypted.kt](https://github.com/permissionlesstech/bitchat-android/blob/main/app/src/main/java/com/bitchat/android/model/NoiseEncrypted.kt). This confirms the wire format; actual Android/iOS delivery remains a hardware acceptance test.
+Reference: [official Android NoiseEncrypted.kt](https://github.com/permissionlesstech/bitchat-android/blob/main/app/src/main/java/com/bitchat/android/model/NoiseEncrypted.kt). This confirms the wire format. The owner subsequently confirmed successful use of the installed sending flow; platform-specific delivery checks remain to be recorded.
 
-Implement in order: encrypted sending and receipt tests; composer/UI integration and bounds tests; preview/docs and target build/upload. Each group is reviewed, tested and committed without pushing.
+Completed implementation order: encrypted sending and receipt tests; composer/UI integration and bounds tests; preview/docs and target build/upload. Each group is reviewed, tested and committed without pushing.
 
 Commands:
 
@@ -32,7 +32,13 @@ pio run -e m5stickc-plus2 -t upload --upload-port /dev/cu.usbserial-58690062391
 
 Always retain recipient identity across list changes, preserve drafts after send failure, bound text and rendering, and keep public/DM traffic separate. Never log private drafts, claim delivery from queue acceptance, add dependencies without need, or persist plaintext drafts.
 
+## Validation status — 2026-11-11
+
+On 2026-11-11, the owner reported that the installed message-sending flow worked well on the device. This confirms the tested flow at owner-observed level; the report did not identify which phone/OS, entry path, input method or receipt state was exercised. Platform-specific and edge-case checks below remain open until individually recorded.
+
 ## Device checklist
+
+- [x] Owner confirmed that the installed message-sending flow worked well.
 
 - [ ] Nearby → user → Short msg → Cancel sends nothing.
 - [ ] Nearby → user → Short msg → Send arrives in the intended Android DM.

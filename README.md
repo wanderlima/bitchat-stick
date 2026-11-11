@@ -4,7 +4,7 @@ Firmware **v0.2.0** · Default language: **English (en-US)**.
 
 A small BLE Bitchat participant for M5StickC Plus2. The firmware implements signed discovery and public chat, automatic identity-bound Noise sessions, bounded public-packet relay, and authenticated InfoBot commands. Other Bitchat users see the device as **Bitchat Stick** in the local `#bluetooth` context.
 
-Android 2.2.0 has verified the Stick's announcement and completed a real Noise handshake. The owner also confirmed seeing the device in the network. Full iOS messaging, indirect two-phone relay, background behavior, and battery endurance still require the [device acceptance checklist](docs/13-device-checklist.md). Compilation and native tests alone do not establish interoperability.
+Android 2.2.0 has verified the Stick's announcement and completed a real Noise handshake. The owner also confirmed network visibility, corrected JoyC navigation and successful use of the installed message-sending flow on 2026-11-11. The sending report did not specify a phone platform or individual receipt checks. Full iOS messaging, indirect two-phone relay, background behavior, and battery endurance still require the [device acceptance checklist](docs/13-device-checklist.md). Compilation and native tests alone do not establish interoperability.
 
 ## Build and upload
 
@@ -61,6 +61,7 @@ The official project distinguishes the offline BLE `#bluetooth` context from geo
 
 ## Documentation
 
+- [Changelog](CHANGELOG.md)
 - [Requirements and scope](docs/01-requirements.md)
 - [Proposed architecture](docs/02-architecture.md)
 - [Features and bot behavior](docs/03-features.md)

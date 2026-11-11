@@ -116,9 +116,9 @@ The combined feedback revision passed seventeen native suites plus the independe
 
 Settings now places About last. The supplied local `m5stick-nemo-wl` reference uses M5Unified Ex_I2C and STOP-separated register reads, with 0x54/0x38 discovery. The Bitchat driver now follows that interface; its direction mapping was subsequently corrected using owner feedback below. The runtime libraries were pinned to the reference's M5GFX 0.2.36 and M5Unified 0.2.8. RTC setup verifies writes through readback for the older API.
 
-A temporary address/pin diagnostic found no acknowledgement and observed the GPIO26 line low. The probe was removed and normal firmware restored. Seventeen native suites passed, and the target built/uploaded successfully, with RTC and the application loop alive. The captured runtime still showed `joyc=absent`. A full power cycle/remount was requested to check for a stalled accessory. Successful physical HAT navigation is not claimed.
+A temporary address/pin diagnostic found no acknowledgement and observed the GPIO26 line low. The probe was removed and normal firmware restored. Seventeen native suites passed, and the target built/uploaded successfully, with RTC and the application loop alive. The captured runtime still showed `joyc=absent`. A full power cycle/remount was requested to check for a stalled accessory. At that diagnostic stage, successful physical HAT navigation was not yet confirmed.
 
-The owner subsequently confirmed Hat ready and working navigation after powering down and remounting the HAT. Both axes were reported reversed. The driver now uses raw X and inverted raw Y, with host assertions covering both signs. The updated physical direction check remains pending; click, LED and sound have not been independently confirmed.
+The owner subsequently confirmed Hat ready and working navigation after powering down and remounting the HAT. Both axes were reported reversed. The driver now uses raw X and inverted raw Y, with host assertions covering both signs. The owner subsequently confirmed the corrected directions. Click, LED and sound have not been independently confirmed.
 
 ## Private composer — 2026-11-11
 
@@ -127,3 +127,9 @@ The owner confirmed the corrected JoyC directions. Eighteen native suites and in
 The target build passed. Software JPEG previews include all seventeen screens. Actual outbound Android/iOS reception and delivery/read presentation remain manual acceptance checks; build/upload and host decryption do not establish those results. See [the composer checklist](14-direct-message-composer.md).
 
 The updated firmware upload completed with flash hash verification (981,952 bytes). A short USB read produced no telemetry; no post-upload session/delivery result is inferred from that read.
+
+## Owner acceptance update — 2026-11-11
+
+On 2026-11-11, the owner reported that the installed message-sending flow worked well on the device. This confirms the tested flow at owner-observed level; the report did not identify which phone/OS, entry path, input method or receipt state was exercised. Platform-specific and edge-case checks below remain open until individually recorded.
+
+The owner also explicitly confirmed successful JoyC navigation after both axis directions were corrected. Existing eighteen-suite/CryptoKit results and the verified upload remain the latest software checks; this documentation update does not represent another test or flash run.
