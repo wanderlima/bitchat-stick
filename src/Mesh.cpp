@@ -54,7 +54,7 @@ size_t Mesh::unreadCount(MessageScope scope)const{
 // Return true when a live-session attempt was made, including a full queue.
 // The tick loop permits at most one encryption/enqueue attempt per second.
 bool Mesh::sendReadReceipt(ChatMessage& message){
-  if(!message.privateMessage||!message.messageIdLength||message.readReceiptSent||!ready())return false;
+  if(message.outgoing||!message.privateMessage||!message.messageIdLength||message.readReceiptSent||!ready())return false;
   auto* peer=find(message.senderId);if(!peer||!peer->authenticated)return false;
   for(auto& s:sessions_)if(s.used&&s.noise.ready()&&same(s.id,message.senderId)){
     uint8_t payload[65],encrypted[85];payload[0]=0x02;std::memcpy(payload+1,message.messageId,message.messageIdLength);size_t n=0;
@@ -83,6 +83,31 @@ bool Mesh::announce(uint16_t target){if(!ready())return false;
 }
 bool Mesh::sendText(const char* text){if(!text)return false;size_t n=std::strlen(text);if(!n||n>192||!textValid({reinterpret_cast<const uint8_t*>(text),n}))return false;
   wire::FrameView f;f.type=2;f.ttl=7;f.payload={reinterpret_cast<const uint8_t*>(text),n};if(!emit(f))return false;store("You",f.payload,true);return true;
+}
+bool Mesh::sendDirect(const uint8_t recipient[8],const char* text) {
+  if(!ready()||!recipient||!text||!entropy_)return false;
+  const size_t length=strnlen(text,193);
+  if(!length||length>192||!textValid({reinterpret_cast<const uint8_t*>(text),length}))return false;
+  bool visible=false;for(size_t i=0;i<length;++i)visible|=uint8_t(text[i])>32;
+  if(!visible)return false;
+  auto* peer=find(recipient);if(!peer||!peer->authenticated)return false;
+  Session* live=nullptr;
+  for(auto& s:sessions_)if(s.used&&s.noise.ready()&&same(s.id,recipient)){live=&s;break;}
+  if(!live)return false;
+  uint8_t random[16];entropy_(random,sizeof(random));char id[33];
+  constexpr char hex[]="0123456789abcdef";
+  for(size_t i=0;i<sizeof(random);++i){id[2*i]=hex[random[i]>>4];id[2*i+1]=hex[random[i]&15];}id[32]=0;
+  crypto::wipe(random,sizeof(random));
+  uint8_t payload[229]{1,0,32},encrypted[249];
+  std::memcpy(payload+3,id,32);payload[35]=1;payload[36]=uint8_t(length);std::memcpy(payload+37,text,length);
+  size_t written=0;const bool encryptedOk=live->noise.encrypt({payload,37+length},encrypted,sizeof(encrypted),written);
+  crypto::wipe(payload,sizeof(payload));
+  if(!encryptedOk)return false;
+  wire::FrameView frame;frame.type=0x11;frame.ttl=7;frame.sender={identity_->id(),8};frame.recipient={recipient,8};frame.timestamp=epoch_;frame.payload={encrypted,written};
+  if(!emit(frame,live->link,kAnyLink,false))return false;
+  auto* message=store(peer->name,{reinterpret_cast<const uint8_t*>(text),length},true,true);
+  std::memcpy(message->senderId,recipient,8);std::memcpy(message->messageId,id,32);message->messageIdLength=32;
+  message->readReceiptSent=true;return true;
 }
 bool Mesh::duplicate(const wire::FrameView& f){size_t n=0;if(!wire::canonical(f,scratch_,sizeof(scratch_),n))return true;uint8_t digest[32];crypto::hash({scratch_,n},f.signature,digest);return rememberDigest(digest);
 }
@@ -120,7 +145,7 @@ void Mesh::process(wire::FrameView& f,uint16_t link){
     if(!p||!wire::verifyPacket(f,p->signingKey,scratch_,sizeof(scratch_))){++stats_.rejected;return;}
     if(f.type==2 && (!size||!textValid({plain_,size}))){++stats_.rejected;return;}
     if(duplicate(f))return;p->seen=now_;
-    if(f.type==2){++stats_.receivedMesh;store(p->name,{plain_,size},false);if(f.timestamp+30000>=epoch_ && f.timestamp<=epoch_+5000)bot(*p,{plain_,size});}
+    if(f.type==2){++stats_.receivedMesh;auto* message=store(p->name,{plain_,size},false);std::memcpy(message->senderId,p->id,8);if(f.timestamp+30000>=epoch_ && f.timestamp<=epoch_+5000)bot(*p,{plain_,size});}
     else {p->authenticated=false;}
   }
   ++stats_.accepted;
@@ -183,6 +208,16 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
         wire::FrameView reply;reply.type=0x11;reply.ttl=7;reply.sender={identity_->id(),8};reply.recipient={p->id,8};reply.timestamp=epoch_;reply.payload={encrypted,written};emit(reply,link,kAnyLink,false);
       }
       return;
+    }
+    if(n>=2&&(plain_[0]==0x02||plain_[0]==0x03)) {
+      if(!p->authenticated||n>65||!textValid({plain_+1,n-1})){++stats_.rejected;return;}
+      for(auto& message:messages_)if(message.outgoing&&message.privateMessage&&same(message.senderId,p->id)&&
+          message.messageIdLength==n-1&&same(message.messageId,plain_+1,n-1)) {
+        if(plain_[0]==0x02)message.delivery=DeliveryState::Read;
+        else if(message.delivery!=DeliveryState::Read)message.delivery=DeliveryState::Delivered;
+        ++stats_.accepted;return;
+      }
+      return; // Evicted/unknown message receipts cannot update another conversation.
     }
     // Other private media/group payloads remain unsupported.
     if(n<2||plain_[0]!=0x21||plain_[1]!=1){++stats_.rejected;return;}

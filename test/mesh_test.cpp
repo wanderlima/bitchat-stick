@@ -69,12 +69,34 @@ int main(){
  sendAllowed=true;m.tick(5500,1800000005500ULL);assert(m.message(0)->readReceiptSent&&sent.size()==pendingRead+1);
  assert(wire::decode({sent.back().data(),sent.back().size()},reply)==wire::Error::None);
  assert(phone.decrypt(reply.payload,response,sizeof(response),r));assert(r==5&&response[0]==2&&std::memcmp(response+1,"dm02",4)==0);
+ // Outgoing private text must use the authenticated session and official TLV payload.
+ const auto beforeOutgoing=m.messageCount();
+ assert(!m.sendDirect(nullptr,"hi")&&!m.sendDirect(remote.id(),"")&&!m.sendDirect(remote.id(),"   "));
+ char tooLong[194];std::memset(tooLong,'x',193);tooLong[193]=0;assert(!m.sendDirect(remote.id(),tooLong));
+ sendAllowed=false;assert(!m.sendDirect(remote.id(),"retry"));assert(m.messageCount()==beforeOutgoing);sendAllowed=true;
+ char maximum[193];std::memset(maximum,'a',192);maximum[192]=0;
+ assert(m.sendDirect(remote.id(),maximum));
+ auto* outgoing=m.message(0);assert(outgoing->outgoing&&outgoing->privateMessage&&!outgoing->unread);
+ assert(outgoing->delivery==DeliveryState::Queued&&outgoing->messageIdLength==32&&std::memcmp(outgoing->senderId,remote.id(),8)==0);
+ assert(wire::decode({sent.back().data(),sent.back().size()},reply)==wire::Error::None);
+ assert(reply.type==0x11&&reply.recipient.size==8&&std::memcmp(reply.recipient.data,remote.id(),8)==0);
+ uint8_t decrypted[300];assert(phone.decrypt(reply.payload,decrypted,sizeof(decrypted),r));
+ assert(r==229&&decrypted[0]==1&&decrypted[1]==0&&decrypted[2]==32&&decrypted[35]==1&&decrypted[36]==192);
+ assert(std::memcmp(decrypted+37,maximum,192)==0);
+ uint8_t ack[33]={3};std::memcpy(ack+1,outgoing->messageId,32);
+ assert(phone.encrypt({ack,sizeof(ack)},handshake,sizeof(handshake),n));receive(m,packet(remote,0x11,{handshake,n},1800000005501ULL,{local.id(),8},false));
+ assert(outgoing->delivery==DeliveryState::Delivered);
+ ack[0]=2;assert(phone.encrypt({ack,sizeof(ack)},handshake,sizeof(handshake),n));receive(m,packet(remote,0x11,{handshake,n},1800000005502ULL,{local.id(),8},false));
+ assert(outgoing->delivery==DeliveryState::Read);
+ ack[0]=3;assert(phone.encrypt({ack,sizeof(ack)},handshake,sizeof(handshake),n));receive(m,packet(remote,0x11,{handshake,n},1800000005503ULL,{local.id(),8},false));
+ assert(outgoing->delivery==DeliveryState::Read); // Late delivered cannot downgrade read.
+ const auto beforeOutgoingRead=sent.size();m.markRead(outgoing->sequence);m.tick(6600,1800000006600ULL);assert(sent.size()==beforeOutgoingRead);
  auto command=packet(remote,2,{reinterpret_cast<const uint8_t*>("!info"),5},1800000000001ULL);receive(m,command);assert(m.stats().botReplies==1);receive(m,command);assert(m.stats().botReplies==1);
  receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!help"),5},1800000000002ULL));assert(m.stats().botReplies==1);
  m.setBotEnabled(false);m.tick(40000,1800000040000ULL);
  receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!rules"),6},1800000040000ULL));assert(m.stats().botReplies==1);
  m.setBotEnabled(true);receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!help"),5},1800000040001ULL));assert(m.stats().botReplies==2);
- m.disconnected(1);assert(m.authenticatedCount()==0);
+ m.disconnected(1);assert(m.authenticatedCount()==0);assert(!m.sendDirect(remote.id(),"offline"));
  receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!rules"),6},1700000000000ULL));assert(m.stats().botReplies==2);
  for(unsigned i=0;i<20;++i)assert(m.sendText("outgoing"));
  assert(m.messageCount()==12&&m.messageCount(MessageScope::Direct)==0&&m.unreadCount()==0);

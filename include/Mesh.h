@@ -13,7 +13,8 @@ struct MeshPeer {
   bool botReplied=false;
 };
 enum class MessageScope {All, Public, Direct};
-struct ChatMessage {uint32_t sequence=0;bool unread=false,readReceiptSent=false;uint8_t senderId[8]{},messageId[64]{},messageIdLength=0; char name[25]{}, text[193]{}; bool outgoing=false, truncated=false, privateMessage=false; };
+enum class DeliveryState { Queued, Delivered, Read };
+struct ChatMessage {DeliveryState delivery=DeliveryState::Queued;uint32_t sequence=0;bool unread=false,readReceiptSent=false;uint8_t senderId[8]{},messageId[64]{},messageIdLength=0; char name[25]{}, text[193]{}; bool outgoing=false, truncated=false, privateMessage=false; };
 struct MeshStats { uint32_t accepted=0,rejected=0,relayed=0,sent=0,dropped=0,botReplies=0,receivedDm=0,receivedMesh=0; };
 // Single-owner loop model. Callbacks must enqueue before calling receive().
 class Mesh {
@@ -25,6 +26,8 @@ class Mesh {
   void disconnected(uint16_t link);
   bool announce(uint16_t target=kAnyLink);
   bool sendText(const char* text);
+  // Queues only through a live authenticated private session. Never broadcasts plaintext.
+  bool sendDirect(const uint8_t recipient[8],const char* text);
   bool botEnabled() const {return botEnabled_;}
   void setBotEnabled(bool enabled) {botEnabled_=enabled;}
   size_t peerCount() const;
