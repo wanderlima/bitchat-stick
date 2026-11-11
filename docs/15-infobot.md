@@ -21,7 +21,7 @@ Commands accept ASCII case differences and surrounding whitespace, but must be t
 - Allow three seconds between commands from the same peer. A shared one-second interval also limits replies across peers. Public and private commands share the peer limit.
 - Duplicate packets do not trigger another bot reply. Queue acceptance is not proof that the phone received it.
 
-The status at the top of InfoBot shows **Waiting**, **Public reply**, **DM reply**, **Wait 3s**, **Bot OFF**, **Check clock**, or **Queue busy**. Public reply/DM reply means a reply was queued. If the original packet is rejected before command processing, check that ordinary chat arrives and that the peer/connection is present; a command status is not available for an unreadable packet. USB telemetry includes `botState` without logging message text.
+The status at the top of InfoBot shows **Waiting**, **Public reply**, **DM reply**, **Wait 3s**, **Bot OFF**, **Check clock**, or **Queue busy**, or **Intro sent**. Public reply/DM reply means a reply was queued. If the original packet is rejected before command processing, check that ordinary chat arrives and that the peer/connection is present; a command status is not available for an unreadable packet. USB telemetry includes `botState` without logging message text.
 
 ## Why commands did not reply before this change
 
@@ -29,7 +29,7 @@ The earlier implementation intentionally ignored DM commands and required privat
 
 ## Automatic welcomes
 
-The former **Welcome: OFF** footer described a disabled automatic greeting feature; it was not an editable setting. BLE discovery/reconnection does not reliably prove that someone joined the chat. Automatic welcomes therefore remain disabled, and the misleading footer has been removed. Bot: ON controls command replies only.
+The former **Welcome: OFF** footer described a disabled automatic greeting feature; it was not an editable setting. BLE discovery/reconnection does not reliably prove that someone joined the chat. Automatic welcomes therefore remain disabled, and the misleading footer has been removed. Bot: ON controls command replies and the private introduction described below.
 
 ## Device checks
 
@@ -41,3 +41,21 @@ The former **Welcome: OFF** footer described a disabled automatic greeting featu
 - [ ] Check clock/Queue busy statuses if the message arrived but no reply could be queued.
 
 The private composer was previously confirmed working by the owner. These new InfoBot paths require separate device acceptance after this firmware update.
+
+## First-DM introduction
+
+With Bot ON, the first fresh, authenticated DM from a person queues this private introduction:
+
+> Hi! I am Bitchat Stick, an open-source Bitchat device. Send !help for commands or !about for the project.
+
+This is a reply to contact initiated by that person, not a public channel-join greeting. Public messages, BLE advertisements, reconnects, old history and duplicate DMs do not trigger it. Identity uses the authenticated peer ID rather than a nickname. The identity is remembered separately from expiring peer records, so disconnect/reconnect or peer expiry cannot repeat the introduction during the same boot.
+
+Up to 32 distinct introduced identities are retained in RAM without eviction. Once full, new introductions stop until restart; normal messages and commands continue. Reboot clears this list, so the next DM may receive the introduction again. Bot OFF suppresses it and does not mark the person as introduced. A failed enqueue may be retried on the person's next fresh, nonduplicate DM; there is no timed resend. Successful enqueue counts as introduced even if radio delivery later fails.
+
+A first DM containing a recognized command still receives its normal private command response plus the one-time introduction. The introduction does not consume the command cooldown. Delivery receipts are queued first. The USB introduction counter is separate from command-reply totals; Intro sent means queued, not confirmed delivered.
+
+- [ ] Send ordinary text as a first DM with Bot ON: receive the introduction privately.
+- [ ] Send another DM and reconnect: no second introduction during the same boot.
+- [ ] Try Bot OFF, then ON and another new DM: introduction is suppressed while OFF.
+- [ ] Test !help as first contact: command response and introduction both stay private.
+- [ ] Restart: the next fresh DM can introduce the Stick again.

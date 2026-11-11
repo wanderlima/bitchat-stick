@@ -6,6 +6,7 @@
 namespace stick {
 namespace {
 bool same(const uint8_t* a,const uint8_t* b,size_t n=8){return crypto::equal(a,b,n);}
+bool liveTimestamp(uint64_t now,uint64_t stamp){return stamp<now?now-stamp<=120000:stamp-now<=120000;}
 bool broadcast(wire::Bytes id){if(!id.size)return true;for(size_t i=0;i<id.size;++i)if(id.data[i]!=255)return false;return true;}
 // Reject malformed UTF-8 and controls; the display substitutes unsupported glyphs.
 bool textValid(wire::Bytes b){
@@ -209,7 +210,7 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
       if(s->noise.encrypt({receipt,id.size+1},encrypted,sizeof(encrypted),written)){
         wire::FrameView reply;reply.type=0x11;reply.ttl=7;reply.sender={identity_->id(),8};reply.recipient={p->id,8};reply.timestamp=epoch_;reply.payload={encrypted,written};emit(reply,link,kAnyLink,false);
       }
-      if(isNew)bot(*p,content,f.timestamp,true);
+      if(isNew){bot(*p,content,f.timestamp,true);introduce(*p,f.timestamp,infoBotReply(content)!=nullptr);}
       return;
     }
     if(n>=2&&(plain_[0]==0x02||plain_[0]==0x03)) {
@@ -233,13 +234,21 @@ void Mesh::handleNoise(const wire::FrameView& f,uint16_t link){
   }
 }
 void Mesh::disconnected(uint16_t link){for(auto& s:sessions_)if(s.used&&s.link==link){auto* p=find(s.id);if(p)p->authenticated=false;s.noise.reset();s.used=false;}}
+void Mesh::introduce(MeshPeer& p,uint64_t timestamp,bool command){
+  if(!botEnabled_||!p.authenticated||!liveTimestamp(epoch_,timestamp))return;
+  for(size_t i=0;i<introducedCount_;++i)if(same(introduced_[i].data(),p.id))return;
+  if(introducedCount_==introduced_.size())return;
+  if(!sendDirect(p.id,kBotIntroduction)){if(!command)botStatus_="Queue busy";return;}
+  std::memcpy(introduced_[introducedCount_++].data(),p.id,8);++stats_.botIntroductions;
+  if(!command)botStatus_="Intro sent";
+}
 void Mesh::bot(MeshPeer& p,wire::Bytes text,uint64_t timestamp,bool direct){
   const char* reply=infoBotReply(text);if(!reply)return;
   if(!botEnabled_){botStatus_="Bot OFF";return;}
   // Public callers already verified the packet signature; only DMs need Noise auth.
   if(direct&&!p.authenticated){botStatus_="Needs auth";return;}
   // Tolerate ordinary clock skew, but do not answer delayed history as a live command.
-  if((timestamp<epoch_&&epoch_-timestamp>120000)||(timestamp>epoch_&&timestamp-epoch_>120000)){botStatus_="Check clock";return;}
+  if(!liveTimestamp(epoch_,timestamp)){botStatus_="Check clock";return;}
   if((p.botReplied&&uint32_t(now_-p.lastBot)<3000)||(replied_&&uint32_t(now_-lastBot_)<1000)){botStatus_="Wait 3s";return;}
   if(direct?sendDirect(p.id,reply):sendText(reply)){
     p.botReplied=true;p.lastBot=now_;lastBot_=now_;replied_=true;++stats_.botReplies;botStatus_=direct?"DM reply":"Public reply";

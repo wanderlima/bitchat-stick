@@ -31,5 +31,6 @@ int main(){
   model.tick(203100,epoch+203100);stamp=epoch+203100;sendAllowed=false;command("!help");
   assert(model.stats().botReplies==5&&std::strcmp(model.botStatus(),"Queue busy")==0);
   sendAllowed=true;command("!help");assert(model.stats().botReplies==6);
+  assert(model.stats().botIntroductions==0); // Public chat never triggers a private introduction.
   std::puts("InfoBot: signed public commands without a private session passed");
 }

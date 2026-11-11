@@ -15,7 +15,7 @@ struct MeshPeer {
 enum class MessageScope {All, Public, Direct};
 enum class DeliveryState { Queued, Delivered, Read };
 struct ChatMessage {DeliveryState delivery=DeliveryState::Queued;uint32_t sequence=0;bool unread=false,readReceiptSent=false;uint8_t senderId[8]{},messageId[64]{},messageIdLength=0; char name[25]{}, text[193]{}; bool outgoing=false, truncated=false, privateMessage=false; };
-struct MeshStats { uint32_t accepted=0,rejected=0,relayed=0,sent=0,dropped=0,botReplies=0,receivedDm=0,receivedMesh=0; };
+struct MeshStats { uint32_t accepted=0,rejected=0,relayed=0,sent=0,dropped=0,botReplies=0,receivedDm=0,receivedMesh=0,botIntroductions=0; };
 // Single-owner loop model. Callbacks must enqueue before calling receive().
 class Mesh {
  public:
@@ -53,6 +53,7 @@ class Mesh {
   void startNoise(MeshPeer& peer,uint16_t link);
   void handleNoise(const wire::FrameView& frame,uint16_t link);
   void bot(MeshPeer& peer,wire::Bytes text,uint64_t timestamp,bool direct=false);
+  void introduce(MeshPeer& peer,uint64_t timestamp,bool command);
   Identity* identity_=nullptr;Identity::Entropy entropy_=nullptr;Send send_=nullptr;
   uint32_t now_=0,lastAnnounce_=0,lastBot_=0,lastReceiptAttempt_=0;uint64_t epoch_=0,lastStamp_=0;bool replied_=false,botEnabled_=true;
   std::array<MeshPeer,12> peers_{};std::array<Session,2> sessions_{};
@@ -60,6 +61,8 @@ class Mesh {
   std::array<std::array<uint8_t,16>,64> dedup_{};size_t dedupCount_=0,dedupNext_=0;
   wire::FragmentAssembler assembler_;
   uint8_t assembled_[4096]{},scratch_[4096]{},out_[4096]{},plain_[2048]{};
+  // No eviction: reconnect/peer expiry must not repeat an introduction this boot.
+  std::array<std::array<uint8_t,8>,32> introduced_{};size_t introducedCount_=0;
   const char* botStatus_="Waiting";
   MeshStats stats_{};
 };

@@ -1,5 +1,6 @@
 #include "Mesh.h"
 #include "PacketSecurity.h"
+#include "../src/InfoBot.h"
 #include <Preferences.h>
 #include <cassert>
 #include <cstring>
@@ -39,6 +40,7 @@ int main(){
  assert(phone.decrypt(reply.payload,response,sizeof(response),r));assert(r==39&&response[0]==0x21);
  uint8_t state[39]={0x21,1,1,1,0,2,32};std::memcpy(state+7,remote.signingPublic(),32);
  assert(phone.encrypt({state,sizeof(state)},handshake,sizeof(handshake),n));receive(m,packet(remote,0x11,{handshake,n},1800000000000ULL,{local.id(),8},false));assert(m.authenticatedCount()==1);
+ m.setBotEnabled(false); // Bot OFF suppresses both command replies and private introductions.
  // Receive an authenticated private TLV message and verify the encrypted delivery receipt.
  uint8_t dm[]={1,0,4,'d','m','0','1',1,5,'h','e','l','l','o'};
  assert(phone.encrypt({dm,sizeof(dm)},handshake,sizeof(handshake),n));
@@ -91,6 +93,20 @@ int main(){
  ack[0]=3;assert(phone.encrypt({ack,sizeof(ack)},handshake,sizeof(handshake),n));receive(m,packet(remote,0x11,{handshake,n},1800000005503ULL,{local.id(),8},false));
  assert(outgoing->delivery==DeliveryState::Read); // Late delivered cannot downgrade read.
  const auto beforeOutgoingRead=sent.size();m.markRead(outgoing->sequence);m.tick(6600,1800000006600ULL);assert(sent.size()==beforeOutgoingRead);
+ // First fresh new DM with Bot ON gets one encrypted introduction, never a public message.
+ assert(m.stats().botIntroductions==0);m.setBotEnabled(true);
+ auto privateText=[&](const char* id,const char* text,uint64_t stamp){uint8_t plain[256];const size_t idLength=std::strlen(id),length=std::strlen(text);plain[0]=1;plain[1]=0;plain[2]=uint8_t(idLength);std::memcpy(plain+3,id,idLength);plain[3+idLength]=1;plain[4+idLength]=uint8_t(length);std::memcpy(plain+5+idLength,text,length);assert(phone.encrypt({plain,5+idLength+length},handshake,sizeof(handshake),n));receive(m,packet(remote,0x11,{handshake,n},stamp,{local.id(),8},false));};
+ // A failed enqueue does not mark this identity as introduced.
+ const auto beforeIntro=sent.size();sendAllowed=false;privateText("intro0","hi",1800000006600ULL);
+ assert(m.stats().botIntroductions==0&&sent.size()==beforeIntro);sendAllowed=true;
+ privateText("intro0","hi",1800000006601ULL);assert(sent.size()==beforeIntro+1&&m.stats().botIntroductions==0);
+ assert(wire::decode({sent.back().data(),sent.back().size()},reply)==wire::Error::None);assert(phone.decrypt(reply.payload,decrypted,sizeof(decrypted),r)&&decrypted[0]==3);
+ const auto introStart=sent.size();privateText("intro1","hi",1800000006602ULL);
+ assert(sent.size()==introStart+2&&m.stats().botIntroductions==1&&std::strcmp(m.botStatus(),"Intro sent")==0);
+ for(size_t i=introStart;i<sent.size();++i){assert(wire::decode({sent[i].data(),sent[i].size()},reply)==wire::Error::None);assert(reply.type==0x11&&std::memcmp(reply.recipient.data,remote.id(),8)==0);assert(phone.decrypt(reply.payload,decrypted,sizeof(decrypted),r));if(i==introStart)assert(decrypted[0]==3);else {assert(decrypted[0]==1);const size_t start=5+decrypted[2];assert(r-start==std::strlen(kBotIntroduction)&&std::memcmp(decrypted+start,kBotIntroduction,r-start)==0);}}
+ const auto afterIntro=sent.size();privateText("intro1","hi",1800000006603ULL);privateText("intro2","hello again",1800000006604ULL);
+ assert(sent.size()==afterIntro+2&&m.stats().botIntroductions==1); // Duplicate and subsequent new DM only get receipts.
+ for(size_t i=afterIntro;i<sent.size();++i){assert(wire::decode({sent[i].data(),sent[i].size()},reply)==wire::Error::None);assert(phone.decrypt(reply.payload,decrypted,sizeof(decrypted),r)&&decrypted[0]==3);}
  auto command=packet(remote,2,{reinterpret_cast<const uint8_t*>("!info"),5},1800000000001ULL);receive(m,command);assert(m.stats().botReplies==1);receive(m,command);assert(m.stats().botReplies==1);
  receive(m,packet(remote,2,{reinterpret_cast<const uint8_t*>("!help"),5},1800000000002ULL));assert(m.stats().botReplies==1);
  m.setBotEnabled(false);m.tick(40000,1800000040000ULL);

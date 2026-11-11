@@ -40,4 +40,4 @@ Nearby/Inbox entry, 32 short replies, a compact QWERTY editor, and explicit reci
 
 ## Current InfoBot control
 
-The screen lists four commands and Bot: ON/OFF. Command rows explain usage; they do not transmit a request. The top status distinguishes Waiting, queued Public/DM replies, cooldown, disabled state, clock mismatch and queue failure. The former Welcome: OFF footer was not editable and has been removed; automatic welcomes remain disabled.
+The screen lists four commands and Bot: ON/OFF. Command rows explain usage; they do not transmit a request. The top status distinguishes Waiting, queued Public/DM replies, cooldown, disabled state, clock mismatch and queue failure. The former Welcome: OFF footer was not editable and has been removed; public channel-join welcomes remain disabled. The first fresh authenticated DM can receive a one-time private introduction with command hints; see [the introduction rules](15-infobot.md#first-dm-introduction).

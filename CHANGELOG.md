@@ -6,6 +6,8 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 ### Added
 
+- First-DM private introduction explaining !help/!about, controlled by Bot ON/OFF and remembered by authenticated peer ID for the current boot (32 identities, no eviction). Public traffic/reconnections never trigger it; queue failures can retry on the next new DM.
+
 - Private message composition from identified Nearby users and Inbox messages, using a shared four-screen flow: Reply, Short msgs, Keyboard and Confirm.
 - Thirty-two scrolling ready-made English replies and a compact QWERTY editor with lower/uppercase letters, numbers, punctuation, space and delete. Drafts are limited to 192 ASCII characters and kept in RAM.
 - Authenticated Noise DM sending with random message IDs, explicit recipient confirmation, Send/Cancel, draft retention after send failure and protection against repeat submission after queue acceptance.
