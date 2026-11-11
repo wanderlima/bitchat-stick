@@ -30,6 +30,16 @@ Date: **2026-11-10**. Device name: **Bitchat Stick**. Supported context: public 
 - [ ] Hold up and down separately: an immediate step, then one step per 1.5 seconds. Move out of the active range to stop repeating.
 - [ ] With the display off, tilt once to wake only. Center and tilt again to navigate. Check the physical buttons still work.
 
+## 1b. Sound and JoyC options
+
+- [ ] Start with all Sound and JoyC checkboxes off. Confirm normal navigation with the HAT attached, then disconnected.
+- [ ] Sound → Interact plays one short beep on movement/back and two on confirmation.
+- [ ] Test DM alert and Mesh msg independently with fresh incoming messages. Duplicate transmissions and own replies stay quiet.
+- [ ] Confirm Click is off by default. A stuck button must not prevent axis or physical-button navigation while Click is off.
+- [ ] Enable Click, release it, then press again to confirm once. Holding it must not repeat. Test a press held while enabling.
+- [ ] Enable LED pulse and interact. Check a short green pulse and return to off. Disable it and verify pulses stop.
+- [ ] Restart and verify all five choices persist, along with the existing brightness setting.
+
 ## 2. Settings, battery and QR
 
 - [ ] Apply each brightness: 5%, 25%, 50%, 75%, 100%; check readability and radio mark versus focus highlight.

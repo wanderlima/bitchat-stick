@@ -1,6 +1,6 @@
 # Screens, layout, and controls
 
-Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All eleven screens are present in the firmware. Live device information is never replaced with sample peers or chat.
+Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All thirteen screens are present in the firmware. Live device information is never replaced with sample peers or chat.
 
 ## Shared visual system
 
@@ -28,7 +28,7 @@ Messages returns to Inbox on hold-B. Splash leaves on short-A or JoyC right. Sho
 
 ## Optional Mini JoyC HAT
 
-The firmware supports the [M5Stack Mini JoyC HAT (U156)](https://docs.m5stack.com/en/hat/Hat_Mini_JoyC). The HAT connection uses SDA G0/SCL G26 at 100 kHz, separate from the internal RTC bus. It reads the signed 8-bit axes at `0x54`, registers `0x20`–`0x21`, following the [M5Stack protocol](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/610/HAT_MiniJoyC.pdf). The center pushbutton does not navigate. LED and calibration settings are unchanged.
+The firmware supports the [M5Stack Mini JoyC HAT (U156)](https://docs.m5stack.com/en/hat/Hat_Mini_JoyC). The HAT connection uses SDA G0/SCL G26 at 100 kHz, separate from the internal RTC bus. It reads the signed 8-bit axes at `0x54`, registers `0x20`–`0x21`, following the [M5Stack protocol](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/610/HAT_MiniJoyC.pdf). Each axis is read with its own one-byte register query. Settings → JoyC HAT offers independent Click and LED pulse checkboxes. Both start disabled. Calibration is read from the module.
 
 | Gesture | Activation | Behavior |
 |---|---|---|
@@ -51,7 +51,9 @@ Diagnostics shows `J:X,Y` when the HAT responds. It exposes the module's calibra
 | Inbox | Separate Mesh (`#bluetooth`) and Direct DMs destinations with unread counts; A opens the selected history | No private groups or Nostr context |
 | Messages | Twelve-entry public/DM live history with BLE/DM labels; B/C cycle messages; A opens text-scroll mode; B/C scroll; hold-B leaves detail, then returns to Inbox | RAM-only, 192 displayed bytes, truncation indicated; no composer |
 | InfoBot | Command reference, authentication readiness, immediate Bot ON/OFF switch | Toggle is per boot; Welcome OFF |
-| Settings | Four working destinations | Additional configuration is future scope |
+| Settings | Brightness, Battery, About, Diagnostics, Sound, JoyC HAT | Choices use compact rows |
+| Sound | Independent Interact, DM alert and Mesh msg square checkboxes | All default off |
+| JoyC HAT | Click and LED pulse square checkboxes, connection/button state | Both default off |
 | Brightness | Five presets, explicit apply, persistent value, visible save failure | Physical 5% readability remains to be checked |
 | Battery | Real voltage and approximate percentage | No calibrated runtime or unsupported charging claim |
 | About | Wander Lima credits and real repository QR | Camera reading still requires physical acceptance |
@@ -107,10 +109,16 @@ The **95 × 95px** QR points to **https://github.com/wanderlima/bitchat-stick**.
 
 ## Verification and previews
 
-The [eleven JPEG previews](screens/README.md) are generated from current drawing calls and pinned font bitmaps, using simulated measurements. They are not hardware screenshots or protocol evidence. The host UI regression checks controls, applied-versus-focused brightness, all screens, live status, ordinary/candidate/empty peers, large counters and text/rectangle bounds. Physical readability, battery behavior, radio scanning, and QR camera reading need a device pass after upload.
+The [thirteen JPEG previews](screens/README.md) are generated from current drawing calls and pinned font bitmaps, using simulated measurements. They are not hardware screenshots or protocol evidence. The host UI regression checks controls, applied-versus-focused brightness, all screens, live status, ordinary/candidate/empty peers, large counters and text/rectangle bounds. Physical readability, battery behavior, radio scanning, and QR camera reading need a device pass after upload.
 
 ## Inbox and read state
 
 **Mesh** is a label for the apps' existing public local mesh (`#bluetooth`), not a new room created by the Stick. Multiple nearby participants share it. **Direct DMs** filters private messages addressed to the Stick. The shared header, including Start, shows an envelope whenever a retained incoming message is unread; Home and each inbox show counts. Viewing one message marks only that entry read. Incoming messages do not replace the message currently being read.
 
 For DMs, a local read schedules the official encrypted Noise read receipt (`0x02` plus the original message ID). Unopened DMs produce only delivered receipts (`0x03`). Pending read receipts retry with bounded work when a suitable authenticated session is available. A queued receipt is not guaranteed radio delivery, and read state is not persisted across reboot.
+
+## Sound and joystick preferences
+
+Settings → Sound uses square checkboxes for independent selections. Interact plays a short 30 ms beep on an interaction and two beeps on confirmation. DM alert and Mesh msg use different short tones for newly accepted incoming messages. Duplicate packets, announcements and outgoing replies do not trigger message alerts. Sound runs asynchronously while the UI and BLE loop continue.
+
+Settings → JoyC HAT has Click and LED pulse. Click reads the active-low button only when enabled, debounces for 30 ms and requires a released button before the first confirmation. LED pulse produces a brief green fade after interaction. All five checkboxes default off and persist as one versioned NVS record, independently of brightness. Save failure is shown as Not saved.

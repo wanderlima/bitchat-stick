@@ -2,7 +2,7 @@
 
 Default language: **English (en-US)**. These software renders come from the current UI drawing calls, pinned FreeMono font bitmaps, and simulated observations/battery values. They are not photographs, device screenshots, or evidence of Bitchat messaging compatibility. The lightweight display fake approximates hardware rendering; confirm the final appearance on the Plus2.
 
-Individual JPEGs: 540 × 960 pixels, a 4× nearest-neighbor enlargement of the 135 × 240 layout. The overview is 4480 × 2220 pixels. Text intentionally retains the pixel grid.
+Individual JPEGs: 540 × 960 pixels, a 4× nearest-neighbor enlargement of the 135 × 240 layout. The overview is 4480 × 3160 pixels. Text intentionally retains the pixel grid.
 
 The current revision restores grouped panels, the green Nearby card and left border, a live-state header square and battery icon, native 16px bold/14px compact FreeMono text, and high-contrast selection. Regular-screen navigation footers have been removed. Controls appear only on Start: A confirm, B up, C down, hold B back. C-long retains power behavior.
 
@@ -72,8 +72,16 @@ python3 tools/render-previews.py /tmp/bitchat-ui-previews
 swift -module-cache-path /tmp/bitchat-swift-cache tools/export-preview-jpegs.swift /tmp/bitchat-ui-previews docs/screens
 ```
 
-All eleven views use the actual drawing code. Simulated measurements are confined to the host harness; the firmware never seeds its observation table with mock peers.
+All thirteen views use the actual drawing code. Simulated measurements are confined to the host harness; the firmware never seeds its observation table with mock peers.
 
 ## Reproduce exports
 
 After installing the pinned PlatformIO dependencies, run `sh tools/render-device-previews.sh` on macOS. It renders the real UI calls using the test display, simulated observations/battery and synthetic signed peer/public-message traffic, then updates the JPEGs. No message is transmitted and no real identity or conversation is embedded. These previews intentionally do not claim Android/iOS interoperability.
+
+## Sound
+
+![Independent sound checkboxes](12-sound.jpg)
+
+## JoyC HAT
+
+![Optional joystick click and LED controls](13-joyc-hat.jpg)

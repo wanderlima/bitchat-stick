@@ -45,4 +45,4 @@ for source in output.glob('*.ops'):
  for y in range(240):
   row=b''.join(bytes(pixels[(y*135+x)*3:(y*135+x)*3+3])*4 for x in range(135));rows.extend([row]*4)
  png(source.with_suffix('.png'),b''.join(rows),540,960)
-print('Eleven FreeMono/cream previews rendered from the current UI.')
+print('FreeMono/cream previews rendered from the current UI.')

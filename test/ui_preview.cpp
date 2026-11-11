@@ -5,7 +5,8 @@
 #include "PacketSecurity.h"
 namespace stick {
 JoycSample fakeJoyc;
-JoycSample pollJoyc(uint32_t) { return fakeJoyc; }
+JoycSample pollJoyc(uint32_t, bool) { return fakeJoyc; }
+bool setJoycLed(uint8_t) { return true; }
 bool transportReady(){return true;}
 size_t transportLinks(){return 1;}
 uint32_t transportDrops(){return 0;}
@@ -36,9 +37,9 @@ int main(int argc, char** argv) {
     assert(wire::signPacket(f,other.signingSecret(),scratch,sizeof(scratch),sig));f.signature={sig,64};assert(wire::encode(f,encoded,sizeof(encoded),n)==wire::Error::None);mesh().receive({encoded,n},1);};
   incoming(1,{announcement,80});const char* text="Hello from a phone";incoming(2,{reinterpret_cast<const uint8_t*>(text),std::strlen(text)});
   beginUi();battery=72;voltage=4000;
-  const Screen pages[]={Screen::Dashboard,Screen::Peers,Screen::Channels,Screen::Messages,Screen::Bot,Screen::Settings,Screen::Splash,Screen::Brightness,Screen::About,Screen::Battery,Screen::Diagnostics};
-  const char* names[]={"01-dashboard","02-nearby-peers","03-channels","04-channel-messages","05-infobot","06-settings","07-splash","08-brightness","09-about","10-battery","11-diagnostics"};
-  for(unsigned i=0;i<11;++i) {
+  const Screen pages[]={Screen::Dashboard,Screen::Peers,Screen::Channels,Screen::Messages,Screen::Bot,Screen::Settings,Screen::Splash,Screen::Brightness,Screen::About,Screen::Battery,Screen::Diagnostics,Screen::Sound,Screen::Joystick};
+  const char* names[]={"01-dashboard","02-nearby-peers","03-channels","04-channel-messages","05-infobot","06-settings","07-splash","08-brightness","09-about","10-battery","11-diagnostics","12-sound","13-joyc-hat"};
+  for(unsigned i=0;i<13;++i) {
     screen=pages[i];selection=pages[i]==Screen::Brightness ? 2 : 0;detail=false;draw(peers,3000);
     assert(M5.Display.boundsOk);
     std::ofstream out((std::string(argv[1])+"/")+names[i]+".ops");

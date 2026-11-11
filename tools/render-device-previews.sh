@@ -9,7 +9,7 @@ ${CC:-cc} -std=c99 -I "$crypto_dir" -c "$crypto_dir/monocypher.c" -o "$preview_d
 ${CC:-cc} -std=c99 -I "$crypto_dir" -c "$crypto_dir/optional/monocypher-ed25519.c" -o "$preview_dir/ed25519.o"
 ${CC:-cc} -std=c99 -c .pio/libdeps/m5stickc-plus2/M5GFX/src/lgfx/utility/lgfx_miniz.c -o "$preview_dir/miniz.o"
 ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror -I test/fakes -I include -I "$crypto_dir" \
-  test/ui_preview.cpp src/PeerTable.cpp src/PeerSelection.cpp src/Settings.cpp \
+  test/ui_preview.cpp src/Feedback.cpp src/PeerTable.cpp src/PeerSelection.cpp src/Settings.cpp \
   src/Mesh.cpp src/Identity.cpp src/NoiseSession.cpp src/FragmentAssembler.cpp \
   src/WireCodec.cpp src/PacketSecurity.cpp src/CryptoPrimitives.cpp \
   "$preview_dir/monocypher.o" "$preview_dir/ed25519.o" "$preview_dir/miniz.o" -o "$preview_dir/preview"
