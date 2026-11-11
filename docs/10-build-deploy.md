@@ -1,6 +1,6 @@
 # Build and USB deployment
 
-Foundation v0.1.0. **Deployment means flashing the Plus2 over USB.** There is no web deployment, OTA, or Bluetooth updater. These instructions do not record a device upload performed by the agent.
+Firmware v1.0.00. **Deployment means flashing the Plus2 over USB.** There is no web deployment, OTA, or Bluetooth updater. Build/upload evidence is recorded separately in the device checklist.
 
 ## 1. Prepare the environment
 
@@ -108,7 +108,7 @@ Exit with `Ctrl+C` before another upload. Re-list/update the port if it changes 
 The latest source prints this startup line:
 
 ```text
-Bitchat Stick 0.2.0 | signed BLE mesh | authenticated InfoBot
+Bitchat Stick 1.0.00 | signed BLE mesh | authenticated InfoBot
 ```
 
 If the monitor starts after this line, it may not appear until the next boot. Every ten seconds the firmware logs aggregate mesh/link/authentication/queue/drop/heap/clock counters. It does not log message bodies or keys. Use Settings → Diagnostics for on-screen counters.
@@ -142,7 +142,7 @@ These generated products are ignored by Git; they are not automatically a univer
 pio pkg list -e m5stickc-plus2
 ```
 
-The local repository was initialized without a release commit/tag in the initial phase. Do not claim an available versioned rollback unless one is later created. Restore a known previous image using its matching flash/partition recipe; there is no OTA rollback.
+The local annotated release tag `v1.0.00` identifies the 1.0.00 source snapshot. Check it out in a separate worktree when rebuilding that release; rebuilding generates a new clock floor, so do not assume the resulting binary is byte-identical to an earlier upload. Restore a known previous image using its matching flash/partition recipe; there is no OTA rollback.
 
 ## 9. Troubleshooting
 
@@ -167,4 +167,15 @@ Build and native tests have passed during foundation development. The owner has 
 
 CLI references: [pio run](https://docs.platformio.org/en/latest/core/userguide/cmd_run.html), [device list](https://docs.platformio.org/en/latest/core/userguide/device/cmd_list.html), [device monitor](https://docs.platformio.org/en/latest/core/userguide/device/cmd_monitor.html).
 
-The current eleven-screen Figma sync also passed the full firmware build (42,496 bytes static RAM; 858,801 bytes application flash), all three native suites with sanitizers, software bounds checks and repository-QR decoding. This is software evidence; the revision has not been flashed by the agent.
+The historical eleven-screen foundation sync passed the full firmware build (42,496 bytes static RAM; 858,801 bytes application flash), all three native suites with sanitizers, software bounds checks and repository-QR decoding. That was software evidence for the earlier foundation snapshot, before subsequent device uploads.
+
+## Release version and tag
+
+The firmware version is defined once in `include/Version.h` and used by the boot banner and Diagnostics. Version 1.0.00 intentionally retains the selected zero-padded patch component; its Git tag is `v1.0.00`.
+
+```sh
+git show v1.0.00 --no-patch
+git worktree add --detach /tmp/bitchat-stick-v1.0.00 v1.0.00
+```
+
+The tag is annotated and local until explicitly pushed. It marks the source snapshot, not a hosted binary or completion of every device acceptance item. The existing [device checklist](13-device-checklist.md) remains applicable.

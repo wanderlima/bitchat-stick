@@ -11,6 +11,7 @@
 #include "Feedback.h"
 #include "MessageComposer.h"
 #include "InfoBot.h"
+#include "Version.h"
 #include <M5Unified.h>
 #include "assets/UiBitmaps.h"
 #include "assets/UiFonts.h"
@@ -447,7 +448,7 @@ void draw(const PeerTable& peers, uint32_t now) {
       if (joycAxes.valid) {
         std::snprintf(value, sizeof(value), "J:%d,%d", int(joycAxes.x), int(joycAxes.y));
         label(value, 216, green, 13,109,compact);
-      } else label(clockRtc() ? "RTC / v0.2" : "Build clock", 216, clockRtc() ? muted : amber, 13,109,compact);
+      } else label(clockRtc() ? "v" STICK_VERSION " RTC" : "Build clock", 216, clockRtc() ? muted : amber, 13,109,compact);
       break;
     default: break;
   }

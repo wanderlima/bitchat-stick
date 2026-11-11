@@ -7,6 +7,7 @@
 #include "Transport.h"
 #include "Clock.h"
 #include "Joyc.h"
+#include "Version.h"
 
 stick::PeerTable peers;
 void setup() {
@@ -34,7 +35,7 @@ void setup() {
   }
   stick::beginUi();
   stick::beginClock();
-  Serial.println("Bitchat Stick 0.2.0 | signed BLE mesh | authenticated InfoBot");
+  Serial.println("Bitchat Stick " STICK_VERSION " | signed BLE mesh | authenticated InfoBot");
   if (!stick::beginScanner()) Serial.println("BLE: scanner initialization failed.");
   else if (!stick::beginTransport()) Serial.println("BLE: transport/identity initialization failed.");
 }

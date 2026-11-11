@@ -1,6 +1,6 @@
 # Implementation plan by screen and complexity
 
-Updated: **2026-11-11**. English (en-US) firmware v0.2.0. Source implementation is complete for the current seventeen-screen public-BLE, received-DM and private-composer scope. Physical acceptance is intentionally separate: use the [device checklist](13-device-checklist.md). Future product ideas are not represented as implemented.
+Updated: **2026-11-11**. English (en-US) firmware v1.0.00. Source implementation is complete for the current seventeen-screen public-BLE, received-DM and private-composer scope. Physical acceptance is intentionally separate: use the [device checklist](13-device-checklist.md). Future product ideas are not represented as implemented.
 
 ## Screen order — lowest to highest complexity
 

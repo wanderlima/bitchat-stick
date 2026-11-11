@@ -1,4 +1,4 @@
-# Device acceptance checklist — v0.2.0
+# Device acceptance checklist — v1.0.00
 
 Updated: **2026-11-11**. Device name: **Bitchat Stick**. Supported context: public BLE **#bluetooth** and authenticated direct text messages. Record the firmware commit/image hash, both phone models/OS/app versions, power source and test time. Start with both apps in the foreground and Bluetooth permissions granted.
 

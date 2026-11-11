@@ -4,6 +4,10 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 ## Unreleased
 
+No changes recorded after 1.0.00.
+
+## 1.0.00 — 2026-11-11
+
 ### Added
 
 - Welcome msg in the composer method picker, using the shared introduction text and explicit confirmation for private or public destinations.

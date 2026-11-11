@@ -161,3 +161,7 @@ In response to the requested DM and #bluetooth Write msg checks, the owner confi
 ## Manual Welcome msg — 2026-11-11
 
 Nineteen native suites and independent CryptoKit verification passed. UI coverage confirms that selecting Welcome msg copies the exact shared introduction without sending, Back restores the third method selection, Cancel transmits nothing, and an explicitly confirmed public welcome stays public. The Plus2 target compiled successfully; private/public method pickers and welcome confirmation states were also updated and visually reviewed in Figma. Actual phone reception of a manually selected welcome remains a device acceptance check.
+
+## Release 1.0.00 — 2026-11-11
+
+The first annotated release tag is `v1.0.00`. The version label is defined in `include/Version.h` and reused in the boot banner and Diagnostics. Nineteen native suites, independent CryptoKit verification, the Plus2 firmware build and software preview bounds checks passed for this source snapshot. Tagging did not flash another image or close outstanding per-platform, manual Welcome msg, range/relay or endurance checks. Earlier owner-confirmed DM recovery/public sending evidence remains recorded above.

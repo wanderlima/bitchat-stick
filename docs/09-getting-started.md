@@ -1,6 +1,6 @@
 # Getting started — implementation status
 
-Firmware **v0.2.0**, English (en-US). Source implementation and physical acceptance are tracked separately in the [device checklist](13-device-checklist.md).
+Firmware **v1.0.00**, English (en-US). Source implementation and physical acceptance are tracked separately in the [device checklist](13-device-checklist.md).
 
 ## Implemented
 

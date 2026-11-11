@@ -1,6 +1,6 @@
 # Bitchat Stick — M5StickC Plus2
 
-Firmware **v0.2.0** · Default language: **English (en-US)**.
+Firmware **v1.0.00** · Default language: **English (en-US)**.
 
 A small BLE Bitchat participant for M5StickC Plus2. The firmware implements signed discovery and public chat, automatic identity-bound Noise sessions, bounded public-packet relay, and signed-public/private InfoBot commands. Other Bitchat users see the device as **Bitchat Stick** in the local `#bluetooth` context.
 
