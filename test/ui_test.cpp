@@ -61,8 +61,8 @@ int main() {
   press(0);press(2);press(1,true);assert(screen==Screen::Settings && brightnessIndex==3); // cancel without applying
   assert(fake_preferences::writes==1);
   press(2);press(0);assert(screen==Screen::Battery && has("4000 mV"));
-  press(1,true);press(2);press(0);assert(screen==Screen::About && has("Wander Lima") && !has("SOON"));
   press(1,true);press(2);press(0);assert(screen==Screen::Diagnostics && has("BLE 123") && has("Drop 2"));
+  press(1,true);press(2);press(2);press(2);press(0);assert(screen==Screen::About && has("Wander Lima") && !has("SOON"));
   // Visit the remaining primary screens and detail states with the same controls.
   screen=Screen::Channels;draw(table,tick);check();assert(has("#bluetooth") && has("Mesh"));press(0);assert(screen==Screen::Messages);
   press(1,true);assert(screen==Screen::Channels);
@@ -149,11 +149,11 @@ int main() {
   screen=Screen::Diagnostics;joy(0,0);joy(0,127);assert(has("J:0,127"));
   fakeJoyc.valid=false;press(1,true);assert(screen==Screen::Settings);
   // New settings use independent persistent square checkboxes.
-  fakeJoyc=JoycSample{};screen=Screen::Settings;selection=4;detail=false;press(0);assert(screen==Screen::Sound);
+  fakeJoyc=JoycSample{};screen=Screen::Settings;selection=3;detail=false;press(0);assert(screen==Screen::Sound);
   assert(preferenceFlags==0);press(0);assert(preferenceFlags==SoundUi&&fake_preferences::flagsRecord==0xBC520101);
   bool squareCheckbox=false;for(const auto& rect:M5.Display.rects)if(rect.x==13&&rect.w==12&&rect.h==1)squareCheckbox=true;
   assert(squareCheckbox);press(2);press(0);assert(preferenceFlags==(SoundUi|SoundDm));
-  press(1,true);assert(screen==Screen::Settings&&selection==4);press(2);press(0);assert(screen==Screen::Joystick);
+  press(1,true);assert(screen==Screen::Settings&&selection==3);press(2);press(0);assert(screen==Screen::Joystick);
   assert(!(preferenceFlags&JoycClick));fakeJoyc.valid=true;fakeJoyc.buttonValid=true;fakeJoyc.pressed=true;
   press(0);assert(preferenceFlags&JoycClick);tick+=100;updateUi(table,tick);assert(preferenceFlags&JoycClick);
   // A stuck press present while enabling never confirms until released and pressed again.
@@ -162,6 +162,7 @@ int main() {
   press(2);press(0);assert(preferenceFlags&JoycLed);assert(has("Hat ready"));
   screen=Screen::Settings;draw(table,tick);check();assert(has("Sound")&&has("JoyC HAT"));
   screen=Screen::Sound;selection=0;draw(table,tick);check();screen=Screen::Joystick;draw(table,tick);check();
+  assert(settingsPages[settingsCount-1]==Screen::About);
   assert(buffered && M5.Display.clears==0 && M5.Display.frames>10);
   std::puts("UI: navigation, presets, credits, live header/data, grouping and text bounds passed");
 }
