@@ -1,0 +1,22 @@
+---
+import Action from './Action.astro';
+import MeshScene from './MeshScene.astro';
+import { repo, buildGuide } from '../data/content';
+---
+<section class="hero" aria-labelledby="hero-heading" id="top">
+  <MeshScene />
+  <div class="hero-content container">
+    <p class="eyebrow">OPEN SOURCE / M5STICKC PLUS2</p>
+    <div class="hero-intro">
+      <h1 id="hero-heading">Bitchat.<br />In your pocket.</h1>
+      <p class="hero-description">A pocket-sized participant in your local Bitchat network. Discover nearby peers, chat over Bluetooth and keep the conversation moving.</p>
+      <div class="hero-actions"><Action href={repo}>View on GitHub</Action><Action href={buildGuide} icon="terminal" secondary>Build &amp; flash</Action></div>
+      <p class="hero-meta">Local BLE text • Physical controls • Optional JoyC HAT</p>
+    </div>
+    <p class="hero-statement">Small device.<br />Shared connections.</p>
+    <div class="mobile-graph"><MeshScene mobile /></div>
+    <div class="hero-caption">
+      <p>A local network, illustrated. Connections and relay depend on available peers.<br />UI screens are software renders with simulated messages.</p>
+    </div>
+  </div>
+</section>

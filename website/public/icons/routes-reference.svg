@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1600" height="760" viewBox="0 0 1600 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="01 / Routes / connected graph">
+<path id="01 / West &#226;&#128;&#148; relay" d="M60 490H160V210H550V590H760" stroke-width="2" stroke="#082D21"/>
+<path id="01 / West &#226;&#128;&#148; relay / lit" d="M60 490H160V210H550V590H760" stroke-width="3" stroke="#082D21"/>
+<path id="02 / Relay &#226;&#128;&#148; Stick" d="M760 590H900V335H1080" stroke-width="2" stroke="#082D21"/>
+<path id="02 / Relay &#226;&#128;&#148; Stick / lit" d="M760 590H900V335H1080" stroke-width="3" stroke="#84FF84"/>
+<path id="03 / Stick &#226;&#128;&#148; north" d="M1080 335H1240V150H1380" stroke-width="2" stroke="#082D21"/>
+<path id="04 / North &#226;&#128;&#148; east" d="M1380 150H1460V580H1490" stroke-width="2" stroke="#082D21"/>
+</g>
+</svg>
