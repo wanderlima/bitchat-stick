@@ -1,0 +1,9 @@
+---
+interface Props { label: string; title: string; animate?: boolean; }
+const { label, title, animate = true } = Astro.props;
+---
+<header class="section-heading">
+  <p class="eyebrow">{label}</p>
+  <h2 data-reveal-title={animate || undefined}>{title}</h2>
+  <slot />
+</header>

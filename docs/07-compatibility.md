@@ -2,7 +2,11 @@
 
 Research snapshot: November 9, 2026. This was a documentary investigation of primary sources, not a radio capture, firmware audit, or Plus2 interoperability test. Mutable branch links do not pin a release. Third-party descriptions demonstrate existence and claimed scope, not independent certification.
 
-## Conclusion
+## Current project evidence — 2026-11-11
+
+The owner has confirmed network visibility, message sending and operation with Bitchat on iPhone. Android signed discovery and a real Noise handshake also have hardware evidence. This supersedes the unimplemented project statuses in the historical research snapshot below; it does not validate indirect relay, range, background operation, battery life or every receipt transition. See the [wire contract](12-wire-contract.md) and [device checklist](13-device-checklist.md) for the current implementation and remaining checks.
+
+## Original research conclusion — 2026-11-09
 
 A BLE Bitchat node on the Plus2 is plausible, but **messaging compatibility for this project remains unproven**. Advertisement discovery is not relay validation. Public ESP32 implementations exist; chip, stack, and protocol versions matter. Recognizing a geohash or displaying a channel name does not implement Nostr.
 
@@ -41,7 +45,7 @@ This pins the origin of an advertisement filter only. It is not an approved mobi
 
 The whitepaper's peer-presence announcements do not establish authoritative channel membership. This investigation did not establish a reliable welcome-bot trigger. That is an evidence gap, not a universal proof that no future implementation could offer one.
 
-## Confidence matrix
+## Historical confidence matrix — 2026-11-09
 
 | Capability | External evidence | Plus2 project status |
 |---|---|---|

@@ -4,7 +4,22 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 ## Unreleased
 
-No changes recorded after 1.0.00.
+### Website refinement
+
+- Added a once-per-load stepped hero entrance (520ms), with the network loop starting afterward, static reduced-motion behavior and immediate visibility when a hero link receives keyboard focus.
+
+- Recorded the owner’s iPhone operation confirmation in website copy, structured facts and linked compatibility/evidence notes, while retaining unverified receipt/reconnect, relay, range and battery checks.
+- Refined the infinite hero loop to highlight a continuous active route and both participating devices. Removed hero play/pause; added a site-wide reduced-motion preference and keyboard shortcut.
+- Applied stepped title reveals to all section headings, batched content entrances and desktop GSAP smooth scrolling with accessible anchor focus and native touch/reduced-motion fallbacks.
+- Reused the hero device shell for the side-by-side physical-controls preview, with real firmware UI renders for menu selections, opened pages and Start.
+- Added safe new-tab external links, linked SEO entities, a social preview, machine-readable project facts, and GA4 G-VHFJLDXMVC plus the supplied GTM container. Local previews and browser tests do not send analytics.
+- Validation: static build and type checks passed; the refinement passed sixteen Chromium tests in CI mode; the subsequent hero entrance revision passed all seventeen tests, including once-only entrance, desktop/mobile route geometry, repeat, reduced motion, keyboard focus and mocked analytics.
+
+### Added
+
+- Independent Astro/Tailwind/GSAP one-page website in `website/`, implemented from the refined Figma design with local pixel/mono fonts, original vector icons and real firmware UI software renders.
+- Connected conceptual hero with send/receive states, pause/resume, offscreen/tab pause and a static reduced-motion alternative. Native FAQ, interactive A/B/C control demonstration, project limitations and documentation links are included.
+- Static SEO metadata, sitemap, robots, structured data, production browser acceptance tests and a GitHub Pages workflow. Deployment requires GitHub Pages to use GitHub Actions; this change does not publish a release or alter firmware behavior.
 
 ## 1.0.00 — 2026-11-11
 
