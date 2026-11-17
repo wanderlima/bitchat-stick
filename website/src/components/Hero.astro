@@ -2,6 +2,7 @@
 import Action from './Action.astro';
 import MeshScene from './MeshScene.astro';
 import { repo, buildGuide } from '../data/content';
+const base = import.meta.env.BASE_URL;
 ---
 <section class="hero" aria-labelledby="hero-heading" id="top">
   <MeshScene />
@@ -19,4 +20,6 @@ import { repo, buildGuide } from '../data/content';
       <p>A local network, illustrated. Connections and relay depend on available peers.<br />UI screens are software renders with simulated messages.</p>
     </div>
   </div>
+  <div class="hero-peers" data-hero-peers aria-hidden="true"></div>
+  <div class="hero-device" data-hero-device aria-hidden="true" data-model-url={`${base}models/stickc-plus2.glb`} data-contour-url={`${base}models/stickc-plus2-contours.glb`} data-screen-base={`${base}screens/`}></div>
 </section>

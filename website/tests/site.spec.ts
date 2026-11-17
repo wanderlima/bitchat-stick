@@ -112,6 +112,8 @@ for(const heroWidth of [375,1440]) test(`both hero scenarios repeat with connect
   const scene=heroWidth > 900 ? '.mesh-desktop' : '.mesh-mobile';
   const seen = new Set<string>();
   let sawActiveRoute = false;
+  let maxAccents = 0;
+  let maxRoutes = 0;
   const deadline = Date.now() + 17000;
   while (Date.now() < deadline) {
     const state = await page.locator(`${scene} [data-screen]`).evaluateAll(elements => elements.filter(el => getComputedStyle(el).opacity === '1').map(el => el.getAttribute('data-screen')!));
@@ -120,7 +122,9 @@ for(const heroWidth of [375,1440]) test(`both hero scenarios repeat with connect
       accents: Array.from(svg.querySelectorAll('.device-accent')).filter(el => Number(getComputedStyle(el).opacity) > .5).length,
       routes: Array.from(svg.querySelectorAll('[data-route]')).filter(el => Number(getComputedStyle(el).opacity) > .5).length,
     }));
-    if (routes) { expect(routes).toBe(1); expect(accents).toBe(2); sawActiveRoute = true; }
+    maxAccents = Math.max(maxAccents, accents);
+    maxRoutes = Math.max(maxRoutes, routes);
+    if (routes) { expect(accents).toBeGreaterThan(0); sawActiveRoute = true; }
     const escaped = await page.locator(`${scene} [data-route]`).evaluateAll(edges => {
       const failures:string[]=[];
       for (const edge of edges) {
@@ -128,6 +132,7 @@ for(const heroWidth of [375,1440]) test(`both hero scenarios repeat with connect
         const matrix=(edge as SVGGElement).getScreenCTM()!;
         for (const element of edge.children) {
           const rect=element as SVGRectElement;
+          if (rect.tagName.toLowerCase() !== 'rect') continue;
           const x=Number(rect.getAttribute('x')), y=Number(rect.getAttribute('y'));
           const width=Number(rect.getAttribute('width')), height=Number(rect.getAttribute('height'));
           const start=new DOMPoint(x,y).matrixTransform(matrix), end=new DOMPoint(x+width,y+height).matrixTransform(matrix);
@@ -142,6 +147,8 @@ for(const heroWidth of [375,1440]) test(`both hero scenarios repeat with connect
   }
   expect([...seen].sort()).toEqual(['confirm','home','queued','received','writing']);
   expect(sawActiveRoute).toBe(true);
+  expect(maxAccents).toBeGreaterThan(1);
+  expect(maxRoutes).toBeGreaterThan(1);
   expect(Number(await page.locator('.hero').getAttribute('data-loop'))).toBeGreaterThan(0);
 });
 
