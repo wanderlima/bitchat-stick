@@ -1,4 +1,5 @@
 #include "../src/Ui.cpp"
+#include "SurfaceProbe.h"
 #include <cassert>
 #include <fstream>
 #include <Preferences.h>
@@ -42,11 +43,11 @@ int main(int argc, char** argv) {
   for(unsigned i=0;i<17;++i) {
     composer.open(other.id(),"Test phone");composer.preset(0);
     screen=pages[i];selection=pages[i]==Screen::Brightness ? 2 : 0;detail=false;if(screen==Screen::Confirm)selection=reviewPages()+1;draw(peers,3000);
-    assert(M5.Display.boundsOk);
+    assert(surfaceProbe().boundsOk);
     std::ofstream out((std::string(argv[1])+"/")+names[i]+".ops");
-    for(const auto& op:M5.Display.ops) out<<op<<'\n';
+    for(const auto& op:surfaceProbe().ops) out<<op<<'\n';
   }
-  auto saveState=[&](const char* name){draw(peers,3000);assert(M5.Display.boundsOk);std::ofstream out(std::string(argv[1])+"/"+name+".ops");for(const auto& op:M5.Display.ops)out<<op<<'\n';};
+  auto saveState=[&](const char* name){draw(peers,3000);assert(surfaceProbe().boundsOk);std::ofstream out(std::string(argv[1])+"/"+name+".ops");for(const auto& op:surfaceProbe().ops)out<<op<<'\n';};
   screen=Screen::Channels;detail=true;selection=1;saveState("18-bluetooth-menu");
   openPublicComposer();saveState("19-public-compose");
   composer.preset(0);screen=Screen::ShortMessages;confirmDraft();saveState("20-public-confirm");

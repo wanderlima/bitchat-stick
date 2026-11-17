@@ -1,6 +1,6 @@
 # Screens, layout, and controls
 
-Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All seventeen screens are present in the firmware. Live device information is never replaced with sample peers or chat.
+Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. This is the initial display profile (`135x240-portrait`). See [adding a display](17-adding-a-display.md) before introducing another panel. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All seventeen screens are present in the firmware. Live device information is never replaced with sample peers or chat.
 
 ## Shared visual system
 
@@ -107,9 +107,9 @@ The **95 × 95px** QR points to **https://github.com/wanderlima/bitchat-stick**.
 
 `src/assets/` contains the QR and 10 × 10px radio SVGs, `UiBitmaps.h`, and native `UiFonts.h`. `tools/generate-ui-bitmaps.py` reproduces the exact mask geometry. The checked-in SVG root dimensions define their display slots.
 
-## Verification and previews
+## Verification
 
-The [seventeen JPEG previews](screens/README.md) are generated from current drawing calls and pinned font bitmaps, using simulated measurements. They are not hardware screenshots or protocol evidence. The host UI regression checks controls, applied-versus-focused brightness, all screens, live status, ordinary/candidate/empty peers, large counters and text/rectangle bounds. Physical readability, battery behavior, radio scanning, and QR camera reading need a device pass after upload.
+The host UI regression checks controls, applied-versus-focused brightness, all screens, live status, ordinary/candidate/empty peers, large counters and text/rectangle bounds. Physical readability, battery behavior, radio scanning, and QR camera reading need a device pass after upload.
 
 ## Channels and read state
 

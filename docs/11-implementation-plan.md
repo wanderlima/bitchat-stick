@@ -1,6 +1,6 @@
 # Implementation plan by screen and complexity
 
-Updated: **2026-11-11**. English (en-US) firmware v1.0.00. Source implementation is complete for the current seventeen-screen public-BLE, received-DM and private-composer scope. Physical acceptance is intentionally separate: use the [device checklist](13-device-checklist.md). Future product ideas are not represented as implemented.
+Updated: **2026-11-17**. English (en-US) firmware v1.0.00. Source implementation is a shared ESP32 core plus the Plus2 profile, with the seventeen-screen public-BLE, received-DM and private-composer scope. Physical acceptance is intentionally separate: use the [device checklist](13-device-checklist.md). Future boards and product ideas are not represented as implemented.
 
 ## Screen order — lowest to highest complexity
 
@@ -16,13 +16,13 @@ Updated: **2026-11-11**. English (en-US) firmware v1.0.00. Source implementation
 | 8 | Nearby | Filtered candidates, signed peers, Noise authentication, stable candidate selection, IDs/details | Android/iOS foreground/background/reconnect behavior |
 | 9 | Messages | Signed public and authenticated private input, bounded history, paging and text scrolling | Real text, Unicode substitution, truncation, reconnect |
 | 10 | Channels | Public #bluetooth and Direct DMs, unread counts and reply entry | Offline context and controlled indirect forwarding |
-| 11 | InfoBot | Signed public/private commands, !about, ON/OFF control and private first-DM introduction | Cross-platform replies, cooldown, no reply loops |
+| 11 | InfoBot | Signed public/private commands, !about, ON/OFF control and private first-DM introduction | Owner confirmed replies on 2026-11-17. Cooldown and reply-loop checks remain open |
 | 12 | Sound | Persistent independent interaction/DM/channel checkboxes | Buzzer audibility and incoming alert behavior |
 | 13 | JoyC HAT | Corrected axes, optional click/LED, release-to-arm and repeat rules | Click/LED edge cases; directions confirmed by owner |
 | 14 | Reply | Captured recipient ID or public channel, Short msg/Keyboard/Welcome msg choices | Entry paths individually recorded |
 | 15 | Short msgs | 32 English presets, sliding list and confirmation | Presets individually recorded |
 | 16 | Keyboard | Bounded 192-character draft, case/numbers, space/delete | Full limit/key usability checks |
-| 17 | Confirm | Send/Cancel, retained draft on failure, authenticated receipt state | Platform-specific receipt and disconnect checks |
+| 17 | Confirm | Send/Cancel, retained draft on failure, authenticated receipt state | Owner confirmed delivered/read checks on 2026-11-17. Disconnect checks remain open |
 
 ## Completed engineering groups
 
@@ -52,6 +52,6 @@ Each implementation group is committed separately; no push is part of this work.
 - **XL:** Nostr/internet contexts, OTA, persistent/out-of-band peer trust and secure-storage provisioning.
 - **Conditional:** public channel-join greetings only after an authoritative, tested entry signal exists. Reappearance, a BLE advert or a reconnect is insufficient.
 
-Completed implementation group: authenticated DM sending, delivery/read correlation, four-screen composer from Nearby/Channels, bounded QWERTY/canned replies and confirmation/cancellation. The owner confirmed the installed sending flow worked well on 2026-11-11. Phone platform, individual input paths and receipt states were not specified; remaining detailed checks are in [the composer checklist](14-direct-message-composer.md).
+Completed implementation group: authenticated DM sending, delivery/read correlation, four-screen composer from Nearby/Channels, bounded QWERTY/canned replies and confirmation/cancellation. The owner confirmed the installed sending flow worked well on 2026-11-11. On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks on Android and iPhone. Remaining input-path and disconnect checks are in [the composer checklist](14-direct-message-composer.md).
 
 Manual Welcome msg is implemented using the shared introduction text. It requires explicit Send/Cancel, retains the chosen public/private destination and is independent of automatic first-DM introductions. Native/build/upload checks passed; manual welcome reception on the phone remains open.

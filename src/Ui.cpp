@@ -12,17 +12,22 @@
 #include "MessageComposer.h"
 #include "InfoBot.h"
 #include "Version.h"
-#include <M5Unified.h>
+#include "Board.h"
+#include "DrawSurface.h"
+#include "DisplayProfile.h"
 #include "assets/UiBitmaps.h"
-#include "assets/UiFonts.h"
+#include <Arduino.h>
 #include <cstdio>
 #include <cstring>
+
+static_assert(stick::kDisplayProfile.width == 135 && stick::kDisplayProfile.height == 240 && stick::kDisplayProfile.rotation == 0, "Plus2 layout is 135x240 portrait");
+static_assert(stick::sameText(stick::kDisplayProfile.layoutId, "135x240-portrait"), "layout id");
 
 namespace stick {
 namespace {
 // #EBDCBA warm cream, quantized to RGB565 for the display.
-constexpr uint16_t bg = TFT_BLACK, fg = 0xEEF7, muted = 0xDEFB;
-constexpr uint16_t green = 0x87F0, amber = TFT_YELLOW;
+constexpr uint16_t bg = 0, fg = 0xEEF7, muted = 0xDEFB;
+constexpr uint16_t green = 0x87F0, amber = 0xFFE0, colorRed = 0xF800;
 constexpr uint16_t headerBorder = 0x41C6;
 constexpr uint32_t screenTimeout = 30000;
 enum class Screen { Splash, Dashboard, Peers, Channels, Messages, Bot, Settings, Brightness, Battery, About, Diagnostics, Sound, Joystick, Reply, ShortMessages, Keyboard, Confirm };
@@ -71,18 +76,30 @@ NavigationInput input;
 JoycNavigation joycInput;
 JoycClickInput joycClick;
 JoycSample joycAxes;
-M5Canvas canvas(&M5.Display);
 bool buffered = false;
-lgfx::LGFXBase& surface() {
-  return buffered ? static_cast<lgfx::LGFXBase&>(canvas) : static_cast<lgfx::LGFXBase&>(M5.Display);
-}
-const lgfx::IFont* body = &assets::FreeMonoBody16;
-const lgfx::IFont* compact = &assets::FreeMonoCompact14;
+struct Pen {
+  int cursorX = 0, cursorY = 0;
+  void setFont(UiFont font) { frameSetFont(font); }
+  void setTextSize(int) {}
+  void setTextWrap(bool) {}
+  int textWidth(const char* value) { return frameTextWidth(value); }
+  void setTextColor(uint16_t color) { frameSetColor(color); }
+  void setCursor(int x, int y) { cursorX = x; cursorY = y; }
+  void print(const char* value) { frameDrawText(cursorX, cursorY, value); }
+  void fillScreen(uint16_t color) { frameFill(color); }
+  void fillRect(int x, int y, int width, int height, uint16_t color) { frameFillRect(x, y, width, height, color); }
+  void drawRect(int x, int y, int width, int height, uint16_t color) { frameDrawRect(x, y, width, height, color); }
+  void drawFastHLine(int x, int y, int width, uint16_t color) { frameHLine(x, y, width, color); }
+  void startWrite() { frameStart(); }
+  void endWrite() { frameFinish(); }
+};
+Pen pen;
+Pen& surface() { return pen; }
 
 void label(const char* value, int y, uint16_t color = fg, int x = 12,
-           int width = 111, const lgfx::IFont* font = nullptr) {
+           int width = 111, UiFont font = UiFont::Body16) {
   auto& d = surface();
-  d.setFont(font ? font : body);
+  d.setFont(font);
   d.setTextSize(1);
   char clipped[48]{};
   std::snprintf(clipped, sizeof(clipped), "%s", value);
@@ -148,12 +165,12 @@ void menu(const char* const* labels, size_t count, int top, int rowHeight) {
   }
 }
 void drawSplash() {
-  label("BITCHAT", 36, green, 10, 121, &fonts::FreeMonoBold12pt7b);
-  label("STICK", 63, fg, 10, 121, &fonts::FreeMonoBold12pt7b);
-  label("A: confirm", 115, fg, 10, 121, compact);
-  label("B: up", 135, fg, 10, 121, compact);
-  label("C: down", 155, fg, 10, 121, compact);
-  label("Hold B: back", 175, muted, 10, 121, compact);
+  label("BITCHAT", 36, green, 10, 121, UiFont::Bold12);
+  label("STICK", 63, fg, 10, 121, UiFont::Bold12);
+  label("A: confirm", 115, fg, 10, 121, UiFont::Compact14);
+  label("B: up", 135, fg, 10, 121, UiFont::Compact14);
+  label("C: down", 155, fg, 10, 121, UiFont::Compact14);
+  label("Hold B: back", 175, muted, 10, 121, UiFont::Compact14);
   item("A: START", 210, true);
 }
 void syncMessageFocus() {
@@ -170,10 +187,10 @@ void draw(const PeerTable& peers, uint32_t now) {
   auto& d = surface();
   d.startWrite();
   d.fillScreen(bg);
-  const uint16_t radioColor = transportReady() ? green : scannerFault() ? TFT_RED : amber;
+  const uint16_t radioColor = transportReady() ? green : scannerFault() ? colorRed : amber;
   d.fillRect(6, 7, 5, 5, radioColor);
   label(transportReady() ? "BLE" : scannerFault() ? "ERR" : "IDLE", 2,
-        fg, 16, 59, compact);
+        fg, 16, 59, UiFont::Compact14);
   if(mesh().unreadCount()) {
     static const uint8_t envelope[]={0xff,0xc0,0xc0,0xc0,0xa1,0x40,0x92,0x40,0x8c,0x40,0x80,0x40,0xff,0xc0};
     bitmap(envelope,56,6,10,7,green);
@@ -184,13 +201,13 @@ void draw(const PeerTable& peers, uint32_t now) {
   if (batteryKnown) std::snprintf(value, sizeof(value), "%d%%", battery);
   else std::snprintf(value, sizeof(value), "--%%");
   const uint16_t batteryColor = batteryKnown && battery < 20 ? amber : fg;
-  d.setFont(compact);
-  label(value, 2, batteryColor, 115 - d.textWidth(value), d.textWidth(value), compact);
+  d.setFont(UiFont::Compact14);
+  label(value, 2, batteryColor, 115 - d.textWidth(value), d.textWidth(value), UiFont::Compact14);
   d.drawRect(119, 5, 11, 9, batteryColor);
   d.fillRect(130, 8, 2, 3, batteryColor);
   if (batteryKnown && battery > 0) d.fillRect(121, 7, (7 * battery + 99) / 100, 5, batteryColor);
   d.drawRect(0, 0, 135, 20, headerBorder);
-  if (screen == Screen::Splash) { drawSplash(); d.endWrite(); if(buffered) canvas.pushSprite(0,0); return; }
+  if (screen == Screen::Splash) { drawSplash(); d.endWrite(); return; }
   const char* title = "Home";
   switch (screen) {
     case Screen::Peers: title = "Nearby"; break;
@@ -210,7 +227,7 @@ void draw(const PeerTable& peers, uint32_t now) {
     case Screen::Confirm: title = queuedMessage ? "Queued" : sendFailed ? "Not sent" : "Confirm"; break;
     default: break;
   }
-  label(title, 26, fg, 4, 127, &fonts::FreeMonoBold9pt7b);
+  label(title, 26, fg, 4, 127, UiFont::Bold9);
   switch (screen) {
     case Screen::Dashboard: {
       panel(54, 69);
@@ -233,12 +250,12 @@ void draw(const PeerTable& peers, uint32_t now) {
           std::snprintf(value, sizeof(value), "%02x%02x%02x%02x",peer->id[0],peer->id[1],peer->id[2],peer->id[3]); label(value, 115, fg, 15, 111);
           std::snprintf(value, sizeof(value), "%02x%02x%02x%02x",peer->id[4],peer->id[5],peer->id[6],peer->id[7]); label(value, 141, fg, 15, 111);
         } else {
-          label("Signed peer", 115, fg, 15, 111, compact);
-          std::snprintf(value, sizeof(value), "Seen %lus", (unsigned long)((now-peer->seen)/1000));label(value, 141, muted, 15, 111, compact);
+          label("Signed peer", 115, fg, 15, 111, UiFont::Compact14);
+          std::snprintf(value, sizeof(value), "Seen %lus", (unsigned long)((now-peer->seen)/1000));label(value, 141, muted, 15, 111, UiFont::Compact14);
         }
         divider(162,15,111);
-        label(peer->authenticated ? "Noise auth" : "Signed only", 173, peer->authenticated ? green : amber,15,111,compact);
-        label("Send DM",199,green,15,111,compact);
+        label(peer->authenticated ? "Noise auth" : "Signed only", 173, peer->authenticated ? green : amber,15,111, UiFont::Compact14);
+        label("Send DM",199,green,15,111, UiFont::Compact14);
         break;
       }
       if (peerSelection.sync(peers)) detail = false;
@@ -248,8 +265,8 @@ void draw(const PeerTable& peers, uint32_t now) {
         panel(54, 110);
         label("No Bitchat", 63);
         divider(92);
-        label(scannerFault() ? "Scan error" : "Waiting for", 103, muted, 13, 109, compact);
-        label(scannerFault() ? "Check BLE" : "BLE adverts", 125, muted, 13, 109, compact);
+        label(scannerFault() ? "Scan error" : "Waiting for", 103, muted, 13, 109, UiFont::Compact14);
+        label(scannerFault() ? "Check BLE" : "BLE adverts", 125, muted, 13, 109, UiFont::Compact14);
       } else {
         const auto& obs = peers.candidateAt(peerIndex)->observation;
         std::snprintf(value, sizeof(value), "Device %u/%u", unsigned(peerIndex + 1), unsigned(n));
@@ -259,64 +276,64 @@ void draw(const PeerTable& peers, uint32_t now) {
           char half[9]{};
           std::memcpy(half, obs.address, 8); label(half, 89);
           label(obs.address + 9, 111);
-          std::snprintf(value, sizeof(value), "Type %u", unsigned(obs.addressType)); label(value, 137, muted, 13, 109, compact);
+          std::snprintf(value, sizeof(value), "Type %u", unsigned(obs.addressType)); label(value, 137, muted, 13, 109, UiFont::Compact14);
         } else {
           label(obs.name[0] ? obs.name : "Unnamed", 89, fg, 15, 111);
           std::snprintf(value, sizeof(value), "%d dBm", obs.rssi); label(value, 115, fg, 15, 111);
           std::snprintf(value, sizeof(value), "Seen %lus ago", (unsigned long)((now - obs.seenAt) / 1000));
-          label(value, 141, muted, 15, 111, compact);
+          label(value, 141, muted, 15, 111, UiFont::Compact14);
         }
         divider(162, 15, 111);
         label(obs.network == Network::Other ? "Other BLE" : "Bitchat?", 173,
               obs.network == Network::Other ? fg : amber, 15, 111);
-        label("Not verified", 199, amber, 15, 111, compact);
+        label("Not verified", 199, amber, 15, 111, UiFont::Compact14);
       }
       break;
     }
     case Screen::Channels:
       if(detail){
-        panel(54,50);label("Public chat",61,fg,13,109,compact);
-        std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,83,green,13,109,compact);
+        panel(54,50);label("Public chat",61,fg,13,109, UiFont::Compact14);
+        std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,83,green,13,109, UiFont::Compact14);
         const char* actions[]={"Read chat","Write msg"};menu(actions,2,117,32);break;
       }
       panel(54,76);item("#bluetooth",60,selection==0,26);
-      label("Public chat",94,fg,13,109,compact);
-      std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,112,green,13,109,compact);
+      label("Public chat",94,fg,13,109, UiFont::Compact14);
+      std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,112,green,13,109, UiFont::Compact14);
       panel(140,76);item("Direct DMs",146,selection==1,26);
-      label("Private text",180,fg,13,109,compact);
-      std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Direct)));label(value,198,green,13,109,compact);
-      label(transportStatus(),220,transportReady()?green:amber,7,123,compact);
+      label("Private text",180,fg,13,109, UiFont::Compact14);
+      std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Direct)));label(value,198,green,13,109, UiFont::Compact14);
+      label(transportStatus(),220,transportReady()?green:amber,7,123, UiFont::Compact14);
       break;
     case Screen::Messages: {
       const auto count = mesh().messageCount(messageScope);
       if (!count) {
         panel(54, 117); label("No messages", 64); divider(92);
-        label(messageScope==MessageScope::Direct?"Direct DMs":"#bluetooth",103,green,13,109,compact);
-        label(transportStatus(),127,muted,13,109,compact);
-        label("Waiting...",149,muted,13,109,compact);
+        label(messageScope==MessageScope::Direct?"Direct DMs":"#bluetooth",103,green,13,109, UiFont::Compact14);
+        label(transportStatus(),127,muted,13,109, UiFont::Compact14);
+        label("Waiting...",149,muted,13,109, UiFont::Compact14);
       } else {
         if(messageOffset>=count) messageOffset=count-1;
         const auto* message=mesh().message(messageOffset,messageScope);
-        std::snprintf(value,sizeof(value),"%u/%u %s",unsigned(messageOffset+1),unsigned(count),message->outgoing?"You":message->privateMessage?"DM":"BLE");label(value,55,muted,4,127,compact);
-        panel(77, 159);label(message->name,84,green,13,109,compact);divider(106);
+        std::snprintf(value,sizeof(value),"%u/%u %s",unsigned(messageOffset+1),unsigned(count),message->outgoing?"You":message->privateMessage?"DM":"BLE");label(value,55,muted,4,127, UiFont::Compact14);
+        panel(77, 159);label(message->name,84,green,13,109, UiFont::Compact14);divider(106);
         const size_t length=std::strlen(message->text), lines=(length+11)/12;
         if(textLine>=lines) textLine=lines?lines-1:0;
-        for(size_t line=0;line<5;++line){const size_t start=(textLine+line)*12;if(start>=length)break;char part[13]{};std::memcpy(part,message->text+start,length-start>12?12:length-start);label(part,115+int(line)*20,fg,13,109,compact);}
-        if(detail)label("Reply",218,green,13,109,compact);
-        else if(message->truncated)label("Truncated",218,amber,13,109,compact);
+        for(size_t line=0;line<5;++line){const size_t start=(textLine+line)*12;if(start>=length)break;char part[13]{};std::memcpy(part,message->text+start,length-start>12?12:length-start);label(part,115+int(line)*20,fg,13,109, UiFont::Compact14);}
+        if(detail)label("Reply",218,green,13,109, UiFont::Compact14);
+        else if(message->truncated)label("Truncated",218,amber,13,109, UiFont::Compact14);
       }
       break;
     }
     case Screen::Reply: {
-      panel(54,68,true);label(composer.recipientName,60,fg,13,109,compact);
+      panel(54,68,true);label(composer.recipientName,60,fg,13,109, UiFont::Compact14);
       std::snprintf(value,sizeof(value),"%02x%02x%02x%02x",composer.recipient[0],composer.recipient[1],composer.recipient[2],composer.recipient[3]);
-      label(privateDraft?value:"Public chat",84,muted,13,109,compact);label(privateDraft?"Private DM":"Everyone",103,green,13,109,compact);
+      label(privateDraft?value:"Public chat",84,muted,13,109, UiFont::Compact14);label(privateDraft?"Private DM":"Everyone",103,green,13,109, UiFont::Compact14);
       const char* options[]={"Short msg", "Keyboard", "Welcome msg"};menu(options,3,125,30);
       break;
     }
     case Screen::ShortMessages: {
-      label(composer.recipientName,55,green,4,127,compact);
-      std::snprintf(value,sizeof(value),"%u/%u",unsigned(selection+1),unsigned(MessageComposer::presetCount));label(value,76,muted,4,127,compact);
+      label(composer.recipientName,55,green,4,127, UiFont::Compact14);
+      std::snprintf(value,sizeof(value),"%u/%u",unsigned(selection+1),unsigned(MessageComposer::presetCount));label(value,76,muted,4,127, UiFont::Compact14);
       const size_t first=selection<5?0:selection-4;
       const int thumb=123*5/int(MessageComposer::presetCount);
       surface().fillRect(132,101,2,123,headerBorder);
@@ -330,48 +347,48 @@ void draw(const PeerTable& peers, uint32_t now) {
       break;
     }
     case Screen::Keyboard: {
-      panel(54,70);label(composer.recipientName,57,green,9,117,compact);
+      panel(54,70);label(composer.recipientName,57,green,9,117, UiFont::Compact14);
       const size_t length=composer.length(),start=length>36?length-36:0;
-      for(size_t row=0;row<3;++row){const size_t at=start+row*12;if(at>=length)break;char part[13]{};std::memcpy(part,composer.draft+at,length-at>12?12:length-at);label(part,76+int(row)*15,fg,9,117,compact);}
-      std::snprintf(value,sizeof(value),"%u/192",unsigned(length));label(value,126,length==192?amber:muted,7,121,compact);
+      for(size_t row=0;row<3;++row){const size_t at=start+row*12;if(at>=length)break;char part[13]{};std::memcpy(part,composer.draft+at,length-at>12?12:length-at);label(part,76+int(row)*15,fg,9,117, UiFont::Compact14);}
+      std::snprintf(value,sizeof(value),"%u/192",unsigned(length));label(value,126,length==192?amber:muted,7,121, UiFont::Compact14);
       for(size_t key=0;key<30;++key) {
         const int x=7+int(key%10)*12,y=146+int(key/10)*19;
         d.drawRect(x,y,12,19,headerBorder);if(selection==key)d.fillRect(x,y,12,19,fg);
-        char character[]={composer.key(key),0};label(character,y+2,selection==key?bg:fg,x+2,10,compact);
+        char character[]={composer.key(key),0};label(character,y+2,selection==key?bg:fg,x+2,10, UiFont::Compact14);
       }
       const char* controls[]={composer.mode==0?"ABC":composer.mode==1?"123":"abc","SP","DEL","OK"};
-      for(size_t key=0;key<4;++key){const int x=5+int(key)*31;d.drawRect(x,210,31,25,fg);if(selection==30+key)d.fillRect(x,210,31,25,fg);label(controls[key],215,selection==30+key?bg:fg,x+3,27,compact);}
+      for(size_t key=0;key<4;++key){const int x=5+int(key)*31;d.drawRect(x,210,31,25,fg);if(selection==30+key)d.fillRect(x,210,31,25,fg);label(controls[key],215,selection==30+key?bg:fg,x+3,27, UiFont::Compact14);}
       break;
     }
     case Screen::Confirm: {
-      panel(54,44,true);label(composer.recipientName,58,fg,13,109,compact);
-      std::snprintf(value,sizeof(value),"%02x%02x%02x%02x",composer.recipient[0],composer.recipient[1],composer.recipient[2],composer.recipient[3]);label(privateDraft?value:"Public chat",79,muted,13,109,compact);
+      panel(54,44,true);label(composer.recipientName,58,fg,13,109, UiFont::Compact14);
+      std::snprintf(value,sizeof(value),"%02x%02x%02x%02x",composer.recipient[0],composer.recipient[1],composer.recipient[2],composer.recipient[3]);label(privateDraft?value:"Public chat",79,muted,13,109, UiFont::Compact14);
       if(selection<reviewPages()&&!queuedMessage)reviewPage=selection;
       panel(104,80);if(selection<reviewPages()&&!queuedMessage)d.drawRect(4,104,127,80,green);
-      for(size_t row=0;row<4;++row){const size_t at=reviewPage*48+row*12,length=composer.length();if(at>=length)break;char part[13]{};std::memcpy(part,composer.draft+at,length-at>12?12:length-at);label(part,109+int(row)*18,fg,13,109,compact);}
+      for(size_t row=0;row<4;++row){const size_t at=reviewPage*48+row*12,length=composer.length();if(at>=length)break;char part[13]{};std::memcpy(part,composer.draft+at,length-at>12?12:length-at);label(part,109+int(row)*18,fg,13,109, UiFont::Compact14);}
       if(queuedMessage) {
         const ChatMessage* queued=nullptr;
         for(size_t i=0;i<mesh().messageCount();++i)if(mesh().message(i)->sequence==queuedMessage)queued=mesh().message(i);
         const char* state=queued&&queued->delivery==DeliveryState::Read?"Read":queued&&queued->delivery==DeliveryState::Delivered?"Delivered":"Queued";
-        label(state,185,green,13,109,compact);item("Done",213,true,22);
+        label(state,185,green,13,109, UiFont::Compact14);item("Done",213,true,22);
       }else{
-        if(sendFailed)label(sendFailure,185,amber,13,109,compact);
-        else {std::snprintf(value,sizeof(value),"Text %u/%u",unsigned(reviewPage+1),unsigned(reviewPages()));label(value,185,muted,13,109,compact);}
+        if(sendFailed)label(sendFailure,185,amber,13,109, UiFont::Compact14);
+        else {std::snprintf(value,sizeof(value),"Text %u/%u",unsigned(reviewPage+1),unsigned(reviewPages()));label(value,185,muted,13,109, UiFont::Compact14);}
         item("Send",201,selection==reviewPages(),18);item("Cancel",220,selection==reviewPages()+1,18);
       }
       break;
     }
     case Screen::Bot: {
       panel(54,31);
-      label(mesh().botStatus(),61,mesh().botEnabled()?green:amber,13,109,compact);
+      label(mesh().botStatus(),61,mesh().botEnabled()?green:amber,13,109, UiFont::Compact14);
       if(detail) {
         panel(93,139);label(kBotCommands[selection],102,green);divider(129);
-        label("Public + DM",140,fg,13,109,compact);
+        label("Public + DM",140,fg,13,109, UiFont::Compact14);
         const char* lines[][3]={{"Stick info","BLE relay","Private text"},
           {"Respect all","No spam","Public chat"},
           {"Send command","in chat / DM","Wait 3s"},
           {"Open-source","Wander Lima","Project link"}};
-        for(int i=0;i<3;++i)label(lines[selection][i],166+i*20,fg,13,109,compact);
+        for(int i=0;i<3;++i)label(lines[selection][i],166+i*20,fg,13,109, UiFont::Compact14);
       }else{
         panel(93,139);
         for(size_t i=0;i<kBotCommandCount;++i)item(kBotCommands[i],98+int(i)*26,selection==i,22);
@@ -381,7 +398,7 @@ void draw(const PeerTable& peers, uint32_t now) {
     }
     case Screen::Settings:
       menu(settingsLabels, settingsCount, 54, 24);
-      if (!settingsSaved) label("Not saved", 219, amber, 13,109,compact);
+      if (!settingsSaved) label("Not saved", 219, amber, 13,109, UiFont::Compact14);
       break;
     case Screen::Sound: {
       const char* options[] = {"Interact", "DM alert", "Channel"};
@@ -391,7 +408,7 @@ void draw(const PeerTable& peers, uint32_t now) {
         checkbox(options[i],59+int(i)*32,selection==i,preferenceFlags & flags[i]);
         if (i<2) divider(90+int(i)*32,5,125);
       }
-      if (!settingsSaved) label("Not saved",219,amber,13,109,compact);
+      if (!settingsSaved) label("Not saved",219,amber,13,109, UiFont::Compact14);
       break;
     }
     case Screen::Joystick:
@@ -401,9 +418,9 @@ void draw(const PeerTable& peers, uint32_t now) {
       checkbox("LED pulse",91,selection==1,preferenceFlags & JoycLed);
       panel(140,68);
       label(joycAxes.valid ? "Hat ready" : "No HAT",150,joycAxes.valid?green:amber);
-      if (preferenceFlags & JoycClick) label(!joycAxes.buttonValid ? "Click error" : joycAxes.pressed ? "Pressed" : "Released",180,muted,13,109,compact);
-      else label("Click off",180,muted,13,109,compact);
-      if (!settingsSaved) label("Not saved",219,amber,13,109,compact);
+      if (preferenceFlags & JoycClick) label(!joycAxes.buttonValid ? "Click error" : joycAxes.pressed ? "Pressed" : "Released",180,muted,13,109, UiFont::Compact14);
+      else label("Click off",180,muted,13,109, UiFont::Compact14);
+      if (!settingsSaved) label("Not saved",219,amber,13,109, UiFont::Compact14);
       break;
     case Screen::Brightness:
       panel(54, 164);
@@ -421,39 +438,38 @@ void draw(const PeerTable& peers, uint32_t now) {
       label(value, 65);
       if (batteryKnown) std::snprintf(value, sizeof(value), "~%d%%", battery);
       else std::snprintf(value, sizeof(value), "--%%");
-      label(value, 95, green, 13, 109, &fonts::FreeMonoBold12pt7b);
+      label(value, 95, green, 13, 109, UiFont::Bold12);
       divider(126);
-      label("Estimate", 137, muted, 13, 109, compact);
-      label("No runtime", 163, muted, 13, 109, compact);
-      label("test yet", 181, muted, 13, 109, compact);
+      label("Estimate", 137, muted, 13, 109, UiFont::Compact14);
+      label("No runtime", 163, muted, 13, 109, UiFont::Compact14);
+      label("test yet", 181, muted, 13, 109, UiFont::Compact14);
       break;
     case Screen::About:
       surface().fillRect(4, 54, 127, 74, 0x0964);
       surface().fillRect(4, 54, 3, 74, green);
       label("Wander Lima", 60, fg, 13, 112);
-      label("Open-source", 86, muted, 13, 112, compact);
-      label("Bitchat app", 108, muted, 13, 112, compact);
+      label("Open-source", 86, muted, 13, 112, UiFont::Compact14);
+      label("Bitchat app", 108, muted, 13, 112, UiFont::Compact14);
       d.fillRect(20, 136, 95, 95, fg);
       bitmap(assets::repositoryQr, 20, 136, 95, 95, bg);
       break;
     case Screen::Diagnostics:
       panel(54, 158);
-      std::snprintf(value, sizeof(value), "BLE %lu", (unsigned long)scannerReports()); label(value, 65, fg, 13, 109, compact);
-      std::snprintf(value, sizeof(value), "Drop %lu", (unsigned long)scannerDrops()); label(value, 91, fg, 13, 109, compact);
+      std::snprintf(value, sizeof(value), "BLE %lu", (unsigned long)scannerReports()); label(value, 65, fg, 13, 109, UiFont::Compact14);
+      std::snprintf(value, sizeof(value), "Drop %lu", (unsigned long)scannerDrops()); label(value, 91, fg, 13, 109, UiFont::Compact14);
       divider(115);
-      std::snprintf(value, sizeof(value), "RAM %u", unsigned(ESP.getFreeHeap())); label(value, 126, fg, 13, 109, compact);
-      std::snprintf(value, sizeof(value), "Up %lus", (unsigned long)(now / 1000)); label(value, 152, fg, 13, 109, compact);
+      std::snprintf(value, sizeof(value), "RAM %u", unsigned(boardFreeHeap())); label(value, 126, fg, 13, 109, UiFont::Compact14);
+      std::snprintf(value, sizeof(value), "Up %lus", (unsigned long)(now / 1000)); label(value, 152, fg, 13, 109, UiFont::Compact14);
       divider(176);
-      std::snprintf(value, sizeof(value), "OK %lu Err%lu", (unsigned long)mesh().stats().accepted, (unsigned long)mesh().stats().rejected); label(value, 187, green, 13, 109, compact);
+      std::snprintf(value, sizeof(value), "OK %lu Err%lu", (unsigned long)mesh().stats().accepted, (unsigned long)mesh().stats().rejected); label(value, 187, green, 13, 109, UiFont::Compact14);
       if (joycAxes.valid) {
         std::snprintf(value, sizeof(value), "J:%d,%d", int(joycAxes.x), int(joycAxes.y));
-        label(value, 216, green, 13,109,compact);
-      } else label(clockRtc() ? "v" STICK_VERSION " RTC" : "Build clock", 216, clockRtc() ? muted : amber, 13,109,compact);
+        label(value, 216, green, 13,109, UiFont::Compact14);
+      } else label(clockRtc() ? "v" STICK_VERSION " RTC" : "Build clock", 216, clockRtc() ? muted : amber, 13,109, UiFont::Compact14);
       break;
     default: break;
   }
   d.endWrite();
-  if(buffered) canvas.pushSprite(0,0);
 }
 void move(int direction, const PeerTable& peers) {
   if(screen==Screen::Channels&&detail){selection=(selection+2+direction)%2;return;}
@@ -484,11 +500,9 @@ void beginUi() {
   preferenceFlags = loadPreferenceFlags();
   brightnessIndex = loadBrightnessIndex();
   brightness = brightnessLevels[brightnessIndex];
-  M5.Display.setRotation(0);
-  M5.Display.setBrightness(brightness);
-  canvas.setColorDepth(16);
-  buffered = canvas.createSprite(135,240) != nullptr;
-  surface().setFont(body);
+  buffered = surfaceBegin();
+  displaySetBrightness(brightness);
+  surface().setFont(UiFont::Body16);
   surface().setTextSize(1);
   surface().setTextWrap(false);
   lastInput = millis();
@@ -496,9 +510,10 @@ void beginUi() {
 }
 void updateUi(const PeerTable& peers, uint32_t now) {
   syncMessageFocus();
-  const bool aDown = M5.BtnA.isPressed();
-  const bool bDown = M5.BtnB.isPressed();
-  const bool cDown = M5.BtnPWR.isPressed();
+  const BoardButtons keys = boardButtons();
+  const bool aDown = keys.a;
+  const bool bDown = keys.b;
+  const bool cDown = keys.power;
   const auto buttons = input.update(aDown, bDown, cDown, now, sleeping);
   const bool buttonsBusy = aDown || bDown || cDown || buttons != NavigationAction::None;
   joycAxes = pollJoyc(now, preferenceFlags & JoycClick);
@@ -512,7 +527,7 @@ void updateUi(const PeerTable& peers, uint32_t now) {
   if (aDown || bDown || cDown || action != NavigationAction::None) lastInput = now;
   if (action == NavigationAction::Wake) {
     sleeping = false;
-    M5.Display.setBrightness(brightness);
+    displaySetBrightness(brightness);
     lastDraw = 0;
   } else if (action == NavigationAction::Up) move(-1, peers);
   else if (action == NavigationAction::Down) move(1, peers);
@@ -579,7 +594,7 @@ void updateUi(const PeerTable& peers, uint32_t now) {
       settingsSaved = saveBrightnessIndex(uint8_t(selection));
       brightnessIndex = selection;
       brightness = brightnessLevels[brightnessIndex];
-      M5.Display.setBrightness(brightness);
+      displaySetBrightness(brightness);
       screen = Screen::Settings;
       selection = 0;
     }
@@ -588,11 +603,10 @@ void updateUi(const PeerTable& peers, uint32_t now) {
   updateFeedback(now, preferenceFlags, action, feedbackStats.receivedDm, feedbackStats.receivedMesh);
   if (!sleeping && uint32_t(now - lastInput) >= screenTimeout) {
     sleeping = true;
-    M5.Display.setBrightness(0);
+    displaySetBrightness(0);
   }
   if (lastBattery == 0 || uint32_t(now - lastBattery) >= 5000) {
-    voltage = M5.Power.getBatteryVoltage();
-    battery = voltage > 0 ? M5.Power.getBatteryLevel() : -1;
+    boardBattery(voltage, battery);
     lastBattery = now;
   }
   if (!sleeping && (action != NavigationAction::None || lastDraw == 0 || uint32_t(now - lastDraw) >= 1000)) {

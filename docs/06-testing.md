@@ -92,7 +92,7 @@ The framebuffer revision was built/uploaded after the owner reported lighter red
 - Application image SHA-256: `edfed7e93f99a50a055d1e58217151e7e2fb66134d4f039cfb406ee2ce8b3a8b`.
 - Target build: 97,336 bytes static RAM and 974,785 bytes application flash; the 64,800-byte display canvas is allocated dynamically in PSRAM.
 - Final observed runtime samples: one subscribed link, one authenticated peer, active RTC, zero rejected packets in the captured interval and about 145,000 bytes free internal heap. These are short observations, not endurance results.
-- Fourteen native suites and the independent CryptoKit signature check passed after private-text/receipt integration. JPEG previews were regenerated from the real UI with simulated data and visually inspected.
+- Fourteen native suites and the independent CryptoKit signature check passed after private-text/receipt integration.
 - The owner's initial missing message was identified as an Android DM sent before private-text display support. The DM reader/receipt update was installed; the owner subsequently confirmed Android delivery status and reading the DM on the Stick. Remote read status was not yet implemented at that checkpoint.
 
 ### Current installed Inbox / Mesh / read-receipt revision
@@ -124,7 +124,7 @@ The owner subsequently confirmed Hat ready and working navigation after powering
 
 The owner confirmed the corrected JoyC directions. Eighteen native suites and independent CryptoKit signature verification passed after the private composer update. Tests decrypt an outgoing maximum-length private TLV, verify recipient addressing, require an authenticated session, preserve history on failed enqueue, correlate delivery/read receipts and prevent read-state downgrade. UI tests cover Nearby and Inbox entry, stable recipient capture, cancel/back, empty Done, every keyboard mode/key, long drafts and all confirmation pages within 135×240.
 
-The target build passed. Software JPEG previews include all seventeen screens. Actual outbound Android/iOS reception and delivery/read presentation remain manual acceptance checks; build/upload and host decryption do not establish those results. See [the composer checklist](14-direct-message-composer.md).
+The target build passed. Actual outbound Android/iOS reception and delivery/read presentation remain manual acceptance checks; build/upload and host decryption do not establish those results. See [the composer checklist](14-direct-message-composer.md).
 
 The updated firmware upload completed with flash hash verification (981,952 bytes). A short USB read produced no telemetry; no post-upload session/delivery result is inferred from that read.
 
@@ -161,6 +161,10 @@ In response to the requested DM and #bluetooth Write msg checks, the owner confi
 ## Manual Welcome msg — 2026-11-11
 
 Nineteen native suites and independent CryptoKit verification passed. UI coverage confirms that selecting Welcome msg copies the exact shared introduction without sending, Back restores the third method selection, Cancel transmits nothing, and an explicitly confirmed public welcome stays public. The Plus2 target compiled successfully; private/public method pickers and welcome confirmation states were also updated and visually reviewed in Figma. Actual phone reception of a manually selected welcome remains a device acceptance check.
+
+## Modular Plus2 profile — 2026-11-17
+
+The native suite passed, including the Plus2 profile contract, clock policy, UI bounds and the ESP32 `!info` sentence. `pio run -e m5stickc-plus2` passed without treating that image as a universal ESP32 binary. The owner then confirmed, on Android and iPhone, that InfoBot replies and that the delivered/read checks are correct. Controlled relay, reconnect, range and battery checks remain open.
 
 ## Release 1.0.00 — 2026-11-11
 

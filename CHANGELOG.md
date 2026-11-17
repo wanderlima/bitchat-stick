@@ -4,11 +4,18 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 ## Unreleased
 
+### Modular Plus2 profile
+
+- Split the firmware into a shared ESP32 core and a compile-time M5StickC Plus2 profile. Power, RTC, buttons, the optional JoyC HAT and the 135×240 panel stay in that profile. Layout code draws through a small display surface. The core does not name M5StickC or include M5Unified. The Plus2 image is not a universal ESP32 binary.
+- `!info` now answers `InfoBot: Bitchat Stick | ESP32 | #bluetooth local relay and private text DMs.` The announced product name remains Bitchat Stick.
+- The website, README and project docs describe that modular boundary. Guides for adding a board or a display are in `docs/17-adding-a-display.md` and `docs/18-adding-a-board.md`.
+- On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks on Android and iPhone after this profile was flashed. Controlled relay, reconnect, range and battery checks remain open.
+
 ### Website refinement
 
 - Added a once-per-load stepped hero entrance (520ms), with the network loop starting afterward, static reduced-motion behavior and immediate visibility when a hero link receives keyboard focus.
 
-- Recorded the owner’s iPhone operation confirmation in website copy, structured facts and linked compatibility/evidence notes, while retaining unverified receipt/reconnect, relay, range and battery checks.
+- Recorded the owner’s iPhone operation confirmation in website copy, structured facts and linked compatibility/evidence notes. Receipt checks were still open in that website pass; the 2026-11-17 device report above later confirmed InfoBot replies and the delivered/read checks. Relay, reconnect, range and battery checks stayed open.
 - Refined the infinite hero loop to highlight a continuous active route and both participating devices. Removed hero play/pause; added a site-wide reduced-motion preference and keyboard shortcut.
 - Applied stepped title reveals to all section headings, batched content entrances and desktop GSAP smooth scrolling with accessible anchor focus and native touch/reduced-motion fallbacks.
 - Reused the hero device shell for the side-by-side physical-controls preview, with real firmware UI renders for menu selections, opened pages and Start.

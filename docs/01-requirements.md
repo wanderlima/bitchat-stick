@@ -2,7 +2,7 @@
 
 ## Context
 
-Bitchat Stick is an experimental offline accessory for the M5StickC Plus2. The original design phase produced documentation only; implementation now includes the scanner/UI foundation described in [getting started](09-getting-started.md). Earlier conversation suggestions are product context, not protocol evidence. English (en-US) is the default for firmware, documentation, and screen previews.
+Bitchat Stick is modular BLE chat firmware for ESP32. The initial supported profile is the M5StickC Plus2, with the Mini JoyC HAT as an optional peripheral of that profile. One build produces one board image; the Plus2 binary is not a universal ESP32 firmware. The implemented participant is described in [getting started](09-getting-started.md). Earlier conversation suggestions are product context, not protocol evidence. English (en-US) is the default for firmware and documentation.
 
 ## Proposed functional requirements
 
@@ -36,7 +36,7 @@ RF03–RF07 remain gated by protocol investigation. Discovery, announcements, re
 
 The [official Plus2 specifications](https://docs.m5stack.com/en/core/StickC-Plus2) establish the target and its physical controls. Do not confuse the Plus2 power circuit with the Plus/AXP192 model. Verify the board revision and library behavior before using pins or power APIs.
 
-The foundation uses C++, Arduino, PlatformIO, M5Unified, M5GFX, and NimBLE-Arduino, with versions pinned in `platformio.ini`. M5Unified provides hardware abstraction, not Bitchat compatibility. The [battery documentation](https://docs.m5stack.com/en/arduino/m5stickc_plus2/battery) links to its power layer. ESP-IDF remains an alternative if later protocol work requires it. Do not mix Arduino/IDF/NimBLE versions without build and runtime evidence.
+The firmware uses C++, Arduino and PlatformIO, with versions pinned in `platformio.ini`. The shared core does not include M5Unified. The Plus2 profile uses M5Unified 0.2.8 and M5GFX 0.2.36 for power, display, RTC, speaker and the optional JoyC HAT. NimBLE-Arduino 2.5.0 carries BLE. M5Unified is a board adapter, not Bitchat compatibility. The [battery documentation](https://docs.m5stack.com/en/arduino/m5stickc_plus2/battery) links to its power layer. ESP-IDF remains an alternative if later protocol work requires it. Do not mix Arduino/IDF/NimBLE versions without build and runtime evidence.
 
 ## Outside the BLE MVP
 

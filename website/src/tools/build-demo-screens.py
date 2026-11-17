@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='bitchat-demo-') as directory:
     for src, name in [(crypto/'monocypher.c','monocypher'), (crypto/'optional/monocypher-ed25519.c','ed25519'), (root/'.pio/libdeps/m5stickc-plus2/M5GFX/src/lgfx/utility/lgfx_miniz.c','miniz')]:
         subprocess.run(['cc','-std=c99','-I',str(crypto),'-c',str(src),'-o',str(temp/f'{name}.o')], check=True)
     sources=['Feedback','PeerTable','PeerSelection','Settings','Mesh','Identity','NoiseSession','FragmentAssembler','WireCodec','PacketSecurity','CryptoPrimitives']
-    subprocess.run(['c++','-std=c++17','-Wall','-Wextra','-Werror','-I',str(root/'test/fakes'),'-I',str(root/'include'),'-I',str(crypto),str(temp/'preview.cpp'),*[str(root/f'src/{name}.cpp') for name in sources],*[str(temp/f'{name}.o') for name in ['monocypher','ed25519','miniz']],'-o',str(temp/'preview')],check=True,cwd=root)
+    subprocess.run(['c++','-std=c++17','-Wall','-Wextra','-Werror','-DSTICK_BOARD_M5STICKC_PLUS2','-I',str(root/'test/fakes'),'-I',str(root/'include'),'-I',str(root/'src'),'-I',str(crypto),str(temp/'preview.cpp'),str(root/'test/fakes/HostBoard.cpp'),*[str(root/f'src/{name}.cpp') for name in sources],*[str(temp/f'{name}.o') for name in ['monocypher','ed25519','miniz']],'-o',str(temp/'preview')],check=True,cwd=root)
     subprocess.run([str(temp/'preview'),str(temp)],check=True,cwd=root)
     # Use the same firmware font renderer at native resolution, not enlarged 4x.
     renderer=(root/'tools/render-previews.py').read_text().replace('root=Path(__file__).resolve().parents[1]',f'root=Path({str(root)!r})')

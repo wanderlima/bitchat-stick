@@ -1,6 +1,6 @@
 # Bitchat Stick website
 
-Static, English (en-US) one-page website built with **Astro 7**, **Tailwind CSS 4** and **GSAP 3**. It lives alongside the firmware; website commands do not build or flash the Stick.
+Static, English (en-US) one-page website built with **Astro 7**, **Tailwind CSS 4** and **GSAP 3**. It describes Bitchat Stick as modular ESP32 firmware, with initial support for the M5StickC Plus2 and the optional Mini JoyC HAT. The Plus2 illustration and JoyC scene stay. Website commands do not build or flash the Stick.
 
 ## Local development
 
@@ -165,7 +165,7 @@ The committed web asset is `public/models/bitchat-stick-wire.glb`. Regenerate it
 npm run build:wire-model
 ```
 
-The generator reads approved solids from `../docs/` and contours from `../models/`, omits internal battery/electronics geometry, preserves metre units and adds the animation pivot. Rebuilding the source CAD models is a separate step. The normal website build uses the committed GLB and does not run model generation.
+The generator reads approved solids and contours from `../../m5stickc-plus2-models/`, omits internal battery/electronics geometry, preserves metre units and adds the animation pivot. Rebuilding the source CAD models is a separate step. The normal website build uses the committed GLB and does not run model generation.
 
 `tests/hardware.spec.ts` checks actual rendered screen changes, joystick articulation, horizontal scroll synchronization, mouse/reduced-motion behavior, mobile keyboard navigation and the model-load fallback. The existing site tests continue to cover accessibility and the rest of the page.
 

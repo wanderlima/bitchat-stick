@@ -17,8 +17,8 @@ import { repo, docs, buildGuide, facts, features, steps, statuses, faqs, resourc
     <Hero />
     <section id="overview" class="section container overview">
       <div class="overview-copy">
-        <SectionHeading label="BITCHAT FOR M5STICKC PLUS2" title="Open-source Bluetooth chat, on a small ESP32 device.">
-          <p>Bitchat Stick is firmware for the M5StickC Plus2. It brings local #bluetooth chat, encrypted DMs and optional Mini JoyC navigation to a pocket-sized device. Created by Wander Lima.</p>
+        <SectionHeading label="MODULAR ESP32 FIRMWARE" title="Open-source Bluetooth chat, on a small ESP32 device.">
+          <p>Bitchat Stick is modular firmware for ESP32. Initial support is the M5StickC Plus2, with the Mini JoyC HAT as an optional peripheral. It brings local #bluetooth chat and encrypted DMs to a pocket-sized device. Created by Wander Lima.</p>
         </SectionHeading>
         <TextLink href={`${repo}#bitchat-stick--m5stickc-plus2`}>Read the project overview</TextLink>
       </div>
@@ -33,7 +33,7 @@ import { repo, docs, buildGuide, facts, features, steps, statuses, faqs, resourc
     <Controls />
     <section id="get-started" class="section container">
       <SectionHeading label="03 / GET STARTED" title="From source to Stick." animate>
-        <p>You need an M5StickC Plus2, a USB data cable and PlatformIO Core. The Mini JoyC HAT is optional.</p>
+        <p>The supported board today is an M5StickC Plus2, plus a USB data cable and PlatformIO Core. The Mini JoyC HAT is an optional peripheral of that profile. Other ESP32 boards are not supported yet.</p>
       </SectionHeading>
       <div class="terminal" data-terminal>
         <ol>{steps.map(([title, body], i) => <li><div class="terminal-line"><h3><span>{i + 1}.</span> {title}</h3><p>{body}</p><TextLink href={buildGuide}>Read the guide</TextLink></div></li>)}</ol>

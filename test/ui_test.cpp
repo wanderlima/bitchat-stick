@@ -1,4 +1,5 @@
 #include "../src/Ui.cpp"
+#include "SurfaceProbe.h"
 #include <cassert>
 #include <Preferences.h>
 #include "PacketSecurity.h"
@@ -24,15 +25,14 @@ using namespace stick;
 uint32_t tick=100;
 PeerTable table;
 bool has(const char* text) {
-  for (const auto& draw:M5.Display.texts) if(draw.text==text) return true;
+  for (const auto& draw:surfaceProbe().texts) if(draw.text==text) return true;
   return false;
 }
-void check() { assert(M5.Display.boundsOk); }
+void check() { assert(surfaceProbe().boundsOk); }
 void press(int key,bool hold=false) {
-  auto& button=key==0?M5.BtnA:key==1?M5.BtnB:M5.BtnPWR;
-  button.down=true;updateUi(table,tick);tick+=hold?700:60;
+  testSetButton(key,true);updateUi(table,tick);tick+=hold?700:60;
   if(hold) updateUi(table,tick);
-  button.down=false;updateUi(table,++tick);tick+=30;check();
+  testSetButton(key,false);updateUi(table,++tick);tick+=30;check();
 }
 int main() {
   Observation obs{};
@@ -41,15 +41,15 @@ int main() {
   beginUi();check();assert(has("BITCHAT") && has("A: START"));
   press(0);assert(screen==Screen::Dashboard && has("Nearby: 1") && has("P:0 New:0"));
   bool square=false;
-  for(const auto& r:M5.Display.rects) if(r.x==6 && r.y==7 && r.w==5 && r.h==5 && r.color==green) square=true;
+  for(const auto& r:surfaceProbe().rects) if(r.x==6 && r.y==7 && r.w==5 && r.h==5 && r.color==green) square=true;
   assert(square);
   bool divider=false;
-  for(const auto& r:M5.Display.rects)
+  for(const auto& r:surfaceProbe().rects)
     if(r.x==5 && r.y==158 && r.w==125 && r.h==1 && r.color==fg) divider=true;
   assert(divider); // Shared separators between Home menu items.
   press(0);assert(screen==Screen::Peers && has("Test phone") && has("-64 dBm") && has("Bitchat?") && has("Not verified") && !has("Mainnet?"));
   bool greenCard=false;
-  for(const auto& r:M5.Display.rects) if(r.x==4 && r.w==3 && r.color==green) greenCard=true;
+  for(const auto& r:surfaceProbe().rects) if(r.x==4 && r.w==3 && r.color==green) greenCard=true;
   assert(greenCard);
   press(0);assert(detail && has("AA:BB:CC") && has("DD:EE:FF"));
   press(1,true);assert(screen==Screen::Peers && !detail);
@@ -94,16 +94,16 @@ int main() {
   detail=false;draw(table,tick);check();assert(!has("Welcome: OFF"));
   detail=false;selection=kBotCommandCount;press(0);assert(!mesh().botEnabled());press(0);assert(mesh().botEnabled());
   // Applied brightness and focus are distinct; inspecting a row never changes PWM.
-  const auto applied=brightnessIndex;const auto pwm=M5.Display.brightness;
+  const auto applied=brightnessIndex;const auto pwm=surfaceProbe().brightness;
   screen=Screen::Brightness;brightnessIndex=2;selection=3;draw(table,tick);check();
   auto pixel=[](int x,int y) {
     uint16_t color=0;
-    for(const auto& r:M5.Display.rects) if(x>=r.x && x<r.x+r.w && y>=r.y && y<r.y+r.h) color=r.color;
+    for(const auto& r:surfaceProbe().rects) if(x>=r.x && x<r.x+r.w && y>=r.y && y<r.y+r.h) color=r.color;
     return color;
   };
   assert(pixel(18,136)==fg); // Filled radio on the applied 50% row, outside focus.
   assert(pixel(18,167)==fg); // Unfilled center retains the focused 75% cream background.
-  assert(M5.Display.brightness==pwm);brightnessIndex=applied;
+  assert(surfaceProbe().brightness==pwm);brightnessIndex=applied;
   screen=Screen::Diagnostics;reports=0xffffffff;drops=0xffffffff;draw(table,0xffffffff);check();
   fake_preferences::writeSucceeds=false;
   screen=Screen::Brightness;selection=4;press(0);
@@ -126,7 +126,7 @@ int main() {
   inject(1,{announcement,74});screen=Screen::Peers;selection=0;detail=false;draw(table,tick);check();assert(has("Live")&&has("Signed only"));
   uint8_t longText[192];std::memset(longText,'x',sizeof(longText));inject(2,{longText,sizeof(longText)});
   screen=Screen::Dashboard;draw(table,tick);check();assert(mesh().unreadCount()==1&&has("P:1 New:1"));
-  auto unreadIcon=[](){for(const auto& r:M5.Display.rects)if(r.x==56&&r.y==6&&r.w==10&&r.color==green)return true;return false;};
+  auto unreadIcon=[](){for(const auto& r:surfaceProbe().rects)if(r.x==56&&r.y==6&&r.w==10&&r.color==green)return true;return false;};
   assert(unreadIcon());battery=100;draw(table,tick);check();assert(has("100%")&&unreadIcon());
   const Screen notificationScreens[]={Screen::Splash,Screen::Dashboard,Screen::Peers,Screen::Channels,Screen::Messages,Screen::Bot,Screen::Settings,Screen::Brightness,Screen::Battery,Screen::About,Screen::Diagnostics};
   messageScope=MessageScope::Direct; // Viewing an empty other inbox must not read the public message.
@@ -147,14 +147,14 @@ int main() {
   joy(0,100,1);assert(selection==2);joy(0,0);joy(0,-100);assert(selection==1);
   joy(0,0);joy(100,0);assert(screen==Screen::Channels);joy(100,0,2000);assert(screen==Screen::Channels);
   joy(0,0);joy(-100,0);assert(screen==Screen::Dashboard);joy(-100,0,2000);assert(screen==Screen::Dashboard);
-  joy(0,0);sleeping=true;M5.Display.setBrightness(0);joy(100,0);assert(!sleeping&&screen==Screen::Dashboard&&M5.Display.brightness==brightness);
+  joy(0,0);sleeping=true;testSetBrightness(0);joy(100,0);assert(!sleeping&&screen==Screen::Dashboard&&surfaceProbe().brightness==brightness);
   joy(100,0);assert(screen==Screen::Dashboard);joy(0,0);joy(100,0);assert(screen==Screen::Peers);
   screen=Screen::Diagnostics;joy(0,0);joy(0,127);assert(has("J:0,127"));
   fakeJoyc.valid=false;press(1,true);assert(screen==Screen::Settings);
   // New settings use independent persistent square checkboxes.
   fakeJoyc=JoycSample{};screen=Screen::Settings;selection=3;detail=false;press(0);assert(screen==Screen::Sound);
   assert(preferenceFlags==0);press(0);assert(preferenceFlags==SoundUi&&fake_preferences::flagsRecord==0xBC520101);
-  bool squareCheckbox=false;for(const auto& rect:M5.Display.rects)if(rect.x==13&&rect.w==12&&rect.h==1)squareCheckbox=true;
+  bool squareCheckbox=false;for(const auto& rect:surfaceProbe().rects)if(rect.x==13&&rect.w==12&&rect.h==1)squareCheckbox=true;
   assert(squareCheckbox);press(2);press(0);assert(preferenceFlags==(SoundUi|SoundDm));
   press(1,true);assert(screen==Screen::Settings&&selection==3);press(2);press(0);assert(screen==Screen::Joystick);
   assert(!(preferenceFlags&JoycClick));fakeJoyc.valid=true;fakeJoyc.buttonValid=true;fakeJoyc.pressed=true;
@@ -209,6 +209,6 @@ int main() {
   screen=Screen::Keyboard;selection=0;draw(table,tick);check();confirmDraft();
   for(selection=0;selection<reviewPages()+2;++selection){draw(table,tick);check();}
   closeComposer();
-  assert(buffered && M5.Display.clears==0 && M5.Display.frames>10);
+  assert(buffered && surfaceProbe().clears==0 && surfaceProbe().frames>10);
   std::puts("UI: navigation, presets, credits, live header/data, grouping and text bounds passed");
 }

@@ -14,7 +14,9 @@ Mesh: deduplication, TTL, scheduling, supported fragments
 BLE transport: scan, central/peripheral GATT, MTU, notify/write
 ```
 
-These are architectural boundaries, not a list of implemented capabilities. The current code contains a passive scanner, peripheral GATT transport, persistent identity, bounded framing/security/Noise modules, a single-owner mesh model, InfoBot, UI, and input handling. A relay should be able to forward ciphertext without exposing it to the bot. Separate scanner, relay, and participant permissions. Do not advertise implemented encryption before vectors and cross-platform tests pass.
+The current firmware follows those boundaries with one shared core and a compile-time board profile. `src/main.cpp` calls the selected profile for power, polling, UI and diagnostics. Protocol modules own scanner, transport, codec, Noise, identity, settings, mesh and InfoBot. They do not include `M5Unified.h` or the text `M5StickC`. The Plus2 profile in `src/boards/m5stickc-plus2/` owns GPIO4 HOLD, M5 initialization, the board guard, RTC, buttons, battery, speaker and the 135×240 display surface. `src/Ui.cpp` draws only through `include/DrawSurface.h`. A second board needs its own profile and binary, as described in [adding a board](18-adding-a-board.md) and [adding a display](17-adding-a-display.md).
+
+The current code contains a passive scanner, peripheral GATT transport, persistent identity, bounded framing/security/Noise modules, a single-owner mesh model, InfoBot, UI and input handling. A relay forwards verified public packets and must not expose private plaintext to the bot. Headless relay policy for a second board remains proposed. Do not treat the Plus2 participant image as that relay.
 
 ## Transport and codec investigation
 
@@ -39,9 +41,9 @@ The current implementation has one owner for PeerTable: the application loop. Ni
 | Observations | 32 entries; expire and replace the oldest |
 | Concurrent links | 2 subscribed peripheral links |
 | Current observation queue | 32 fixed-size events |
-| Future packet RX/TX queues | 12 × 512-byte inbound events; 6 × 4096-byte outbound frames |
-| Future visible history | 12 messages; 192 displayed bytes each |
-| Future deduplication | 64 canonical packet/signature digests |
+| Packet RX/TX queues | 12 × 512-byte inbound events; 6 × 4096-byte outbound frames |
+| Visible history | 12 messages, public, private and outgoing together; 192 displayed bytes each. About 300 bytes per entry. Raising the cap is a memory-budget change and should stay within the 64-entry deduplication window |
+| Deduplication | 64 canonical packet/signature digests |
 | Bot contexts | One explicitly approved context |
 
 These are local engineering budgets, not official protocol constants. Display truncation must never silently truncate outgoing packets. Fragment reassembly needs bounds on bytes, count, and lifetime; oversized input must cause a counted rejection rather than overflow. Do not copy mobile memory quotas into the MCU.

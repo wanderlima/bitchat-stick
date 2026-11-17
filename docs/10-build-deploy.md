@@ -1,6 +1,6 @@
 # Build and USB deployment
 
-Firmware v1.0.00. **Deployment means flashing the Plus2 over USB.** There is no web deployment, OTA, or Bluetooth updater. Build/upload evidence is recorded separately in the device checklist.
+Firmware v1.0.00. **Deployment means flashing the Plus2 profile over USB.** The environment `m5stickc-plus2` builds the shared ESP32 core with that one board profile. It is not a universal ESP32 image. There is no web deployment, OTA, or Bluetooth updater. Build/upload evidence is recorded separately in the device checklist.
 
 ## 1. Prepare the environment
 
@@ -33,7 +33,7 @@ Use the corresponding local path on another computer. Subsequent commands assume
 
 | Item | Value |
 |---|---|
-| Environment | `m5stickc-plus2` |
+| Environment | `m5stickc-plus2`, with `-DSTICK_BOARD_M5STICKC_PLUS2` |
 | Platform | `espressif32@6.9.0` |
 | Framework | Arduino; validated with Arduino-ESP32 2.0.17 |
 | Board base | `m5stick-c` with Plus2 overrides |
