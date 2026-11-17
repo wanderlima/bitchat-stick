@@ -14,7 +14,7 @@ const loader = new GLTFLoader();
 const external = /^(housing_|display_|button_[ABC]|joystick_|chassis_|tray_|Grove|USB_C|mount_boss|rear_label|rear_screw|screw_)/;
 for (const [prefix, offset] of [['hat-mini-joyc', [0, 0, 0]], ['stickc-plus2', [0, -.01685, -.00295]]]) {
   for (const contours of [false, true]) {
-    const bytes = await readFile(new URL(`../../../${contours ? `models/${prefix}` : 'docs'}/${prefix}${contours ? '-contours' : ''}.glb`, import.meta.url));
+    const bytes = await readFile(new URL(`../../../../m5stickc-plus2-models/${prefix}/${prefix}${contours ? '-contours' : ''}.glb`, import.meta.url));
     const source = (await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '')).scene;
     source.position.set(...offset); source.updateMatrixWorld(true);
     source.traverse(part => {

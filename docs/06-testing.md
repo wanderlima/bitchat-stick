@@ -92,7 +92,7 @@ The framebuffer revision was built/uploaded after the owner reported lighter red
 - Application image SHA-256: `edfed7e93f99a50a055d1e58217151e7e2fb66134d4f039cfb406ee2ce8b3a8b`.
 - Target build: 97,336 bytes static RAM and 974,785 bytes application flash; the 64,800-byte display canvas is allocated dynamically in PSRAM.
 - Final observed runtime samples: one subscribed link, one authenticated peer, active RTC, zero rejected packets in the captured interval and about 145,000 bytes free internal heap. These are short observations, not endurance results.
-- Fourteen native suites and the independent CryptoKit signature check passed after private-text/receipt integration. JPEG previews were regenerated from the real UI with simulated data and visually inspected.
+- Fourteen native suites and the independent CryptoKit signature check passed after private-text/receipt integration.
 - The owner's initial missing message was identified as an Android DM sent before private-text display support. The DM reader/receipt update was installed; the owner subsequently confirmed Android delivery status and reading the DM on the Stick. Remote read status was not yet implemented at that checkpoint.
 
 ### Current installed Inbox / Mesh / read-receipt revision
@@ -124,7 +124,7 @@ The owner subsequently confirmed Hat ready and working navigation after powering
 
 The owner confirmed the corrected JoyC directions. Eighteen native suites and independent CryptoKit signature verification passed after the private composer update. Tests decrypt an outgoing maximum-length private TLV, verify recipient addressing, require an authenticated session, preserve history on failed enqueue, correlate delivery/read receipts and prevent read-state downgrade. UI tests cover Nearby and Inbox entry, stable recipient capture, cancel/back, empty Done, every keyboard mode/key, long drafts and all confirmation pages within 135×240.
 
-The target build passed. Software JPEG previews include all seventeen screens. Actual outbound Android/iOS reception and delivery/read presentation remain manual acceptance checks; build/upload and host decryption do not establish those results. See [the composer checklist](14-direct-message-composer.md).
+The target build passed. Actual outbound Android/iOS reception and delivery/read presentation remain manual acceptance checks; build/upload and host decryption do not establish those results. See [the composer checklist](14-direct-message-composer.md).
 
 The updated firmware upload completed with flash hash verification (981,952 bytes). A short USB read produced no telemetry; no post-upload session/delivery result is inferred from that read.
 

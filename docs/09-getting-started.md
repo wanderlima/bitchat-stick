@@ -116,7 +116,7 @@ The table test covers updates, address-type distinction, bounds/oldest replaceme
 
 On the splash screen, only A enters Home; B/C and long-B do not change pages. Short actions occur on release. After screen-off, the first A/B/C press only wakes it; suppress navigation until all buttons are released. Brightness persists in NVS; transient screen/navigation state remains volatile. Real USB/battery power-off behavior must be checked on the Plus2.
 
-The UI uses native FreeMono body/compact bitmaps at 16/14px, generated from pinned M5GFX glyphs to preserve strokes without fractional scaling. Titles use FreeMonoBold9pt7b and the brand uses FreeMonoBold12pt7b. Primary cream is #EBDCBA, quantized to RGB565 0xEEF7. The 20px BLE header has a subtle outline. Text is English; non-ASCII radio-name bytes still render as `?`. Current JPEG previews are not pixel-identical hardware screenshots. InfoBot command pages explain public replies; the ON/OFF row controls real behavior for the current boot.
+The UI uses native FreeMono body/compact bitmaps at 16/14px, generated from pinned M5GFX glyphs to preserve strokes without fractional scaling. Titles use FreeMonoBold9pt7b and the brand uses FreeMonoBold12pt7b. Primary cream is #EBDCBA, quantized to RGB565 0xEEF7. The 20px BLE header has a subtle outline. Text is English; non-ASCII radio-name bytes still render as `?`. InfoBot command pages explain public replies; the ON/OFF row controls real behavior for the current boot.
 
 ## Source structure
 

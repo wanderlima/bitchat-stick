@@ -25,7 +25,6 @@ Commands:
 
 ```sh
 sh tools/test-native.sh
-sh tools/render-device-previews.sh
 pio run -e m5stickc-plus2
 pio run -e m5stickc-plus2 -t upload --upload-port /dev/cu.usbserial-58690062391
 ```
