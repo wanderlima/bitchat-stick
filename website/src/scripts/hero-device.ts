@@ -15,7 +15,11 @@ export async function mountHeroDevice() {
   const signal = controller.signal;
   let renderer: THREE.WebGLRenderer;
   try {
-    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
+    renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: true,
+      powerPreference: 'low-power',
+    });
   } catch {
     hero.dataset.device = 'fallback';
     return;
@@ -52,13 +56,17 @@ export async function mountHeroDevice() {
     frame = requestAnimationFrame(render);
   }
   function activeMesh() {
-    return [...hero!.querySelectorAll<SVGSVGElement>('[data-mesh]')].find(mesh => getComputedStyle(mesh).display !== 'none');
+    return [...hero!.querySelectorAll<SVGSVGElement>('[data-mesh]')].find(
+      (mesh) => getComputedStyle(mesh).display !== 'none',
+    );
   }
   function syncFromMesh() {
     const mesh = activeMesh();
     if (!mesh) return;
     host!.style.opacity = getComputedStyle(mesh).opacity;
-    const lit = Number(getComputedStyle(mesh.querySelector('[data-peer="stick"] .device-accent')!).opacity) > 0.5;
+    const lit =
+      Number(getComputedStyle(mesh.querySelector('[data-peer="stick"] .device-accent')!).opacity) >
+      0.5;
     if (lit !== litState) {
       litState = lit;
       hero!.dataset.stickLit = lit ? 'true' : 'false';
@@ -68,7 +76,9 @@ export async function mountHeroDevice() {
       }
       requestRender();
     }
-    const active = [...mesh.querySelectorAll<SVGImageElement>('[data-screen]')].find(image => Number(getComputedStyle(image).opacity) > 0.5);
+    const active = [...mesh.querySelectorAll<SVGImageElement>('[data-screen]')].find(
+      (image) => Number(getComputedStyle(image).opacity) > 0.5,
+    );
     const name = active?.dataset.screen ?? 'home';
     if (name !== shown) setScreen(name);
   }
@@ -86,7 +96,9 @@ export async function mountHeroDevice() {
     if (Math.abs(current.x - target.x) + Math.abs(current.y - target.y) > 0.001) requestRender();
   }
   function place() {
-    const slot = [...hero!.querySelectorAll<SVGRectElement>('[data-device-slot]')].find(element => element.getClientRects().length);
+    const slot = [...hero!.querySelectorAll<SVGRectElement>('[data-device-slot]')].find(
+      (element) => element.getClientRects().length,
+    );
     slotEl = slot ?? null;
     if (!slot) return;
     const heroBox = hero!.getBoundingClientRect();
@@ -103,7 +115,7 @@ export async function mountHeroDevice() {
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     const visibleHeight = modelHeight * (1 + PAD * 2);
-    camera.position.z = (visibleHeight / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    camera.position.z = visibleHeight / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     camera.updateProjectionMatrix();
     requestRender();
   }
@@ -111,7 +123,7 @@ export async function mountHeroDevice() {
   function loadTexture(name: string) {
     const cached = textures.get(name);
     if (cached) return Promise.resolve(cached);
-    return textureLoader.loadAsync(`${host!.dataset.screenBase}${name}.png`).then(texture => {
+    return textureLoader.loadAsync(`${host!.dataset.screenBase}${name}.png`).then((texture) => {
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.magFilter = THREE.NearestFilter;
       texture.minFilter = THREE.NearestFilter;
@@ -123,13 +135,15 @@ export async function mountHeroDevice() {
   }
   function setScreen(name: string) {
     shown = name;
-    loadTexture(name).then(texture => {
-      if (disposed || shown !== name) return;
-      screenMaterial.map = texture;
-      screenMaterial.needsUpdate = true;
-      host!.dataset.renderedScreen = name;
-      requestRender();
-    }).catch(() => {});
+    loadTexture(name)
+      .then((texture) => {
+        if (disposed || shown !== name) return;
+        screenMaterial.map = texture;
+        screenMaterial.needsUpdate = true;
+        host!.dataset.renderedScreen = name;
+        requestRender();
+      })
+      .catch(() => {});
   }
   function dispose() {
     if (disposed) return;
@@ -139,17 +153,17 @@ export async function mountHeroDevice() {
     presentation.disconnect();
     sizeObserver.disconnect();
     cancelAnimationFrame(frame);
-    scene.traverse(object => {
+    scene.traverse((object) => {
       if (object instanceof THREE.Mesh) object.geometry.dispose();
     });
-    textures.forEach(texture => texture.dispose());
-    materials.forEach(material => material.dispose());
+    textures.forEach((texture) => texture.dispose());
+    materials.forEach((material) => material.dispose());
     renderer.dispose();
     renderer.domElement.remove();
     if (hero!.dataset.device === 'ready') hero!.dataset.device = 'fallback';
   }
   const presentation = new MutationObserver(() => syncFromMesh());
-  const observer = new IntersectionObserver(entries => {
+  const observer = new IntersectionObserver((entries) => {
     visible = entries[0].isIntersecting;
     if (visible) {
       lastFrame = 0;
@@ -169,19 +183,30 @@ export async function mountHeroDevice() {
       Promise.all(screens.map(loadTexture)),
     ]);
     if (disposed) return;
-    const depth = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+    const depth = new THREE.MeshBasicMaterial({
+      colorWrite: false,
+      depthWrite: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
+    });
     materials.add(depth);
     for (const source of [solid.scene, contours.scene]) {
-      source.traverse(object => {
+      source.traverse((object) => {
         if (!(object instanceof THREE.Mesh || object instanceof THREE.LineSegments)) return;
         const previous = object.material;
-        if (Array.isArray(previous)) previous.forEach(material => material.dispose());
+        if (Array.isArray(previous)) previous.forEach((material) => material.dispose());
         else previous.dispose();
         if (object instanceof THREE.Mesh) {
           object.material = depth;
           object.renderOrder = 0;
         } else {
-          const material = new THREE.LineBasicMaterial({ color: 0xebdcba, transparent: true, opacity: 0.72, toneMapped: false });
+          const material = new THREE.LineBasicMaterial({
+            color: 0xebdcba,
+            transparent: true,
+            opacity: 0.72,
+            toneMapped: false,
+          });
           object.material = material;
           object.renderOrder = 1;
           materials.add(material);
@@ -213,34 +238,59 @@ export async function mountHeroDevice() {
     for (const mesh of hero.querySelectorAll<SVGSVGElement>('[data-mesh]')) {
       presentation.observe(mesh, { attributes: true, attributeFilter: ['style'] });
       const stick = mesh.querySelector('[data-peer="stick"]');
-      if (stick) presentation.observe(stick, { attributes: true, attributeFilter: ['style', 'opacity'], subtree: true });
+      if (stick)
+        presentation.observe(stick, {
+          attributes: true,
+          attributeFilter: ['style', 'opacity'],
+          subtree: true,
+        });
     }
     syncFromMesh();
     requestRender();
-    const reset = () => { pointer.active = false; requestRender(); };
-    window.addEventListener('pointermove', event => {
-      if (!media.matches || !visible || reducedMotion() || event.pointerType !== 'mouse') return;
-      pointer.active = true;
-      pointer.x = event.clientX;
-      pointer.y = event.clientY;
+    const reset = () => {
+      pointer.active = false;
       requestRender();
-    }, { signal, passive: true });
+    };
+    window.addEventListener(
+      'pointermove',
+      (event) => {
+        if (!media.matches || !visible || reducedMotion() || event.pointerType !== 'mouse') return;
+        pointer.active = true;
+        pointer.x = event.clientX;
+        pointer.y = event.clientY;
+        requestRender();
+      },
+      { signal, passive: true },
+    );
     document.documentElement.addEventListener('pointerleave', reset, { signal });
     const motion = new MutationObserver(reset);
-    motion.observe(document.documentElement, { attributes: true, attributeFilter: ['data-reduce-motion'] });
+    motion.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-reduce-motion'],
+    });
     signal.addEventListener('abort', () => motion.disconnect());
-    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', reset, { signal });
+    window
+      .matchMedia('(prefers-reduced-motion: reduce)')
+      .addEventListener('change', reset, { signal });
     window.addEventListener('resize', place, { signal, passive: true });
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        cancelAnimationFrame(frame);
-        frame = 0;
-      } else requestRender();
-    }, { signal });
-    renderer.domElement.addEventListener('webglcontextlost', event => {
-      event.preventDefault();
-      dispose();
-    }, { signal });
+    document.addEventListener(
+      'visibilitychange',
+      () => {
+        if (document.hidden) {
+          cancelAnimationFrame(frame);
+          frame = 0;
+        } else requestRender();
+      },
+      { signal },
+    );
+    renderer.domElement.addEventListener(
+      'webglcontextlost',
+      (event) => {
+        event.preventDefault();
+        dispose();
+      },
+      { signal },
+    );
     window.addEventListener('pagehide', dispose, { once: true, signal });
   } catch {
     dispose();
@@ -248,12 +298,20 @@ export async function mountHeroDevice() {
   }
 }
 
-function deviceOffset(pointer: { x: number; y: number; active: boolean }, slot: Element | null, reduced: boolean) {
+function deviceOffset(
+  pointer: { x: number; y: number; active: boolean },
+  slot: Element | null,
+  reduced: boolean,
+) {
   if (!pointer.active || reduced || !slot) return { x: 0, y: 0 };
   const box = slot.getBoundingClientRect();
   if (!box.width) return { x: 0, y: 0 };
   return {
     x: THREE.MathUtils.clamp((pointer.x - (box.left + box.width / 2)) / (innerWidth * 0.45), -1, 1),
-    y: THREE.MathUtils.clamp((pointer.y - (box.top + box.height / 2)) / (innerHeight * 0.45), -1, 1),
+    y: THREE.MathUtils.clamp(
+      (pointer.y - (box.top + box.height / 2)) / (innerHeight * 0.45),
+      -1,
+      1,
+    ),
   };
 }

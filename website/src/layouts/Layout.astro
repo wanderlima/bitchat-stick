@@ -5,20 +5,63 @@ import '@fontsource/courier-prime/latin-700.css';
 import '../styles/global.css';
 import Analytics from '../components/Analytics.astro';
 import { description, repo, faqs } from '../data/content';
-const canonical=new URL(import.meta.env.BASE_URL,Astro.site);
-const image=new URL(`${import.meta.env.BASE_URL}social-card.png`,Astro.site);
-const title='Bitchat Stick — Modular ESP32 firmware, initial support for M5StickC Plus2';
-const schema={
-  '@context':'https://schema.org',
-  '@graph':[
-    {'@type':'WebSite','@id':`${canonical}#website`,name:'Bitchat Stick',url:canonical.href,inLanguage:'en-US',description},
-    {'@type':'WebPage','@id':`${canonical}#webpage`,url:canonical.href,name:title,description,inLanguage:'en-US',isPartOf:{'@id':`${canonical}#website`},about:{'@id':`${canonical}#project`},author:{'@id':`${canonical}#author`},dateModified:'2026-11-11',primaryImageOfPage:{'@type':'ImageObject',url:image.href,width:1200,height:630}},
-    {'@type':'Person','@id':`${canonical}#author`,name:'Wander Lima',url:'https://github.com/wanderlima'},
-    {'@type':'SoftwareSourceCode','@id':`${canonical}#project`,name:'Bitchat Stick',codeRepository:repo,programmingLanguage:'C++',runtimePlatform:'ESP32 (initial board: M5StickC Plus2)',description,author:{'@id':`${canonical}#author`}},
-    {'@type':'FAQPage','@id':`${canonical}#faq`,isPartOf:{'@id':`${canonical}#webpage`},mainEntity:faqs.map(([name,text])=>({'@type':'Question',name,acceptedAnswer:{'@type':'Answer',text}}))},
+const canonical = new URL(import.meta.env.BASE_URL, Astro.site);
+const image = new URL(`${import.meta.env.BASE_URL}social-card.png`, Astro.site);
+const title = 'Bitchat Stick — Modular ESP32 firmware, initial support for M5StickC Plus2';
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${canonical}#website`,
+      name: 'Bitchat Stick',
+      url: canonical.href,
+      inLanguage: 'en-US',
+      description,
+    },
+    {
+      '@type': 'WebPage',
+      '@id': `${canonical}#webpage`,
+      url: canonical.href,
+      name: title,
+      description,
+      inLanguage: 'en-US',
+      isPartOf: { '@id': `${canonical}#website` },
+      about: { '@id': `${canonical}#project` },
+      author: { '@id': `${canonical}#author` },
+      dateModified: '2026-11-11',
+      primaryImageOfPage: { '@type': 'ImageObject', url: image.href, width: 1200, height: 630 },
+    },
+    {
+      '@type': 'Person',
+      '@id': `${canonical}#author`,
+      name: 'Wander Lima',
+      url: 'https://github.com/wanderlima',
+    },
+    {
+      '@type': 'SoftwareSourceCode',
+      '@id': `${canonical}#project`,
+      name: 'Bitchat Stick',
+      codeRepository: repo,
+      programmingLanguage: 'C++',
+      runtimePlatform: 'ESP32 (initial board: M5StickC Plus2)',
+      description,
+      author: { '@id': `${canonical}#author` },
+    },
+    {
+      '@type': 'FAQPage',
+      '@id': `${canonical}#faq`,
+      isPartOf: { '@id': `${canonical}#webpage` },
+      mainEntity: faqs.map(([name, text]) => ({
+        '@type': 'Question',
+        name,
+        acceptedAnswer: { '@type': 'Answer', text },
+      })),
+    },
   ],
 };
 ---
+
 <!doctype html>
 <html lang="en-US">
   <head>
@@ -31,7 +74,12 @@ const schema={
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
     <link rel="sitemap" href={`${import.meta.env.BASE_URL}sitemap.xml`} />
-    <link rel="alternate" type="text/markdown" href={`${import.meta.env.BASE_URL}llms.txt`} title="Bitchat Stick project facts" />
+    <link
+      rel="alternate"
+      type="text/markdown"
+      href={`${import.meta.env.BASE_URL}llms.txt`}
+      title="Bitchat Stick project facts"
+    />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -41,18 +89,32 @@ const schema={
     <meta property="og:image" content={image} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Bitchat Stick: open-source Bluetooth chat, with a software-rendered M5StickC Plus2 in a conceptual local network." />
+    <meta
+      property="og:image:alt"
+      content="Bitchat Stick: open-source Bluetooth chat, with a software-rendered M5StickC Plus2 in a conceptual local network."
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={image} />
-    <meta name="twitter:image:alt" content="Bitchat Stick firmware running on an illustrated M5StickC Plus2." />
+    <meta
+      name="twitter:image:alt"
+      content="Bitchat Stick firmware running on an illustrated M5StickC Plus2."
+    />
     <title>{title}</title>
-    <script type="application/ld+json" set:html={JSON.stringify(schema).replace(/</g,'\\u003c')} />
+    <script type="application/ld+json" set:html={JSON.stringify(schema).replace(/</g, '\\u003c')} />
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to content</a>
-    <a class="skip-link" href="#reduce-motion" data-motion-shortcut hidden>Motion settings</a>
-    <div id="smooth-wrapper"><div id="smooth-content"><slot /></div></div>
+    <a class="skip-link" href="#main">
+      Skip to content
+    </a>
+    <a class="skip-link" href="#reduce-motion" data-motion-shortcut hidden>
+      Motion settings
+    </a>
+    <div id="smooth-wrapper">
+      <div id="smooth-content">
+        <slot />
+      </div>
+    </div>
   </body>
 </html>

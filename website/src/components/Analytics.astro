@@ -1,21 +1,26 @@
 ---
 // Account setup is external. No collection runs on localhost or in development.
-const enabled=import.meta.env.PROD;
+const enabled = import.meta.env.PROD;
 ---
+
 {enabled && <script is:inline>
   (() => {
     if (['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)) return;
     window.dataLayer = window.dataLayer || [];
-    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window.gtag =
+      window.gtag ||
+      function () {
+        window.dataLayer.push(arguments);
+      }; // eslint-disable-line prefer-rest-params -- gtag.js reads the Arguments object
     window.gtag('js', new Date());
     window.gtag('config', 'G-VHFJLDXMVC');
     for (const src of [
       'https://www.googletagmanager.com/gtag/js?id=G-VHFJLDXMVC',
-      'https://www.googletagmanager.com/gtm.js?id=GTM-K58ZNCMN'
+      'https://www.googletagmanager.com/gtm.js?id=GTM-K58ZNCMN',
     ]) {
-      const script=document.createElement('script');
-      script.async=true;
-      script.src=src;
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = src;
       document.head.appendChild(script);
     }
   })();

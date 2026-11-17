@@ -12,7 +12,11 @@ export function mountHeroPeers() {
   if (!hero || !host) return;
   let renderer: THREE.WebGLRenderer;
   try {
-    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
+    renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: true,
+      powerPreference: 'low-power',
+    });
   } catch {
     return;
   }
@@ -35,7 +39,9 @@ export function mountHeroPeers() {
     frame = requestAnimationFrame(render);
   }
   function activeMesh() {
-    return [...hero!.querySelectorAll<SVGSVGElement>('[data-mesh]')].find(mesh => getComputedStyle(mesh).display !== 'none');
+    return [...hero!.querySelectorAll<SVGSVGElement>('[data-mesh]')].find(
+      (mesh) => getComputedStyle(mesh).display !== 'none',
+    );
   }
   function render(time: number) {
     frame = 0;
@@ -75,7 +81,9 @@ export function mountHeroPeers() {
     const height = host!.clientHeight;
     if (!width || !height) return;
     renderer.setSize(width, height, false);
-    const slots = [...mesh.querySelectorAll<SVGRectElement>('[data-peer-slot]')].filter(slot => slot.getClientRects().length);
+    const slots = [...mesh.querySelectorAll<SVGRectElement>('[data-peer-slot]')].filter(
+      (slot) => slot.getClientRects().length,
+    );
     viewports.length = 0;
     slots.slice(0, 4).forEach((slot, index) => {
       const box = slot.getBoundingClientRect();
@@ -92,10 +100,12 @@ export function mountHeroPeers() {
       const camera = phones[index].camera;
       camera.aspect = pixel.w / pixel.h;
       const visibleHeight = phones[index].height * (1 + PAD * 2);
-      camera.position.z = (visibleHeight / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      camera.position.z = visibleHeight / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
       camera.updateProjectionMatrix();
     });
-    const peers = [...mesh.querySelectorAll<SVGGElement>('[data-peer]')].filter(peer => peer.querySelector('[data-peer-slot]'));
+    const peers = [...mesh.querySelectorAll<SVGGElement>('[data-peer]')].filter((peer) =>
+      peer.querySelector('[data-peer-slot]'),
+    );
     peers.slice(0, 4).forEach((peer, index) => {
       const lit = Number(getComputedStyle(peer.querySelector('.device-accent')!).opacity) > 0.5;
       const material = phones[index].material;
@@ -109,7 +119,7 @@ export function mountHeroPeers() {
     disposed = true;
     controller.abort();
     cancelAnimationFrame(frame);
-    phones.forEach(phone => phone.dispose());
+    phones.forEach((phone) => phone.dispose());
     renderer.dispose();
     renderer.domElement.remove();
     if (hero!.dataset.peers === 'ready') delete hero!.dataset.peers;
@@ -123,35 +133,73 @@ export function mountHeroPeers() {
   const presentation = new MutationObserver(place);
   for (const mesh of hero.querySelectorAll<SVGSVGElement>('[data-mesh]')) {
     presentation.observe(mesh, { attributes: true, attributeFilter: ['style'] });
-    for (const accent of mesh.querySelectorAll('.device-accent')) presentation.observe(accent, { attributes: true, attributeFilter: ['style', 'opacity'] });
+    for (const accent of mesh.querySelectorAll('.device-accent'))
+      presentation.observe(accent, { attributes: true, attributeFilter: ['style', 'opacity'] });
   }
-  const reset = () => { pointer.active = false; requestRender(); };
-  window.addEventListener('pointermove', event => {
-    if (!media.matches || !visible || reducedMotion() || event.pointerType !== 'mouse') return;
-    pointer.active = true;
-    pointer.x = event.clientX;
-    pointer.y = event.clientY;
+  const reset = () => {
+    pointer.active = false;
     requestRender();
-  }, { signal, passive: true });
+  };
+  window.addEventListener(
+    'pointermove',
+    (event) => {
+      if (!media.matches || !visible || reducedMotion() || event.pointerType !== 'mouse') return;
+      pointer.active = true;
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      requestRender();
+    },
+    { signal, passive: true },
+  );
   document.documentElement.addEventListener('pointerleave', reset, { signal });
-  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', reset, { signal });
+  window
+    .matchMedia('(prefers-reduced-motion: reduce)')
+    .addEventListener('change', reset, { signal });
   window.addEventListener('resize', place, { signal, passive: true });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) requestRender(); }, { signal });
-  renderer.domElement.addEventListener('webglcontextlost', event => { event.preventDefault(); dispose(); }, { signal });
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+      if (!document.hidden) requestRender();
+    },
+    { signal },
+  );
+  renderer.domElement.addEventListener(
+    'webglcontextlost',
+    (event) => {
+      event.preventDefault();
+      dispose();
+    },
+    { signal },
+  );
   window.addEventListener('pagehide', dispose, { once: true, signal });
-  const intersection = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) requestRender(); });
+  const intersection = new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (visible) requestRender();
+  });
   intersection.observe(hero);
-  signal.addEventListener('abort', () => { observer.disconnect(); presentation.disconnect(); intersection.disconnect(); });
+  signal.addEventListener('abort', () => {
+    observer.disconnect();
+    presentation.disconnect();
+    intersection.disconnect();
+  });
   requestRender();
 }
 
-function deviceOffset(pointer: { x: number; y: number; active: boolean }, slot: Element | null, reduced: boolean) {
+function deviceOffset(
+  pointer: { x: number; y: number; active: boolean },
+  slot: Element | null,
+  reduced: boolean,
+) {
   if (!pointer.active || reduced || !slot) return { x: 0, y: 0 };
   const box = slot.getBoundingClientRect();
   if (!box.width) return { x: 0, y: 0 };
   return {
     x: THREE.MathUtils.clamp((pointer.x - (box.left + box.width / 2)) / (innerWidth * 0.28), -1, 1),
-    y: THREE.MathUtils.clamp((pointer.y - (box.top + box.height / 2)) / (innerHeight * 0.28), -1, 1),
+    y: THREE.MathUtils.clamp(
+      (pointer.y - (box.top + box.height / 2)) / (innerHeight * 0.28),
+      -1,
+      1,
+    ),
   };
 }
 
@@ -164,10 +212,20 @@ function createPhone() {
   const camera = new THREE.PerspectiveCamera(26, width / height, 0.01, 10);
   const pose = new THREE.Group();
   scene.add(pose);
-  const material = new THREE.LineBasicMaterial({ color: 0xebdcba, transparent: true, opacity: 0.78, toneMapped: false, depthTest: false });
+  const material = new THREE.LineBasicMaterial({
+    color: 0xebdcba,
+    transparent: true,
+    opacity: 0.78,
+    toneMapped: false,
+    depthTest: false,
+  });
   const shape = roundedShape(width, height, radius);
   const body = new THREE.Mesh(
-    new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 10 }).translate(0, 0, -depth / 2),
+    new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 10 }).translate(
+      0,
+      0,
+      -depth / 2,
+    ),
     new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true }),
   );
   pose.add(body);
@@ -176,18 +234,40 @@ function createPhone() {
   pose.add(shell);
   const face = depth / 2 + 0.02;
   pose.add(loop(roundedPoints(width * 0.78, height * 0.68, 0.05, face), material));
-  pose.add(loop([new THREE.Vector3(-0.1, height * 0.4, face), new THREE.Vector3(0.1, height * 0.4, face)], material));
-  pose.add(loop([new THREE.Vector3(-0.16, 0.02, face), new THREE.Vector3(0.16, 0.02, face)], material));
-  pose.add(loop([new THREE.Vector3(-0.16, -0.12, face), new THREE.Vector3(0.08, -0.12, face)], material));
-  pose.add(loop([new THREE.Vector3(-0.08, -height * 0.4, face), new THREE.Vector3(0.08, -height * 0.4, face)], material));
+  pose.add(
+    loop(
+      [new THREE.Vector3(-0.1, height * 0.4, face), new THREE.Vector3(0.1, height * 0.4, face)],
+      material,
+    ),
+  );
+  pose.add(
+    loop([new THREE.Vector3(-0.16, 0.02, face), new THREE.Vector3(0.16, 0.02, face)], material),
+  );
+  pose.add(
+    loop([new THREE.Vector3(-0.16, -0.12, face), new THREE.Vector3(0.08, -0.12, face)], material),
+  );
+  pose.add(
+    loop(
+      [new THREE.Vector3(-0.08, -height * 0.4, face), new THREE.Vector3(0.08, -height * 0.4, face)],
+      material,
+    ),
+  );
   return {
-    scene, camera, pose, material, height, x: 0, y: 0, slot: null as SVGRectElement | null,
+    scene,
+    camera,
+    pose,
+    material,
+    height,
+    x: 0,
+    y: 0,
+    slot: null as SVGRectElement | null,
     dispose() {
       body.geometry.dispose();
       (body.material as THREE.Material).dispose();
       material.dispose();
-      pose.traverse(object => {
-        if (object instanceof THREE.Line || object instanceof THREE.LineSegments) object.geometry.dispose();
+      pose.traverse((object) => {
+        if (object instanceof THREE.Line || object instanceof THREE.LineSegments)
+          object.geometry.dispose();
       });
     },
   };
@@ -226,7 +306,9 @@ function roundedPoints(width: number, height: number, radius: number, z: number)
   for (const [cx, cy, start, end] of corners) {
     for (let step = 0; step <= 8; step++) {
       const angle = start + (end - start) * (step / 8);
-      points.push(new THREE.Vector3(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius, z));
+      points.push(
+        new THREE.Vector3(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius, z),
+      );
     }
   }
   points.push(points[0].clone());

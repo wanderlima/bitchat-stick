@@ -6,65 +6,195 @@ import TextLink from '../components/TextLink.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import Hero from '../components/Hero.astro';
 import Controls from '../components/Controls.astro';
-import { repo, docs, buildGuide, facts, features, steps, statuses, faqs, resources } from '../data/content';
+import {
+  repo,
+  docs,
+  buildGuide,
+  facts,
+  features,
+  steps,
+  statuses,
+  faqs,
+  resources,
+} from '../data/content';
 ---
+
 <Layout>
   <header class="site-header container">
-    <a class="brand" href="#top"><span class="brand-pixel" aria-hidden="true"></span>BITCHAT STICK</a>
-    <nav aria-label="Main navigation"><a href="#features">Features</a><a href="#get-started">Get started</a><a href={repo} target="_blank" rel="noopener noreferrer" class="nav-github"><Icon name="github" />GitHub<span class="sr-only"> (opens in a new tab)</span></a></nav>
+    <a class="brand" href="#top">
+      <span class="brand-pixel" aria-hidden="true"></span>BITCHAT STICK
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="#features">Features</a>
+      <a href="#get-started">Get started</a>
+      <a href={repo} target="_blank" rel="noopener noreferrer" class="nav-github">
+        <Icon name="github" />
+        GitHub<span class="sr-only"> (opens in a new tab)</span>
+      </a>
+    </nav>
   </header>
   <main id="main">
     <Hero />
     <section id="overview" class="section container overview">
       <div class="overview-copy">
-        <SectionHeading label="MODULAR ESP32 FIRMWARE" title="Open-source Bluetooth chat, on a small ESP32 device.">
-          <p>Bitchat Stick is modular firmware for ESP32. Initial support is the M5StickC Plus2, with the Mini JoyC HAT as an optional peripheral. It brings local #bluetooth chat and encrypted DMs to a pocket-sized device. Created by Wander Lima.</p>
+        <SectionHeading
+          label="MODULAR ESP32 FIRMWARE"
+          title="Open-source Bluetooth chat, on a small ESP32 device."
+        >
+          <p>
+            Bitchat Stick is modular firmware for ESP32. Initial support is the M5StickC Plus2, with
+            the Mini JoyC HAT as an optional peripheral. It brings local #bluetooth chat and
+            encrypted DMs to a pocket-sized device. Created by Wander Lima.
+          </p>
         </SectionHeading>
-        <TextLink href={`${repo}#bitchat-stick--m5stickc-plus2`}>Read the project overview</TextLink>
+        <TextLink href={`${repo}#bitchat-stick--m5stickc-plus2`}>
+          Read the project overview
+        </TextLink>
       </div>
-      <div class="hardware-facts" data-enter-item><p class="eyebrow">HARDWARE AT A GLANCE</p><dl>{facts.map(([label,value]) => <div><dt>{label}</dt><dd>{value}</dd></div>)}</dl></div>
+      <div class="hardware-facts" data-enter-item>
+        <p class="eyebrow">HARDWARE AT A GLANCE</p>
+        <dl>
+          {facts.map(([label, value]) => (
+            <div>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </section>
     <section id="features" class="section container">
-      <SectionHeading label="01 / LOCAL CONNECTIONS" title="Stay in the local conversation." animate>
-        <p>Built around the essentials of text chat, with a compact interface you can use without a touchscreen.</p>
+      <SectionHeading
+        label="01 / LOCAL CONNECTIONS"
+        title="Stay in the local conversation."
+        animate
+      >
+        <p>
+          Built around the essentials of text chat, with a compact interface you can use without a
+          touchscreen.
+        </p>
       </SectionHeading>
-      <div class="feature-grid grid gap-8 md:grid-cols-2">{features.map(([title, body], i) => <article class:list={['feature', { 'feature-highlight': i === 0 }]} data-enter-item><h3>{title}</h3><p>{body}</p></article>)}</div>
+      <div class="feature-grid grid gap-8 md:grid-cols-2">
+        {features.map(([title, body], i) => (
+          <article class:list={['feature', { 'feature-highlight': i === 0 }]} data-enter-item>
+            <h3>{title}</h3>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
     </section>
     <Controls />
     <section id="get-started" class="section container">
       <SectionHeading label="03 / GET STARTED" title="From source to Stick." animate>
-        <p>The supported board today is an M5StickC Plus2, plus a USB data cable and PlatformIO Core. The Mini JoyC HAT is an optional peripheral of that profile. Other ESP32 boards are not supported yet.</p>
+        <p>
+          The supported board today is an M5StickC Plus2, plus a USB data cable and PlatformIO Core.
+          The Mini JoyC HAT is an optional peripheral of that profile. Other ESP32 boards are not
+          supported yet.
+        </p>
       </SectionHeading>
       <div class="terminal" data-terminal>
-        <ol>{steps.map(([title, body], i) => <li><div class="terminal-line"><h3><span>{i + 1}.</span> {title}</h3><p>{body}</p><TextLink href={buildGuide}>Read the guide</TextLink></div></li>)}</ol>
-        <div class="upload-track" aria-hidden="true"><div class="upload-progress"></div></div>
+        <ol>
+          {steps.map(([title, body], i) => (
+            <li>
+              <div class="terminal-line">
+                <h3>
+                  <span>{i + 1}.</span> {title}
+                </h3>
+                <p>{body}</p>
+                <TextLink href={buildGuide}>Read the guide</TextLink>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div class="upload-track" aria-hidden="true">
+          <div class="upload-progress"></div>
+        </div>
       </div>
-      <Action href={buildGuide} icon="terminal">Build &amp; flash guide</Action>
+      <Action href={buildGuide} icon="terminal">
+        Build &amp; flash guide
+      </Action>
     </section>
     <section id="status" class="section container">
-      <SectionHeading label="04 / PROJECT STATUS" title="Working today. Still evolving."><p>Source code, implementation notes and test plans are available in the repository.</p></SectionHeading>
-      <div class="status-grid grid gap-8 lg:grid-cols-3">{statuses.map(([title, body]) => <article data-enter-item><h3>{title}</h3><p>{body}</p></article>)}</div>
+      <SectionHeading label="04 / PROJECT STATUS" title="Working today. Still evolving.">
+        <p>Source code, implementation notes and test plans are available in the repository.</p>
+      </SectionHeading>
+      <div class="status-grid grid gap-8 lg:grid-cols-3">
+        {statuses.map(([title, body]) => (
+          <article data-enter-item>
+            <h3>{title}</h3>
+            <p>{body}</p>
+          </article>
+        ))}
+      </div>
       <TextLink href={`${docs}08-limitations-risks.md`}>Compatibility &amp; limitations</TextLink>
     </section>
     <section id="faq" class="section container">
       <SectionHeading label="QUESTIONS / ANSWERED" title="Bitchat Stick FAQ" />
-      <div class="faq-list">{faqs.map(([question,answer], i) => <details open={i === 0} data-enter-item><summary>{question}<span class="disclosure-mark" aria-hidden="true"></span></summary><div class="faq-answer"><p>{answer}</p></div></details>)}</div>
+      <div class="faq-list">
+        {faqs.map(([question, answer], i) => (
+          <details open={i === 0} data-enter-item>
+            <summary>
+              {question}
+              <span class="disclosure-mark" aria-hidden="true"></span>
+            </summary>
+            <div class="faq-answer">
+              <p>{answer}</p>
+            </div>
+          </details>
+        ))}
+      </div>
       <TextLink href={`${docs}07-compatibility.md`}>More compatibility details</TextLink>
     </section>
     <section id="docs" class="section container">
       <SectionHeading label="DOCUMENTATION / PRIMARY SOURCES" title="Go deeper." />
-      <ul class="docs-grid grid gap-x-8 md:grid-cols-2">{resources.map(([label,href,icon]) => <li data-enter-item><TextLink href={href} icon={icon}>{label}</TextLink></li>)}</ul>
+      <ul class="docs-grid grid gap-x-8 md:grid-cols-2">
+        {resources.map(([label, href, icon]) => (
+          <li data-enter-item>
+            <TextLink href={href} icon={icon}>
+              {label}
+            </TextLink>
+          </li>
+        ))}
+      </ul>
     </section>
     <section id="about" class="section container">
-      <SectionHeading label="05 / BUILT IN THE OPEN" title="Make it yours. Help it grow."><p>Bitchat Stick is an open-source project by Wander Lima, built around Bitchat for a small device you can carry. Explore the code, report an issue or share your hardware test results.</p></SectionHeading>
+      <SectionHeading label="05 / BUILT IN THE OPEN" title="Make it yours. Help it grow.">
+        <p>
+          Bitchat Stick is an open-source project by Wander Lima, built around Bitchat for a small
+          device you can carry. Explore the code, report an issue or share your hardware test
+          results.
+        </p>
+      </SectionHeading>
       <Action href={repo}>Explore the project</Action>
-      <p class="independent-note" data-enter-item>Bitchat Stick is an independent project for the Bitchat ecosystem.</p>
+      <p class="independent-note" data-enter-item>
+        Bitchat Stick is an independent project for the Bitchat ecosystem.
+      </p>
     </section>
   </main>
   <footer class="site-footer container">
-    <p><span class="brand">BITCHAT STICK</span> / by Wander Lima</p>
-    <nav aria-label="Footer navigation"><TextLink href={repo} icon="github">GitHub</TextLink><TextLink href={`${repo}#documentation`} icon="documentation">Documentation</TextLink><TextLink href={`${repo}/issues`} icon="issue">Report an issue</TextLink></nav>
-    <div class="motion-preference" data-motion-preference hidden><label><input id="reduce-motion" type="checkbox" name="reduce-motion" />Reduce motion</label><p id="motion-system-note" hidden>Enabled by your device settings.</p></div>
+    <p>
+      <span class="brand">BITCHAT STICK</span> / by Wander Lima
+    </p>
+    <nav aria-label="Footer navigation">
+      <TextLink href={repo} icon="github">
+        GitHub
+      </TextLink>
+      <TextLink href={`${repo}#documentation`} icon="documentation">
+        Documentation
+      </TextLink>
+      <TextLink href={`${repo}/issues`} icon="issue">
+        Report an issue
+      </TextLink>
+    </nav>
+    <div class="motion-preference" data-motion-preference hidden>
+      <label>
+        <input id="reduce-motion" type="checkbox" name="reduce-motion" />
+        Reduce motion
+      </label>
+      <p id="motion-system-note" hidden>
+        Enabled by your device settings.
+      </p>
+    </div>
   </footer>
   <script>
     import { initMotionPreference } from '../scripts/preferences';
@@ -76,8 +206,8 @@ import { repo, docs, buildGuide, facts, features, steps, statuses, faqs, resourc
     initMotionPreference();
     initSmoothScroll();
     initHero();
-    import('../scripts/hero-device').then(module => module.mountHeroDevice()).catch(() => {});
-    import('../scripts/hero-peers').then(module => module.mountHeroPeers()).catch(() => {});
+    import('../scripts/hero-device').then((module) => module.mountHeroDevice()).catch(() => {});
+    import('../scripts/hero-peers').then((module) => module.mountHeroPeers()).catch(() => {});
     initControls();
     initHardwareStory();
     initMotion();

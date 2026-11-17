@@ -73,21 +73,21 @@ The hero uses exact 135:240 UI proportions and nearest-neighbor image sampling. 
 
 One 15,460 ms timeline contains two conceptual scenarios:
 
-| Moment | Duration |
-| --- | ---: |
-| Home | 800 ms |
-| Writing | 1,200 ms |
-| Send selected | 600 ms |
-| Queued | 400 ms |
-| Stick → North, then hop accent | 900 + 120 ms |
-| North → East, then hop accent | 1,200 + 120 ms |
-| Hold and reset | 1,000 + 120 ms |
-| West → Relay, then hop accent | 1,800 + 120 ms |
-| Relay → Stick, then hop accent | 1,000 + 120 ms |
-| Received screen hold after arrival accent | 1,700 ms |
-| Stick → North, then hop accent | 900 + 120 ms |
-| North → East, then hop accent | 1,200 + 120 ms |
-| Rest and reset | 1,800 + 120 ms |
+| Moment                                    |       Duration |
+| ----------------------------------------- | -------------: |
+| Home                                      |         800 ms |
+| Writing                                   |       1,200 ms |
+| Send selected                             |         600 ms |
+| Queued                                    |         400 ms |
+| Stick → North, then hop accent            |   900 + 120 ms |
+| North → East, then hop accent             | 1,200 + 120 ms |
+| Hold and reset                            | 1,000 + 120 ms |
+| West → Relay, then hop accent             | 1,800 + 120 ms |
+| Relay → Stick, then hop accent            | 1,000 + 120 ms |
+| Received screen hold after arrival accent |       1,700 ms |
+| Stick → North, then hop accent            |   900 + 120 ms |
+| North → East, then hop accent             | 1,200 + 120 ms |
+| Rest and reset                            | 1,800 + 120 ms |
 
 Each route is decomposed into cardinal legs, with discrete steps and a single envelope. The active connection is rendered as contiguous mint segments revealed by transform scaling; base forest routes stay visible. The source and destination silhouettes, controls and labels receive the same mint accent for the duration of the hop. Inactive peers return to cream; there are no permanently green West/Relay peers or detached blinking rectangles. Screens swap as complete bitmaps. No typing is fabricated on top of the firmware images. Queued never claims Delivered or Read.
 

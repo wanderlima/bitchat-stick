@@ -1,8 +1,22 @@
 ---
 import Icon from './Icon.astro';
-interface Props { href: string; icon?: string; secondary?: boolean; }
+interface Props {
+  href: string;
+  icon?: string;
+  secondary?: boolean;
+}
 const { href, icon = 'github', secondary = false } = Astro.props;
 ---
-<a href={href} target={/^https?:/.test(href) ? "_blank" : undefined} rel={/^https?:/.test(href) ? "noopener noreferrer" : undefined} class:list={['action', { 'action-secondary': secondary }]}>
-  <Icon name={icon} /><span><slot /></span>{/^https?:/.test(href) && <span class="sr-only"> (opens in a new tab)</span>}
+
+<a
+  href={href}
+  target={/^https?:/.test(href) ? '_blank' : undefined}
+  rel={/^https?:/.test(href) ? 'noopener noreferrer' : undefined}
+  class:list={['action', { 'action-secondary': secondary }]}
+>
+  <Icon name={icon} />
+  <span>
+    <slot />
+  </span>
+  {/^https?:/.test(href) && <span class="sr-only"> (opens in a new tab)</span>}
 </a>
