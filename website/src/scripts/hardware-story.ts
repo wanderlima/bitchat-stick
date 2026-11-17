@@ -186,8 +186,10 @@ export async function initHardwareStory() {
             if (trigger) {
               const y = trigger.start + (index / last) * (trigger.end - trigger.start);
               const smoother = ScrollSmoother.get();
-              if (smoother) smoother.scrollTo(y, true);
-              else window.scrollTo({ top: y, behavior: 'smooth' });
+              // Jump on an explicit step. A smoothed catch-up keeps the button
+              // moving, so the next pointer action never becomes stable.
+              if (smoother) smoother.scrollTo(y, false);
+              else window.scrollTo({ top: y, behavior: 'auto' });
             } else {
               update(index / last, true);
               gsap.set(track, { x: (-index * track.clientWidth) / count });

@@ -24,8 +24,10 @@ export async function initSmoothScroll() {
     });
     const controller = new AbortController();
     let folding = false;
-    // overflow:hidden still scrolls. scrollIntoView then offsets this wrapper on top
-    // of the smoother transform, and the next focus snaps it back under the pointer.
+    let echoed = 0;
+    // overflow:hidden is still a scrollport. scrollIntoView sets wrapper.scrollTop,
+    // and the browser echoes that value after we move the smoother. Fold the first
+    // offset through once; ignoring the echo stops the page from running away.
     wrapper.addEventListener(
       'scroll',
       () => {
@@ -34,7 +36,10 @@ export async function initSmoothScroll() {
         if (!delta) return;
         folding = true;
         wrapper.scrollTop = 0;
-        smoother.scrollTop(smoother.scrollTop() + delta);
+        if (delta !== echoed) {
+          echoed = delta;
+          smoother.scrollTop(Number(smoother.scrollTop()) + delta);
+        }
         folding = false;
       },
       { signal: controller.signal },
