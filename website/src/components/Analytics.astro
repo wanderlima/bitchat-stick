@@ -9,9 +9,9 @@ const enabled = import.meta.env.PROD;
     window.dataLayer = window.dataLayer || [];
     window.gtag =
       window.gtag ||
-      function () {
-        window.dataLayer.push(arguments);
-      }; // eslint-disable-line prefer-rest-params -- gtag.js reads the Arguments object
+      function (...args) {
+        window.dataLayer.push(args);
+      };
     window.gtag('js', new Date());
     window.gtag('config', 'G-VHFJLDXMVC');
     for (const src of [
