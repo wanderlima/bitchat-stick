@@ -1,6 +1,6 @@
 # Screens, layout, and controls
 
-Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All seventeen screens are present in the firmware. Live device information is never replaced with sample peers or chat.
+Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. This is the initial display profile (`135x240-portrait`). See [adding a display](17-adding-a-display.md) before introducing another panel. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All seventeen screens are present in the firmware. Live device information is never replaced with sample peers or chat.
 
 ## Shared visual system
 

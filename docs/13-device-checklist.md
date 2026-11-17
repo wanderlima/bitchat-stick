@@ -1,6 +1,6 @@
 # Device acceptance checklist — v1.0.00
 
-Updated: **2026-11-11**. Device name: **Bitchat Stick**. Supported context: public BLE **#bluetooth** and authenticated direct text messages. Record the firmware commit/image hash, both phone models/OS/app versions, power source and test time. Start with both apps in the foreground and Bluetooth permissions granted.
+Updated: **2026-11-17**. Device name: **Bitchat Stick**. Supported context: public BLE **#bluetooth** and authenticated direct text messages. Record the firmware commit/image hash, both phone models/OS/app versions, power source and test time. Start with both apps in the foreground and Bluetooth permissions granted.
 
 ## Evidence already recorded
 
@@ -15,8 +15,9 @@ Updated: **2026-11-11**. Device name: **Bitchat Stick**. Supported context: publ
 - [x] Owner confirmed Android DM delivery status and reading the DM on the Stick.
 - [x] Owner confirmed JoyC HAT detection and correct navigation in all four directions.
 - [x] Owner confirmed the installed message-sending flow worked well; phone platform, individual input paths and receipt states were not specified.
-- [x] Owner confirmed that Bitchat Stick works with the iPhone app. Exact app/OS versions and each receipt/reconnect scenario were not provided with this report.
-- [ ] Final display, unread/read-status acceptance, detailed iPhone receipt/reconnect scenarios, controlled relay and endurance below.
+- [x] Owner confirmed that Bitchat Stick works with the iPhone app. Exact app/OS versions were not provided with that report.
+- [x] On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks while testing Android and iPhone against the flashed Plus2 profile. App versions, Bot OFF, command aliases and reconnect-before-open were not separately recorded.
+- [ ] Final display, detailed reconnect scenarios, controlled relay and endurance below.
 
 ## 1. Display and navigation
 

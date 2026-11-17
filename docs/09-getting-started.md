@@ -4,7 +4,7 @@ Firmware **v1.0.00**, English (en-US). Source implementation and physical accept
 
 ## Implemented
 
-- PlatformIO/Arduino firmware for Plus2, early power HOLD, physical navigation, real voltage/estimated battery, screen timeout and wake suppression.
+- PlatformIO/Arduino firmware with a shared ESP32 core and a compile-time M5StickC Plus2 profile. The Plus2 profile owns early power HOLD, the panel, RTC, buttons and the optional JoyC HAT. Physical navigation, real voltage/estimated battery, screen timeout and wake suppression remain on that profile. The Plus2 binary is not a universal ESP32 image.
 - Seventeen working screens with FreeMono, warm cream, grouped panels, dividers, green Nearby styling, and buffered rendering to remove erase/redraw flicker.
 - Persistent brightness: 5/25/50/75/100%, default 50%; explicit apply writes NVS and storage failures are visible.
 - Passive UUID-filtered candidate scanning alongside mainnet GATT advertising. At most two subscribed peripheral links; mobiles initiate the BLE connection.
@@ -23,7 +23,7 @@ Firmware **v1.0.00**, English (en-US). Source implementation and physical accept
 
 The earlier brightness self-test saved/read back a changed value across ESP32 restart and restored the original setting. The integrated firmware exposed an initialization assertion when GATT was registered during scanning; pausing scanning before registration fixed the reproduced reboot loop. After correction the Stick stayed running with an active RTC, a subscribed Android link, a verified signed announcement and an authenticated Noise peer. Android Bitchat 2.2.0 independently logged successful signature verification and Noise establishment. The owner confirmed network visibility.
 
-The owner confirmed corrected HAT navigation and successful use of the installed sending flow on 2026-11-11, without identifying a specific phone platform or receipt state. Full two-phone messaging/relay, iOS payload exchange, display flicker/readability, battery-only operation, and endurance remain physical acceptance items, not claimed passes. Use the [checklist](13-device-checklist.md).
+The owner confirmed corrected HAT navigation and successful use of the installed sending flow on 2026-11-11. On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks while testing Android and iPhone against the Plus2 profile. Controlled indirect relay, background behavior, battery-only operation and endurance remain physical acceptance items. Use the [checklist](13-device-checklist.md).
 
 ## Future scope
 

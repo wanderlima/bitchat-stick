@@ -6,7 +6,7 @@ The command rows on that screen explain each command; selecting them does not se
 
 | Command | Reply |
 |---|---|
-| `!info` | Stick hardware and supported local features |
+| `!info` | `InfoBot: Bitchat Stick | ESP32 | #bluetooth local relay and private text DMs.` |
 | `!rules` / `!regras` | Public/private context and basic conduct |
 | `!help` / `!ajuda` | Commands and usage |
 | `!about` | Project description, Wander Lima credit and https://github.com/wanderlima/bitchat-stick |
@@ -32,6 +32,8 @@ The earlier implementation intentionally ignored DM commands and required privat
 The former **Welcome: OFF** footer described a disabled automatic greeting feature; it was not an editable setting. BLE discovery/reconnection does not reliably prove that someone joined the chat. Automatic welcomes therefore remain disabled, and the misleading footer has been removed. Bot: ON controls command replies and the private introduction described below.
 
 ## Device checks
+
+On 2026-11-17 the owner confirmed that InfoBot replies correctly on the flashed Plus2 profile. That report does not by itself check Bot OFF, the three-second cooldown or every alias.
 
 - [ ] Connect Bitchat, verify ordinary incoming messages, and keep Bot: ON.
 - [ ] In #bluetooth, send `!help`; allow three seconds, then send `!about`. Check the public reply and project link.

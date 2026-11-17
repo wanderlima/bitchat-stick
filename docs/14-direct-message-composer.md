@@ -54,7 +54,7 @@ The 32 presets include Come here, Follow me, On my way, Turn right, Turn left, H
 
 A known user without an authenticated session now triggers negotiation when Send is selected. The draft remains unsent with Connecting; wait for authentication and explicitly select Send again. Peer gone means the recipient has expired from the table; Link / queue means the current link or bounded outgoing queue did not accept the packet. No failed private draft is sent publicly.
 
-The private-session pool now matches the twelve-peer table rather than the two physical BLE connections. Expired/orphaned sessions are released. The two-session configuration was reproduced failing a three-identity regression; the twelve-session configuration passes it. The owner subsequently confirmed that DM and public writing both worked correctly in the tested setup; individual phone platforms and receipt transitions were not specified.
+The private-session pool now matches the twelve-peer table rather than the two physical BLE connections. Expired/orphaned sessions are released. The two-session configuration was reproduced failing a three-identity regression; the twelve-session configuration passes it. The owner subsequently confirmed that DM and public writing both worked correctly in the tested setup. On 2026-11-17 the owner confirmed that the delivered and read checks are correct on Android and iPhone. Disconnect-before-open remains a separate check.
 
 Channels → #bluetooth offers Read chat and Write msg. Public confirmation shows #bluetooth and Public chat, never a peer ID. Reply from a received message still selects that sender privately. Cancel returns to the original menu. Queued is not delivered; public messages have no private delivered/read receipt.
 

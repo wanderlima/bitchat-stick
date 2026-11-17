@@ -7,7 +7,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 }, reducedMotion: 'reduce' });
   await page.goto('http://127.0.0.1:4322/bitchat-stick/');
   await page.evaluate(() => document.fonts.ready);
-  await page.locator('.hero .eyebrow').evaluate(element => { element.textContent = 'BITCHAT STICK / OPEN SOURCE / M5STICKC PLUS2'; });
+  await page.locator('.hero .eyebrow').evaluate(element => { element.textContent = 'BITCHAT STICK / OPEN SOURCE / ESP32'; });
   await page.addStyleTag({ content: `
     .site-header,.site-footer,.skip-link,main>.section,.hero-actions,.hero-meta,.hero-statement { display:none!important }
     .hero { width:1200px;height:630px;min-height:630px;margin:0 }

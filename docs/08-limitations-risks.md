@@ -21,17 +21,17 @@ BLE does not guarantee delivery, fixed range, anonymity, or availability. The [o
 
 The Plus2 has no built-in LoRa radio. Projects with LoRa backhaul require additional hardware and scope. Relay may extend useful connectivity through intermediate links; it does not amplify the phones' radio power.
 
-No local measurements establish range, sustained BLE stability, runtime heap, battery life, or Bitchat messaging compatibility. Native tests/builds and the owner's initial UI use are narrower evidence. Keep protocol proof ahead of relay/bot claims.
+No local measurements establish range, sustained BLE stability, runtime heap or battery life. Messaging, InfoBot replies and delivered/read checks have owner confirmation from 2026-11-17. That confirmation does not prove indirect relay or endurance.
 
 ## Current implementation boundaries
 
 - Public BLE text is readable to nearby participants; Noise authentication does not encrypt the public channel.
 - Local seeds are in unencrypted NVS; flash extraction can disclose identity. No secure-boot/flash-encryption provisioning was performed.
 - Peer key pins are in RAM and expire; this is not persistent TOFU or out-of-band human verification.
-- Two subscribed peripheral links, twelve peer records, twelve displayed messages, bounded queues and two fragment assemblies intentionally limit load. Saturation drops work rather than growing memory.
+- Two subscribed peripheral links, twelve peer records, twelve displayed messages, bounded queues and two fragment assemblies intentionally limit load. Public, private and outgoing messages share that twelve-entry history. Saturation drops or overwrites old history rather than growing memory.
 - Queue acceptance and successful notification submission are not end-to-end delivery acknowledgements.
 - The supported relay subset is signed public announcements/text. Private media/group traffic and arbitrary opaque Noise routing are not relayed.
-- No private-channel discovery, Nostr, sync/history recovery, OTA, or composer is provided.
+- No private-channel discovery, Nostr, sync/history recovery or OTA is provided. The private composer, InfoBot and public #bluetooth writing are implemented.
 - The RTC requires correct UTC. Build time repairs an older/unset clock; a stale binary plus unavailable RTC can fail freshness checks.
 - Battery percentage is approximate; runtime, low-voltage policies and charging state are not calibrated.
 - Bot ON/OFF is immediate but resets to ON after reboot; brightness and identity persist.

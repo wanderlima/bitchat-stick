@@ -1,6 +1,6 @@
 # Bitchat Stick website
 
-Static, English (en-US) one-page website built with **Astro 7**, **Tailwind CSS 4** and **GSAP 3**. It lives alongside the firmware; website commands do not build or flash the Stick.
+Static, English (en-US) one-page website built with **Astro 7**, **Tailwind CSS 4** and **GSAP 3**. It describes Bitchat Stick as modular ESP32 firmware, with initial support for the M5StickC Plus2 and the optional Mini JoyC HAT. The Plus2 illustration and JoyC scene stay. Website commands do not build or flash the Stick.
 
 ## Local development
 

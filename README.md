@@ -1,10 +1,10 @@
-# Bitchat Stick — M5StickC Plus2
+# Bitchat Stick
 
 Firmware **v1.0.00** · Default language: **English (en-US)**.
 
-A small BLE Bitchat participant for M5StickC Plus2. The firmware implements signed discovery and public chat, automatic identity-bound Noise sessions, bounded public-packet relay, and signed-public/private InfoBot commands. Other Bitchat users see the device as **Bitchat Stick** in the local `#bluetooth` context.
+Modular BLE Bitchat firmware for ESP32. The initial supported profile is the M5StickC Plus2, with the Mini JoyC HAT as an optional peripheral of that profile. The firmware implements signed discovery and public chat, automatic identity-bound Noise sessions, bounded public-packet relay, and signed-public/private InfoBot commands. Other Bitchat users see the device as **Bitchat Stick** in the local `#bluetooth` context. Other ESP32 boards are not supported yet, and the Plus2 binary is not a universal image.
 
-Android 2.2.0 has verified the Stick's announcement and completed a real Noise handshake. The owner also confirmed network visibility, corrected JoyC navigation and successful use of the installed message-sending flow on 2026-11-11. The owner subsequently confirmed that Bitchat Stick works with the iPhone app. Individual receipt transitions, indirect two-phone relay, background behavior, and battery endurance still require the [device acceptance checklist](docs/13-device-checklist.md). Compilation and native tests alone do not establish interoperability.
+Android 2.2.0 has verified the Stick's announcement and completed a real Noise handshake. The owner also confirmed network visibility, corrected JoyC navigation and successful use of the installed message-sending flow on 2026-11-11, and later confirmed that Bitchat Stick works with the iPhone app. On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks on Android and iPhone. Indirect two-phone relay, background behavior and battery endurance still require the [device acceptance checklist](docs/13-device-checklist.md). Compilation and native tests alone do not establish interoperability.
 
 ## Build and upload
 
@@ -29,7 +29,7 @@ Exit the monitor with `Ctrl+C` before uploading again. Deployment currently mean
 
 - **A:** confirm/open the selected item.
 - **B:** move up.
-- **C:** move down. C is the Plus2 power button, exposed as `M5.BtnPWR`.
+- **C:** move down. On the Plus2 profile, C is the power button.
 - **Hold B for 700 ms:** go back; from Home, return to Start.
 - **Hold C for 6 seconds:** retain the power-off behavior. A long C press never becomes a down action on release.
 
@@ -49,7 +49,7 @@ The interface uses FreeMono Regular/Bold, warm cream `#EBDCBA` instead of pure w
 - Nearby distinguishes service-advertisement candidates, signed peers, and Noise-authenticated peers. A signed name is not an out-of-band verified human identity.
 - Channels separates **#bluetooth** (the shared public BLE `#bluetooth` context) and **Direct DMs** (private messages addressed to this Stick). It does not create a new channel. Messages reads signed public text and authenticated DMs, with explicit BLE/DM labels. It keeps twelve RAM-only entries, with message paging and text scrolling; at most 192 bytes are rendered per entry, with an explicit truncation mark.
 - Signed public announcements and text are verified, deduplicated, and eligible for TTL-limited forwarding without echoing the ingress link. Queue acceptance is not a delivery acknowledgement.
-- InfoBot supports `!info`, `!rules`, `!help`, and `!about`, plus `!regras`/`!ajuda` aliases. Signed public commands receive public replies; authenticated DMs receive private replies. A three-second peer limit and one-second global limit prevent reply floods. The InfoBot screen shows its latest reply/block status. See [usage and troubleshooting](docs/15-infobot.md). The on-device `Bot: ON/OFF` switch applies immediately for the current boot.
+- InfoBot supports `!info`, `!rules`, `!help`, and `!about`, plus `!regras`/`!ajuda` aliases. `!info` answers `InfoBot: Bitchat Stick | ESP32 | #bluetooth local relay and private text DMs.` Signed public commands receive public replies; authenticated DMs receive private replies. A three-second peer limit and one-second global limit prevent reply floods. The InfoBot screen shows its latest reply/block status. See [usage and troubleshooting](docs/15-infobot.md). The on-device `Bot: ON/OFF` switch applies immediately for the current boot.
 - Public channel-join greetings remain OFF because discovery/reconnection does not reliably prove channel entry. With Bot ON, the first fresh authenticated DM from each person receives a private introduction explaining !help/!about, once per boot for up to 32 identities.
 - An envelope in the header indicates unread incoming messages. Home and each inbox show unread counts; opening a DM sends an encrypted read receipt. New arrivals preserve the current reading position. Unread state is RAM-only.
 - Channels → #bluetooth offers Read chat and Write msg; public drafts show the channel explicitly and use signed public sending. Replying to a user remains private.
@@ -68,7 +68,7 @@ The one-page website lives in [`website/`](website/README.md), alongside the fir
 
 - [Changelog](CHANGELOG.md)
 - [Requirements and scope](docs/01-requirements.md)
-- [Proposed architecture](docs/02-architecture.md)
+- [Architecture](docs/02-architecture.md)
 - [Features and bot behavior](docs/03-features.md)
 - [Screens, wireframes, typography, and controls](docs/04-screens.md)
 - [Evidence-driven roadmap](docs/05-roadmap.md)
@@ -82,9 +82,13 @@ The one-page website lives in [`website/`](website/README.md), alongside the fir
 - [Device acceptance checklist](docs/13-device-checklist.md)
 - [Private composer and validation checklist](docs/14-direct-message-composer.md)
 - [InfoBot commands and troubleshooting](docs/15-infobot.md)
+- [Multi-board and headless-relay implementation plan](docs/16-multi-board-plan.md)
+- [Adding a display](docs/17-adding-a-display.md)
+- [Adding a board](docs/18-adding-a-board.md)
+- [ADR-001: shared core, board profiles and optional UI](docs/decisions/001-multi-board-core-and-optional-ui.md)
 
 ## Hardware and evidence
 
-Target: M5StickC Plus2 with ESP32-PICO-V3-02, 135 × 240 display, and nominal 200 mAh battery. Refer to the [M5Stack hardware documentation](https://docs.m5stack.com/en/core/StickC-Plus2). Binaries built for ESP32-C3/C6/S3 are not interchangeable with this target.
+Initial hardware: M5StickC Plus2 with ESP32-PICO-V3-02, 135 × 240 display, and nominal 200 mAh battery. The Mini JoyC HAT is optional on that profile. Refer to the [M5Stack hardware documentation](https://docs.m5stack.com/en/core/StickC-Plus2). Binaries built for ESP32-C3/C6/S3 are not interchangeable with this target.
 
 “Documented upstream” means described by the cited source. “Third-party claim” is not an independent test. “Proposed” means future work. “Unverified” requires an experiment. The Android discovery/signature/Noise path has hardware evidence. Full messaging compatibility, controlled indirect relay, range, and battery runtime have not yet been established.

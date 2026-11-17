@@ -17,6 +17,9 @@ int main(){
   auto command=[&](const char* text,bool corrupt=false){inject(2,{reinterpret_cast<const uint8_t*>(text),std::strlen(text)},corrupt);};
   inject(1,{announcement,74});assert(model.authenticatedCount()==0);
   command("!info");assert(model.stats().botReplies==1); // A signed public command needs no private session.
+  assert(model.message(0)&&model.message(0)->outgoing);
+  assert(std::strcmp(model.message(0)->text,"InfoBot: Bitchat Stick | ESP32 | #bluetooth local relay and private text DMs.")==0);
+  assert(!std::strstr(model.message(0)->text,"M5StickC"));
   assert(std::strcmp(model.botStatus(),"Public reply")==0);
   command("!help");assert(model.stats().botReplies==1&&std::strcmp(model.botStatus(),"Wait 3s")==0);
   model.tick(3100,epoch+3000);stamp=epoch+3000;command("  !ABOUT\n");assert(model.stats().botReplies==2);

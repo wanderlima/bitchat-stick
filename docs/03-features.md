@@ -18,9 +18,9 @@ The initial candidate context is the local BLE `#bluetooth` chat described in th
 
 Do not promise discovery of every channel or a complete participant list. Show observed peers rather than members unless association is established. Arbitrary channels, groups, and passwords depend on mobile versions and message paths; old slash commands are not a stable API. For inaccessible payloads, show “Encrypted/unavailable,” never invented content.
 
-## InfoBot — planned
+## InfoBot — implemented
 
-The device replies under its advertised Bitchat Stick identity. Bot defaults to ON for each boot and can be disabled locally. The installed bot behavior is described below; physical acceptance of newly added paths is recorded separately.
+The device replies under its advertised Bitchat Stick identity. Bot defaults to ON for each boot and can be disabled locally. On 2026-11-17 the owner confirmed that replies and the delivered/read checks worked on Android and iPhone. Bot OFF, cooldown and alias coverage remain separate checks.
 
 InfoBot implements `!info`, `!rules`, `!help`, `!about`, and aliases `!regras`/`!ajuda`. It accepts a complete command with surrounding whitespace and ASCII case differences. Public replies require a verified signed public packet; private commands require an authenticated Noise session and receive encrypted private replies. Arguments, URLs and shell text are never executed.
 
