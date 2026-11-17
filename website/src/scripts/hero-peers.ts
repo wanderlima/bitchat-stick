@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { reducedMotion } from './preferences';
 
 const PAD = 0.22;
-const REST_X = -0.08;
-const REST_Y = -0.28;
+const REST_X = -0.06;
+const REST_Y = -0.1;
 
 /** Outline phones over the hero peers. Each one turns toward the pointer from its own place on the screen. */
 export function mountHeroPeers() {
@@ -45,9 +45,9 @@ export function mountHeroPeers() {
     let settling = false;
     for (const phone of phones) {
       const target = deviceOffset(pointer, phone.slot, reduced);
-      phone.x = THREE.MathUtils.damp(phone.x, target.x, 7, delta);
-      phone.y = THREE.MathUtils.damp(phone.y, target.y, 7, delta);
-      phone.pose.rotation.set(REST_X + phone.y * 0.1, REST_Y + phone.x * 0.22, phone.x * 0.03);
+      phone.x = THREE.MathUtils.damp(phone.x, target.x, 4, delta);
+      phone.y = THREE.MathUtils.damp(phone.y, target.y, 4, delta);
+      phone.pose.rotation.set(REST_X + phone.y * 0.32, REST_Y + phone.x * 0.72, phone.x * 0.05);
       if (Math.abs(phone.x - target.x) + Math.abs(phone.y - target.y) > 0.001) settling = true;
     }
     renderer.setScissorTest(false);
@@ -75,7 +75,6 @@ export function mountHeroPeers() {
     const height = host!.clientHeight;
     if (!width || !height) return;
     renderer.setSize(width, height, false);
-    const ratio = renderer.getPixelRatio();
     const slots = [...mesh.querySelectorAll<SVGRectElement>('[data-peer-slot]')].filter(slot => slot.getClientRects().length);
     viewports.length = 0;
     slots.slice(0, 4).forEach((slot, index) => {
@@ -83,10 +82,10 @@ export function mountHeroPeers() {
       const padX = box.width * PAD;
       const padY = box.height * PAD;
       const pixel = {
-        x: (box.left - meshBox.left - padX) * ratio,
-        y: (meshBox.bottom - box.bottom - padY) * ratio,
-        w: (box.width + padX * 2) * ratio,
-        h: (box.height + padY * 2) * ratio,
+        x: box.left - meshBox.left - padX,
+        y: meshBox.bottom - box.bottom - padY,
+        w: box.width + padX * 2,
+        h: box.height + padY * 2,
       };
       viewports.push(pixel);
       phones[index].slot = slot;
@@ -151,8 +150,8 @@ function deviceOffset(pointer: { x: number; y: number; active: boolean }, slot: 
   const box = slot.getBoundingClientRect();
   if (!box.width) return { x: 0, y: 0 };
   return {
-    x: THREE.MathUtils.clamp((pointer.x - (box.left + box.width / 2)) / (innerWidth * 0.45), -1, 1),
-    y: THREE.MathUtils.clamp((pointer.y - (box.top + box.height / 2)) / (innerHeight * 0.45), -1, 1),
+    x: THREE.MathUtils.clamp((pointer.x - (box.left + box.width / 2)) / (innerWidth * 0.28), -1, 1),
+    y: THREE.MathUtils.clamp((pointer.y - (box.top + box.height / 2)) / (innerHeight * 0.28), -1, 1),
   };
 }
 
