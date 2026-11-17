@@ -1,22 +1,22 @@
 ---
 interface Props { x: number; y: number; name: string; label: string; scale?: number; labelX?: number; labelAnchor?: string; }
 const { x, y, name, label, scale=1, labelX=46, labelAnchor='middle' } = Astro.props;
-const shell = 'M8 0h76v8h8v116h-8v8H8v-8H0V8h8z M8 8v116h76V8z';
-const labelY = scale < 1 ? 132 + 20 / scale : 162;
-const labelStyle = scale < 1 ? `font-size: ${12 / scale}px` : undefined;
+const labelY = scale < 1 ? 132 + 20 / scale : 156;
+const labelStyle = scale < 1 ? `font-size: ${11 / scale}px` : undefined;
 ---
 <g transform={`translate(${x} ${y}) scale(${scale})`} class="peer" data-peer={name}>
-  <path d={shell} fill="#ebdcba" fill-rule="evenodd" />
-  <rect x="8" y="8" width="76" height="116" fill="black" />
-  <path d="M16 24h60v60H16z M20 28v52h52V28z" fill="#082d21" fill-rule="evenodd" />
-  <rect x="26" y="36" width="6" height="6" fill="#082d21" />
-  <path d="M26 56h36v3H26zm0 14h24v3H26zm4 28h32v12H30z" fill="#ebdcba" />
+  <rect data-peer-slot width="92" height="132" fill="none" />
+  <rect class="peer-mask" x="1" y="1" width="90" height="130" rx="12" fill="#000" />
+  <g class="peer-outline" fill="none" stroke="#ebdcba" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="1" y="1" width="90" height="130" rx="12" fill="#000" vector-effect="non-scaling-stroke" />
+    <rect x="8" y="14" width="76" height="100" rx="4" fill="#000" vector-effect="non-scaling-stroke" />
+    <path d="M39 8h14M32 56h28M32 68h16M37 120h18" vector-effect="non-scaling-stroke" />
+  </g>
   <text x={labelX} y={labelY} text-anchor={labelAnchor} fill="#ebdcba" class="peer-label" style={labelStyle}>{label}</text>
-  <g class="device-accent" opacity="0" fill="#84ff84">
-    <path d={shell} fill-rule="evenodd" />
-    <path d="M16 24h60v60H16z M20 28v52h52V28z" fill-rule="evenodd" />
-    <rect x="26" y="36" width="6" height="6" />
-    <path d="M26 56h36v3H26zm0 14h24v3H26zm4 28h32v12H30z" />
-    <text x={labelX} y={labelY} text-anchor={labelAnchor} class="peer-label" style={labelStyle}>{label}</text>
+  <g class="device-accent" opacity="0" fill="none" stroke="#84ff84" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="1" y="1" width="90" height="130" rx="12" fill="#000" vector-effect="non-scaling-stroke" />
+    <rect x="8" y="14" width="76" height="100" rx="4" fill="#000" vector-effect="non-scaling-stroke" />
+    <path d="M39 8h14M32 56h28M32 68h16M37 120h18" vector-effect="non-scaling-stroke" />
+    <text x={labelX} y={labelY} text-anchor={labelAnchor} fill="#84ff84" stroke="none" class="peer-label" style={labelStyle}>{label}</text>
   </g>
 </g>

@@ -2,7 +2,7 @@ import gsap from 'gsap';
 import { desktopRoutes, mobileRoutes, length, type Route } from '../data/mesh';
 import { reducedMotion } from './preferences';
 
-/** One connected graph, one envelope, active devices and route highlighted together. */
+/** Two stories: the Stick sends one message, then receives one. The envelope glides, and peers stay lit until that message arrives. */
 export async function initHero() {
   const hero=document.querySelector<HTMLElement>('.hero');
   if (!hero) return;
@@ -17,6 +17,22 @@ export async function initHero() {
     const scene=hero.querySelector<SVGSVGElement>(`[data-mesh="${desktop ? 'desktop' : 'mobile'}"]`)!;
     const routes=desktop ? desktopRoutes : mobileRoutes;
     const packet=scene.querySelector<SVGGElement>('.packet')!;
+    const rings=[...scene.querySelectorAll<SVGCircleElement>('.ripple')];
+    let rippleCursor=0;
+    const ripple=(x:number,y:number,at:number)=>{
+      const ring=rings[rippleCursor++%rings.length];
+      const max=desktop ? 118 : 50;
+      const state={radius:max*.25,opacity:.85};
+      const draw=()=>{
+        ring.setAttribute('cx',String(x));
+        ring.setAttribute('cy',String(y));
+        ring.setAttribute('r',state.radius.toFixed(1));
+        ring.setAttribute('opacity',state.opacity.toFixed(3));
+      };
+      timeline.set(state,{radius:max*.25,opacity:.85},at);
+      timeline.call(draw,[],at);
+      timeline.to(state,{radius:max,opacity:0,duration:.85,ease:'power2.out',onUpdate:draw},at);
+    };
     const screens=scene.querySelectorAll<SVGImageElement>('[data-screen]');
     const lit=scene.querySelectorAll<SVGGElement>('[data-route]');
     const accents=scene.querySelectorAll<SVGGElement>('.device-accent');
@@ -26,30 +42,38 @@ export async function initHero() {
       timeline.set(screens,{opacity:0},at);
       timeline.set(scene.querySelector(`[data-screen="${name}"]`),{opacity:1},at);
     };
-    function travel(route:Route,index:number,at:number) {
+    function travel(route:Route,index:number,at:number,pulseOrigin=true) {
       const points=route.points, distance=length(points);
       const edge=scene.querySelector<SVGGElement>(`[data-route="${index}"]`)!;
       const nodes=['west','relay','stick','north','east'];
       const pair=[scene.querySelector(`[data-peer="${nodes[index]}"] .device-accent`),scene.querySelector(`[data-peer="${nodes[index+1]}"] .device-accent`)];
-      timeline.set([lit,accents],{opacity:0},at);
+      const trail=edge.querySelector<SVGPolylineElement>('polyline')!;
+      const head={covered:0};
+      const paint=()=>{
+        trail.style.removeProperty('stroke-dasharray');
+        trail.style.removeProperty('stroke-dashoffset');
+        const drawn=Math.max(0,Math.min(distance,head.covered));
+        trail.setAttribute('stroke-dasharray',`${drawn.toFixed(2)} ${distance}`);
+        trail.setAttribute('stroke-dashoffset','0');
+      };
+      const [source,destination]=pair;
+      timeline.call(paint,[],at);
       timeline.set(edge,{opacity:1},at);
-      timeline.set(pair,{opacity:1},at);
+      timeline.set(source,{opacity:1},at);
       timeline.set(packet,{x:points[0][0],y:points[0][1],opacity:1},at);
-      let cursor=at;
+      if(pulseOrigin) ripple(points[0][0],points[0][1],at);
+      let cursor=at, covered=0;
       for(let i=1;i<points.length;i++) {
         const leg=Math.abs(points[i][0]-points[i-1][0])+Math.abs(points[i][1]-points[i-1][1]);
         const duration=route.duration*leg/distance;
-        const ease=`steps(${Math.max(1,Math.round(route.steps*leg/distance))})`;
-        const segment=edge.querySelector<SVGRectElement>(`[data-leg="${i-1}"]`)!;
-        const property=segment.dataset.axis==='x' ? 'scaleX' : 'scaleY';
-        timeline.set(segment,{[property]:0,svgOrigin:`${points[i-1][0]} ${points[i-1][1]}`},at);
-        timeline.to(segment,{[property]:1,duration,ease},cursor);
-        timeline.to(packet,{x:points[i][0],y:points[i][1],duration,ease},cursor);
+        const from=covered;
+        covered+=leg;
+        timeline.fromTo(head,{covered:from},{covered,duration,ease:'none',immediateRender:false,onUpdate:paint},cursor);
+        timeline.to(packet,{x:points[i][0],y:points[i][1],duration,ease:'none'},cursor);
         cursor+=duration;
       }
-      timeline.set(packet,{opacity:0},at+route.duration);
-      // Hold the complete connection and both device silhouettes through the 120ms hop.
-      timeline.to([edge,...pair],{opacity:0,duration:.12,ease:'steps(2)'},at+route.duration);
+      timeline.set(destination,{opacity:1},at+route.duration);
+      ripple(points[points.length-1][0],points[points.length-1][1],at+route.duration);
     }
     timeline.addLabel('idle',0);
     screen('home',0);
@@ -58,16 +82,14 @@ export async function initHero() {
     timeline.addLabel('confirm',2);screen('confirm',2);
     timeline.addLabel('queued',2.6);screen('queued',2.6);
     timeline.addLabel('outbound-north',3);travel(routes[2],2,3);
-    timeline.addLabel('outbound-east',4.02);travel(routes[3],3,4.02);
-    timeline.set([lit,accents,packet],{opacity:0},6.34);
-    timeline.addLabel('inbound-west',6.46);screen('home',6.46);travel(routes[0],0,6.46);
-    timeline.addLabel('inbound-relay',8.38);travel(routes[1],1,8.38);
-    timeline.addLabel('received',9.38);screen('received',9.38);
-    timeline.addLabel('relay-north',11.2);travel(routes[2],2,11.2);
-    timeline.addLabel('relay-east',12.22);travel(routes[3],3,12.22);
-    timeline.addLabel('rest',13.54);
-    timeline.set([lit,accents,packet],{opacity:0},15.34);
-    timeline.to({},{duration:.12},15.34);
+    timeline.addLabel('outbound-east',3.9);travel(routes[3],3,3.9,false);
+    timeline.set([lit,accents,packet],{opacity:0},6.2);
+    timeline.addLabel('inbound-west',6.4);screen('home',6.4);travel(routes[0],0,6.4);
+    timeline.addLabel('inbound-relay',8.2);travel(routes[1],1,8.2,false);
+    timeline.addLabel('received',9.2);screen('received',9.2);
+    timeline.addLabel('rest',11);
+    timeline.set([lit,accents,packet],{opacity:0},11.2);
+    timeline.to({},{duration:.2},11.2);
     timeline.pause(0);
     let visible=false;
     let entrance:gsap.core.Timeline | undefined;
