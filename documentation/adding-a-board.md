@@ -58,4 +58,4 @@ Do not rename the NVS namespace `bitchat-stick`. Do not upgrade `espressif32@6.9
 
 `sh tools/test-native.sh` and `pio run -e <that-environment>`. Confirm the map does not pull Plus2 GPIO4 or M5 init into a different profile. Hardware support still requires a device record. A successful compile is not enough.
 
-See [adding a display](17-adding-a-display.md) before attaching a panel, and [the multi-board plan](16-multi-board-plan.md) for what remains proposed.
+See [adding a display](adding-a-display.md) before attaching a panel, and [the multi-board plan](multi-board-plan.md) for what remains proposed.

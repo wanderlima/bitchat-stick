@@ -2,7 +2,7 @@
 
 ## Context
 
-Bitchat Stick is modular BLE chat firmware for ESP32. The initial supported profile is the M5StickC Plus2, with the Mini JoyC HAT as an optional peripheral of that profile. One build produces one board image; the Plus2 binary is not a universal ESP32 firmware. The implemented participant is described in [getting started](09-getting-started.md). Earlier conversation suggestions are product context, not protocol evidence. English (en-US) is the default for firmware and documentation.
+Bitchat Stick is modular BLE chat firmware for ESP32. The initial supported profile is the M5StickC Plus2, with the Mini JoyC HAT as an optional peripheral of that profile. One build produces one board image; the Plus2 binary is not a universal ESP32 firmware. The implemented participant is described in [getting started](features.md). Earlier conversation suggestions are product context, not protocol evidence. English (en-US) is the default for firmware and documentation.
 
 ## Proposed functional requirements
 

@@ -18,11 +18,11 @@ Do not estimate later phases before transport feasibility is established. Each g
 
 The seventeen-screen participant, persistent identity/brightness, signed public mesh, automatic Noise, bounded GATT, public and private messaging, and authenticated InfoBot are implemented. The firmware is a shared ESP32 core plus a compile-time Plus2 profile. Native tests include official codec/signature fixtures, independent Android Noise vectors, CryptoKit verification, hostile input, mesh processing, UI bounds/navigation, the profile contract and transport startup/fragmentation. Android hardware has verified discovery/signatures/Noise. On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks on Android and iPhone.
 
-The active gate is physical acceptance of controlled two-phone relay, screen readability/flicker, reconnect/background behavior and endurance. See the [checklist](13-device-checklist.md). Passing software tests is not a substitute.
+The active gate is physical acceptance of controlled two-phone relay, screen readability/flicker, reconnect/background behavior and endurance. See the [checklist](device-checklist.md). Passing software tests is not a substitute.
 
 ## Recorded stack decision
 
-Use the existing Plus2 Arduino/NimBLE stack, behind a board profile, with a bounded local protocol model. Cryptography uses pinned Monocypher 4.0.2 and ESP32 mbedTLS SHA-256; host tests cross-check official Swift/Android behavior. The exact SHAs and limitations are recorded in the [wire contract](12-wire-contract.md). No C3/C6/S3 firmware port is claimed.
+Use the existing Plus2 Arduino/NimBLE stack, behind a board profile, with a bounded local protocol model. Cryptography uses pinned Monocypher 4.0.2 and ESP32 mbedTLS SHA-256; host tests cross-check official Swift/Android behavior. The exact SHAs and limitations are recorded in the [wire contract](wire-contract.md). No C3/C6/S3 firmware port is claimed.
 
 Private groups/media, Nostr, general encrypted routing, synchronization and persistent Pocket Messenger history remain separate future milestones. Welcome automation remains blocked by the lack of a reliable entry event.
 
@@ -30,4 +30,4 @@ Private groups/media, Nostr, general encrypted routing, synchronization and pers
 
 Record builds and compatibility results, run the test matrix, measure runtime/heap/queues, review licenses, document limitations, and make the bot locally disableable. Two nearby phones receiving the same text is not proof that the Stick relayed it.
 
-The initial Pocket Messenger composer is implemented: canned replies, QWERTY draft entry and explicit destination confirmation. Actual outbound Android/iOS acceptance remains on the [device checklist](14-direct-message-composer.md).
+The initial Pocket Messenger composer is implemented: canned replies, QWERTY draft entry and explicit destination confirmation. Actual outbound Android/iOS acceptance remains on the [device checklist](direct-message-composer.md).

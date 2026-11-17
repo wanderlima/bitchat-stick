@@ -1,0 +1,53 @@
+name: Documentation
+
+on:
+  push:
+    paths: ['documentation/**', '.github/workflows/documentation.yml']
+  pull_request:
+    paths: ['documentation/**', '.github/workflows/documentation.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  filenames:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Require lowercase kebab-case handbook names
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          root = Path("documentation")
+          errors = []
+          file_name = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*\.md$")
+          directory_name = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+          adr_name = re.compile(r"^adr-[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*\.md$")
+
+          if not root.is_dir():
+              raise SystemExit("documentation/ is missing")
+
+          for path in sorted(root.rglob("*")):
+              relative = path.relative_to(root)
+              if path.is_dir():
+                  if not directory_name.match(path.name):
+                      errors.append(f"directory name: {relative}")
+                  continue
+              if path.suffix != ".md":
+                  errors.append(f"non-markdown file: {relative}")
+                  continue
+              if path.parent == root / "adr":
+                  if not adr_name.match(path.name):
+                      errors.append(f"ADR name: {relative}")
+                  continue
+              if not file_name.match(path.name):
+                  errors.append(f"file name: {relative}")
+
+          if errors:
+              print("\n".join(errors))
+              raise SystemExit(1)
+
+          print("documentation filenames match lowercase kebab-case")
+          PY

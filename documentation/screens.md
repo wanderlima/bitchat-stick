@@ -1,6 +1,6 @@
 # Screens, layout, and controls
 
-Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. This is the initial display profile (`135x240-portrait`). See [adding a display](17-adding-a-display.md) before introducing another panel. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All seventeen screens are present in the firmware. Live device information is never replaced with sample peers or chat.
+Target: **M5StickC Plus2, 135 × 240 pixels, portrait, en-US**. This is the initial display profile (`135x240-portrait`). See [adding a display](adding-a-display.md) before introducing another panel. The editable [Figma file](https://www.figma.com/design/z2zlfw1uBejLJ5fFfRGkeZ/Bitchat-Stick) defines the visual direction. All seventeen screens are present in the firmware. Live device information is never replaced with sample peers or chat.
 
 ## Shared visual system
 
@@ -133,13 +133,13 @@ Nearby A selects the currently displayed identified user. Channels A opens the t
 
 B/C and JoyC up/down traverse the keyboard in reading order. A/right selects, left/hold-B backs out one step. ABC/123/abc switches case/numbers, SP inserts a space, DEL removes the last character, and OK opens confirmation. The confirmation text pages participate in the same focus cycle as Send and Cancel, allowing the full 192-character draft to be reviewed.
 
-The composer captures a peer ID, not a list position. Failed sends preserve the draft and show Not sent; successful enqueues show Queued and cannot be submitted twice. Delivered/Read require an authenticated receipt. See [behavior and acceptance checks](14-direct-message-composer.md).
+The composer captures a peer ID, not a list position. Failed sends preserve the draft and show Not sent; successful enqueues show Queued and cannot be submitted twice. Delivered/Read require an authenticated receipt. See [behavior and acceptance checks](direct-message-composer.md).
 
 Owner acceptance on 2026-11-11: the installed sending flow worked well. This general confirmation does not individually close the platform, receipt-state or edge-case items in the composer checklist.
 
 ## App navigation and InfoBot update — 2026-11-11
 
-The public inbox is named #bluetooth again, with Public chat as its subtitle. Home Back returns to Start. Sound labels the public-message alert Channel. InfoBot offers !info, !rules, !help, !about and Bot: ON/OFF; the top status shows command results or reasons to wait. The noninteractive Welcome: OFF footer is removed. See [InfoBot behavior](15-infobot.md) for public/private reply conditions.
+The public inbox is named #bluetooth again, with Public chat as its subtitle. Home Back returns to Start. Sound labels the public-message alert Channel. InfoBot offers !info, !rules, !help, !about and Bot: ON/OFF; the top status shows command results or reasons to wait. The noninteractive Welcome: OFF footer is removed. See [InfoBot behavior](infobot.md) for public/private reply conditions.
 
 ## Public writing and DM recovery
 

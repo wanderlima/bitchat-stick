@@ -8,7 +8,7 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 - Split the firmware into a shared ESP32 core and a compile-time M5StickC Plus2 profile. Power, RTC, buttons, the optional JoyC HAT and the 135×240 panel stay in that profile. Layout code draws through a small display surface. The core does not name M5StickC or include M5Unified. The Plus2 image is not a universal ESP32 binary.
 - `!info` now answers `InfoBot: Bitchat Stick | ESP32 | #bluetooth local relay and private text DMs.` The announced product name remains Bitchat Stick.
-- The website, README and project docs describe that modular boundary. Guides for adding a board or a display are in `docs/17-adding-a-display.md` and `docs/18-adding-a-board.md`.
+- The website, README and project docs describe that modular boundary. Guides for adding a board or a display are in `documentation/adding-a-display.md` and `documentation/adding-a-board.md`.
 - On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks on Android and iPhone after this profile was flashed. Controlled relay, reconnect, range and battery checks remain open.
 
 ### Website refinement
@@ -66,7 +66,7 @@ User-visible changes and validation evidence are recorded here in English (en-US
 - The composer revision passed eighteen native suites; the subsequent InfoBot/navigation revision passed nineteen suites, including the reproduced public-command regression. Independent CryptoKit signature verification passed. The Plus2 build and USB upload completed with flash hash verification.
 - The owner confirmed DM recovery and new public #bluetooth writing after the session-pool correction. Manual Welcome msg subsequently passed nineteen native suites, the Plus2 build/upload and Figma visual checks; its actual phone reception is still unchecked.
 - The owner reported that the installed message-sending flow worked well. The report did not identify a phone platform, entry path, input method or delivered/read state; these are not inferred as separate passes.
-- Earlier owner reports confirmed Android discovery, incoming DM display and HAT navigation. See [recorded tests](docs/06-testing.md) and the [device checklist](docs/13-device-checklist.md).
+- Earlier owner reports confirmed Android discovery, incoming DM display and HAT navigation. See [recorded tests](documentation/testing.md) and the [device checklist](documentation/device-checklist.md).
 
 ### Remaining scope
 

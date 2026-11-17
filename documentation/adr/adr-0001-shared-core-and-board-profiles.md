@@ -1,10 +1,10 @@
 # ADR-001: Shared Bitchat core with board profiles and optional UI
 
-Status: **Accepted for the shared core and the Plus2 profile.** Other boards remain proposed. Guides: [adding a display](../17-adding-a-display.md), [adding a board](../18-adding-a-board.md).
+Status: **Accepted for the shared core and the Plus2 profile.** Other boards remain proposed. Guides: [adding a display](../adding-a-display.md), [adding a board](../adding-a-board.md).
 
 Date: **2026-11-11**.
 
-Plan: [Multi-board implementation plan](../16-multi-board-plan.md).
+Plan: [Multi-board implementation plan](../multi-board-plan.md).
 
 ## Context
 

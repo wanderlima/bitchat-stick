@@ -104,9 +104,9 @@ Use your own test phones and synthetic content. Public BLE messages are visible 
 
 ## Limits that are not failures of this version
 
-Private media/groups, geographic/Nostr channels, sync/history recovery and OTA are not implemented. Private-message sending with a QWERTY/canned-reply composer is implemented; validate it using [the composer checklist](14-direct-message-composer.md). History and peer pins are in RAM; local identity and brightness persist in unencrypted NVS. Outgoing public sending is currently exercised through InfoBot and public relay; private sending supports confirmed text DMs and protocol delivery/read receipts. Queue/notification acceptance is not end-to-end delivery confirmation; the sender app must actually receive the encrypted delivered/read receipt. Welcome automation intentionally stays disabled.
+Private media/groups, geographic/Nostr channels, sync/history recovery and OTA are not implemented. Private-message sending with a QWERTY/canned-reply composer is implemented; validate it using [the composer checklist](direct-message-composer.md). History and peer pins are in RAM; local identity and brightness persist in unencrypted NVS. Outgoing public sending is currently exercised through InfoBot and public relay; private sending supports confirmed text DMs and protocol delivery/read receipts. Queue/notification acceptance is not end-to-end delivery confirmation; the sender app must actually receive the encrypted delivered/read receipt. Welcome automation intentionally stays disabled.
 
-See [InfoBot usage](15-infobot.md) for the changed public/private command gates, statuses and automatic-welcome explanation. Test Home → Back → Start and scroll through all 32 Short msgs, including Help/SOS, before confirming a send.
+See [InfoBot usage](infobot.md) for the changed public/private command gates, statuses and automatic-welcome explanation. Test Home → Back → Start and scroll through all 32 Short msgs, including Help/SOS, before confirming a send.
 
 ## DM recovery and new public messages
 

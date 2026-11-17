@@ -1,6 +1,6 @@
 export const repo = 'https://github.com/wanderlima/bitchat-stick';
-export const docs = `${repo}/blob/main/docs/`;
-export const buildGuide = `${docs}10-build-deploy.md`;
+export const docs = `${repo}/blob/main/documentation/`;
+export const buildGuide = `${docs}setup.md`;
 export const description =
   'Modular open-source Bluetooth chat firmware for ESP32. Initial support is the M5StickC Plus2 and the optional Mini JoyC HAT.';
 export const features = [
@@ -88,8 +88,8 @@ export const faqs = [
 ];
 export const resources = [
   ['Build and USB flashing guide', buildGuide, 'terminal'],
-  ['Device acceptance checklist', `${docs}13-device-checklist.md`, 'documentation'],
-  ['Protocol, compatibility and security limits', `${docs}12-wire-contract.md`, 'documentation'],
+  ['Device acceptance checklist', `${docs}device-checklist.md`, 'documentation'],
+  ['Protocol, compatibility and security limits', `${docs}wire-contract.md`, 'documentation'],
   [
     'M5Stack hardware specifications',
     'https://docs.m5stack.com/en/core/StickC-Plus2',

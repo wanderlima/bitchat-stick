@@ -4,7 +4,7 @@ Research snapshot: November 9, 2026. This was a documentary investigation of pri
 
 ## Current project evidence — 2026-11-11
 
-The owner has confirmed network visibility, message sending and operation with Bitchat on iPhone. Android signed discovery and a real Noise handshake also have hardware evidence. On 2026-11-17, after flashing the shared-core Plus2 profile, the owner confirmed that InfoBot replies and that the delivered/read checks are correct. This supersedes the unimplemented project statuses in the historical research snapshot below. It does not validate indirect relay, range, background operation, battery life or every reconnect path. See the [wire contract](12-wire-contract.md) and [device checklist](13-device-checklist.md).
+The owner has confirmed network visibility, message sending and operation with Bitchat on iPhone. Android signed discovery and a real Noise handshake also have hardware evidence. On 2026-11-17, after flashing the shared-core Plus2 profile, the owner confirmed that InfoBot replies and that the delivered/read checks are correct. This supersedes the unimplemented project statuses in the historical research snapshot below. It does not validate indirect relay, range, background operation, battery life or every reconnect path. See the [wire contract](wire-contract.md) and [device checklist](device-checklist.md).
 
 ## Original research conclusion — 2026-11-09
 

@@ -1,6 +1,6 @@
 # Implementation plan by screen and complexity
 
-Updated: **2026-11-17**. English (en-US) firmware v1.0.00. Source implementation is a shared ESP32 core plus the Plus2 profile, with the seventeen-screen public-BLE, received-DM and private-composer scope. Physical acceptance is intentionally separate: use the [device checklist](13-device-checklist.md). Future boards and product ideas are not represented as implemented.
+Updated: **2026-11-17**. English (en-US) firmware v1.0.00. Source implementation is a shared ESP32 core plus the Plus2 profile, with the seventeen-screen public-BLE, received-DM and private-composer scope. Physical acceptance is intentionally separate: use the [device checklist](device-checklist.md). Future boards and product ideas are not represented as implemented.
 
 ## Screen order — lowest to highest complexity
 
@@ -52,6 +52,6 @@ Each implementation group is committed separately; no push is part of this work.
 - **XL:** Nostr/internet contexts, OTA, persistent/out-of-band peer trust and secure-storage provisioning.
 - **Conditional:** public channel-join greetings only after an authoritative, tested entry signal exists. Reappearance, a BLE advert or a reconnect is insufficient.
 
-Completed implementation group: authenticated DM sending, delivery/read correlation, four-screen composer from Nearby/Channels, bounded QWERTY/canned replies and confirmation/cancellation. The owner confirmed the installed sending flow worked well on 2026-11-11. On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks on Android and iPhone. Remaining input-path and disconnect checks are in [the composer checklist](14-direct-message-composer.md).
+Completed implementation group: authenticated DM sending, delivery/read correlation, four-screen composer from Nearby/Channels, bounded QWERTY/canned replies and confirmation/cancellation. The owner confirmed the installed sending flow worked well on 2026-11-11. On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks on Android and iPhone. Remaining input-path and disconnect checks are in [the composer checklist](direct-message-composer.md).
 
 Manual Welcome msg is implemented using the shared introduction text. It requires explicit Send/Cancel, retains the chosen public/private destination and is independent of automatic first-DM introductions. Native/build/upload checks passed; manual welcome reception on the phone remains open.

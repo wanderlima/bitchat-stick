@@ -4,7 +4,7 @@ Status: **Plus2 shell implemented.** The shared core, Plus2 profile, display sur
 
 Date: **2026-11-11**. Default language: **en-US**.
 
-Decision record: [ADR-001](decisions/001-multi-board-core-and-optional-ui.md).
+Decision record: [ADR-001](adr/adr-0001-shared-core-and-board-profiles.md).
 
 ## Objective
 
@@ -14,7 +14,7 @@ Make Bitchat Stick reusable across explicitly supported BLE-capable ESP32 boards
 
 ## Current evidence and implementation boundaries
 
-The Plus2 currently has hardware evidence for discovery, Noise authentication and messaging; the owner has confirmed operation with the iPhone app. This is not controlled indirect-relay, range, endurance or complete receipt/reconnect evidence. The [wire contract](12-wire-contract.md) and [device checklist](13-device-checklist.md) remain the source of recorded results.
+The Plus2 currently has hardware evidence for discovery, Noise authentication and messaging; the owner has confirmed operation with the iPhone app. This is not controlled indirect-relay, range, endurance or complete receipt/reconnect evidence. The [wire contract](wire-contract.md) and [device checklist](device-checklist.md) remain the source of recorded results.
 
 | Existing area | Portability constraint |
 | --- | --- |
@@ -146,7 +146,7 @@ All tasks are unchecked because this document does not implement them. Scope lab
 
 ### T1 — Record a reproducible Plus2 baseline [S]
 
-Dependencies: none. Likely files: `docs/13-device-checklist.md`, a new board acceptance record.
+Dependencies: none. Likely files: `documentation/device-checklist.md`, a new board acceptance record.
 
 - [ ] Record firmware commit/image hash, dependency versions, current native-test results and the actual Android/iPhone app versions.
 - [ ] Capture boot, battery-only HOLD, navigation/HAT, public chat and direct-message behavior with current evidence separated from untested cases.
@@ -234,7 +234,7 @@ Both profiles build. The DevKit runs without a UI or PSRAM and reports truthful 
 
 ### T9 — Prove the headless public relay path [M]
 
-Dependencies: T8. Likely files: `docs/06-testing.md`, a board acceptance record; code changes only for demonstrated defects.
+Dependencies: T8. Likely files: `documentation/testing.md`, a board acceptance record; code changes only for demonstrated defects.
 
 - [ ] Pass the controlled A → relay → B and B → relay → A experiment below, with unique messages and ingress/egress evidence.
 - [ ] Verify no forwarding for duplicates, invalid signatures, exhausted TTL, prohibited private packets or the ingress link.
@@ -244,7 +244,7 @@ Verification: physical Android/iPhone experiment with negative controls, recorde
 
 ### T10 — Add repeatable build gates and release documentation [M]
 
-Dependencies: T9. Likely files: a firmware CI workflow, `tools/test-native.sh`, `docs/10-build-deploy.md`, board support matrix.
+Dependencies: T9. Likely files: a firmware CI workflow, `tools/test-native.sh`, `documentation/setup.md`, board support matrix.
 
 - [ ] Build each supported environment and run relevant host regressions; keep the website workflow independent.
 - [ ] Publish clearly named, separate artifacts with board/mode, flash layout, version and checksum, plus exact USB instructions. Never attach one binary as a universal ESP32 image.

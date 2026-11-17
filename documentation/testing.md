@@ -59,7 +59,7 @@ For battery life, measure three cycles per profile: scanner, future two-link rel
 
 ## Native tests
 
-The foundation has host tests for observation-table bounds/expiry and shared input semantics, including clock wrap and wake suppression. See [test commands](09-getting-started.md#native-tests). They do not replace radio or physical UI tests.
+The foundation has host tests for observation-table bounds/expiry and shared input semantics, including clock wrap and wake suppression. See [test commands](commands.md#native-tests). They do not replace radio or physical UI tests.
 
 ## Report template
 
@@ -70,7 +70,7 @@ Date; operator; builds/SHAs; hardware; topology; radios; steps; expected/observe
 - Plus2, USB-powered: the dedicated `settings-selftest` firmware used the production Settings adapter, wrote brightness index 4 (100%) from original index 2 (50%), restarted the ESP32, read back index 4, then restored and read back index 2. UART repeatedly reported `SETTINGS_SELFTEST PASS original=2 persisted=4 restored=2`.
 - The normal `m5stickc-plus2` firmware was reinstalled immediately afterward; esptool verified the written flash hash. At that earlier checkpoint this included persistent brightness and stable Nearby selection; protocol/GATT integration was added later in the same session.
 - This verifies NVS across a software/device restart, not a battery-only power-cycle or calibrated brightness/voltage/autonomy. Physical readability and camera QR reading remain manual checks.
-- Available app versions were queried: Android 2.2.0/build 42, Android 16 on SM-A366E; iOS app 1.8.0/build 1 on iPhone 15 Pro. No authenticated phone↔Stick message exchange has passed yet. See the [wire contract](12-wire-contract.md).
+- Available app versions were queried: Android 2.2.0/build 42, Android 16 on SM-A366E; iOS app 1.8.0/build 1 on iPhone 15 Pro. No authenticated phone↔Stick message exchange has passed yet. See the [wire contract](wire-contract.md).
 
 To repeat the controlled NVS check, use the PlatformIO Python environment (pyserial required), an explicit Plus2 port and the PlatformIO executable:
 
@@ -84,7 +84,7 @@ This temporarily installs a dedicated test firmware, preserves/restores the orig
 
 The first integrated upload reproduced a NimBLE GATT-registration assertion while scanning, causing repeated reboots. The corrected startup pauses discovery before registering services; the scanner resumes on its normal loop schedule. Native transport tests now assert this ordering. A subsequent USB observation showed stable heap around 145 KB before framebuffer changes, one subscribed Android link, a signed peer, then a Noise-authenticated peer with zero protocol rejections. Android 2.2.0 independently logged successful signature verification and responder handshake establishment. The owner reported seeing Bitchat Stick in the network. These observations do not establish indirect relay or message delivery.
 
-The framebuffer revision was built/uploaded after the owner reported lighter redraw flicker; physical visual acceptance remains with the owner. Use the [device checklist](13-device-checklist.md) to record the final revision, both phone versions and each actual result.
+The framebuffer revision was built/uploaded after the owner reported lighter redraw flicker; physical visual acceptance remains with the owner. Use the [device checklist](device-checklist.md) to record the final revision, both phone versions and each actual result.
 
 ### Earlier DM-reader snapshot (superseded)
 
@@ -124,7 +124,7 @@ The owner subsequently confirmed Hat ready and working navigation after powering
 
 The owner confirmed the corrected JoyC directions. Eighteen native suites and independent CryptoKit signature verification passed after the private composer update. Tests decrypt an outgoing maximum-length private TLV, verify recipient addressing, require an authenticated session, preserve history on failed enqueue, correlate delivery/read receipts and prevent read-state downgrade. UI tests cover Nearby and Inbox entry, stable recipient capture, cancel/back, empty Done, every keyboard mode/key, long drafts and all confirmation pages within 135×240.
 
-The target build passed. Actual outbound Android/iOS reception and delivery/read presentation remain manual acceptance checks; build/upload and host decryption do not establish those results. See [the composer checklist](14-direct-message-composer.md).
+The target build passed. Actual outbound Android/iOS reception and delivery/read presentation remain manual acceptance checks; build/upload and host decryption do not establish those results. See [the composer checklist](direct-message-composer.md).
 
 The updated firmware upload completed with flash hash verification (981,952 bytes). A short USB read produced no telemetry; no post-upload session/delivery result is inferred from that read.
 
@@ -144,7 +144,7 @@ This revision passed nineteen native suites plus independent CryptoKit verificat
 
 ## Private introduction — 2026-11-11
 
-Nineteen native suites plus independent CryptoKit verification passed. The private-message test decrypts the first introduction and checks the exact English hint, addressed private frame and delivery-receipt order. It also covers Bot OFF, failed enqueue followed by a retry on a new DM, and suppression for duplicate/subsequent DMs. Public-only bot tests assert zero private introductions. The 32-entry identity memory has no eviction and is independent of peer/session expiry; it resets at reboot. Actual phone display of this new introduction remains an owner acceptance check in [the InfoBot guide](15-infobot.md#first-dm-introduction).
+Nineteen native suites plus independent CryptoKit verification passed. The private-message test decrypts the first introduction and checks the exact English hint, addressed private frame and delivery-receipt order. It also covers Bot OFF, failed enqueue followed by a retry on a new DM, and suppression for duplicate/subsequent DMs. Public-only bot tests assert zero private introductions. The 32-entry identity memory has no eviction and is independent of peer/session expiry; it resets at reboot. Actual phone display of this new introduction remains an owner acceptance check in [the InfoBot guide](infobot.md#first-dm-introduction).
 
 ## DM session recovery and public composer — 2026-11-11
 
