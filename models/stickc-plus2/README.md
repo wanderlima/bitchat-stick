@@ -9,7 +9,7 @@ Model for Three.js / web visualization. No animation or website changes are incl
 - `preview.png`: front, rear and contour render of the exported assets.
 - `generate.mjs`: editable, procedural source using Three.js and CSG.
 
-The solid contains about 17,675 triangles, no textures, no animations, and no electronics inside. Button A is a tongue in the front housing; its M5 mark is engraved geometry. Rear label is a plain inset, without printed text. Mount inserts have no helical thread geometry.
+The solid contains about 17,255 triangles, no textures, no animations, and no electronics inside. Button A is a tongue in the front housing, without an engraved mark. Rear label is a plain inset, without printed text. Mount inserts have no helical thread geometry.
 
 ## Dimensions and confidence
 
@@ -19,7 +19,7 @@ Explicit drawing dimensions used: 24 mm width, 48 mm length, 13.5 mm depth, R3 o
 
 The lower rear shell includes the full-width step and inclined transition visible in the side elevation (estimated 2.4 mm depth, 6.8 mm lower flat and 2.5 mm transition). Lower screws follow the recessed surface.
 
-Screen opening (~16 × 26 mm), controls, shell seam, wall depths, connector recesses, screw diameters, front/back bevels and the M5 mark were reconstructed from image proportions. Their positions/depths are **estimates**, not manufacturer CAD. Side feature shapes/positions and rear details are a visual approximation. The drawing is published under the older Plus path, but is also linked in the Plus2 documentation; photographs of Plus2 were used for the external appearance.
+Screen opening (~16 × 26 mm), controls, shell seam, wall depths, connector recesses, screw diameters and front/back bevels were reconstructed from image proportions. Their positions/depths are **estimates**, not manufacturer CAD. Side feature shapes/positions and rear details are a visual approximation. The drawing is published under the older Plus path, but is also linked in the Plus2 documentation; photographs of Plus2 were used for the external appearance.
 
 This is a visual reference model, not a manufacturing or fit-certified solid. It does not reproduce PCB, battery, hidden mounting structures, printed labels or every moulding detail.
 

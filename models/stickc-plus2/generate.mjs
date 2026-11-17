@@ -59,7 +59,6 @@ slot.lineTo(5.65,-9.4);slot.quadraticCurveTo(7.45,-9.4,7.45,-11.2);slot.lineTo(7
 slot.lineTo(7.12,-17.7);slot.lineTo(7.12,-11.2);slot.quadraticCurveTo(7.12,-9.73,5.65,-9.73);
 slot.lineTo(-5.65,-9.73);slot.quadraticCurveTo(-7.12,-9.73,-7.12,-11.2);slot.lineTo(-7.12,-17.7);slot.closePath();
 cut(front,extrude(slot,1.6),[0,0,6.5]);
-// M5 is actual shallow relief, so it survives conversion to wireframe without textures.
 function polygon(points) { const s=new T.Shape();points.forEach(([x,y],i)=>i?s.lineTo(x,y):s.moveTo(x,y));s.closePath();return s; }
 // Lower rear step visible in the side elevation: approximately 2.4 mm deep,
 // flat for the last 6.8 mm, with a 2.5 mm inclined transition above it.
@@ -68,12 +67,6 @@ const rearStep=extrude(polygon([[-26,-10],[-14.7,-10],[-14.7,-6.75],[-17.2,-4.35
 rearStep.applyMatrix4(new T.Matrix4().makeBasis(
  new T.Vector3(0,1,0),new T.Vector3(0,0,1),new T.Vector3(1,0,0)));
 cut(back,rearStep,[0,0,0]);
-const letterM=mesh('button_A_M',extrude(polygon([[-5.7,-18.1],[-5.7,-11.1],[-4.8,-11.1],[-2.8,-13.5],[-.8,-11.1],[.1,-11.1],[.1,-18.1],[-.8,-18.1],[-.8,-12.7],[-2.8,-15],[-4.8,-12.7],[-4.8,-18.1]]),.08),'shell',[0,0,6.71]);
-const five=new T.Shape();five.moveTo(5.6,-11.1);five.lineTo(1.1,-11.1);five.lineTo(1.1,-14.6);five.lineTo(3.7,-14.6);
-five.bezierCurveTo(6.4,-14.6,6.4,-18.1,3.7,-18.1);five.lineTo(1.1,-18.1);five.lineTo(1.1,-17.2);five.lineTo(3.6,-17.2);
-five.bezierCurveTo(5.2,-17.2,5.2,-15.5,3.6,-15.5);five.lineTo(.2,-15.5);five.lineTo(.2,-10.2);five.lineTo(5.6,-10.2);five.closePath();
-const letter5=mesh('button_A_5',extrude(five,.08),'shell',[0,0,6.71]);
-for(const letter of [letterM,letter5]) { cut(front,extrude(letter===letterM?polygon([[-5.7,-18.1],[-5.7,-11.1],[-4.8,-11.1],[-2.8,-13.5],[-.8,-11.1],[.1,-11.1],[.1,-18.1],[-.8,-18.1],[-.8,-12.7],[-2.8,-15],[-4.8,-12.7],[-4.8,-18.1]]):five,.35),[0,0,6.7]);root.remove(letter); }
 // Side apertures and inset controls, reconstructed from un-dimensioned views.
 for(const [name,side,y,h] of [['B',1,8.2,5],['C',-1,-14.5,5]]) {
   const target=front;
