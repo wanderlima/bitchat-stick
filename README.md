@@ -4,7 +4,7 @@ Firmware **v1.0.00** · Default language: **English (en-US)**.
 
 A small BLE Bitchat participant for M5StickC Plus2. The firmware implements signed discovery and public chat, automatic identity-bound Noise sessions, bounded public-packet relay, and signed-public/private InfoBot commands. Other Bitchat users see the device as **Bitchat Stick** in the local `#bluetooth` context.
 
-Android 2.2.0 has verified the Stick's announcement and completed a real Noise handshake. The owner also confirmed network visibility, corrected JoyC navigation and successful use of the installed message-sending flow on 2026-11-11. The sending report did not specify a phone platform or individual receipt checks. Full iOS messaging, indirect two-phone relay, background behavior, and battery endurance still require the [device acceptance checklist](docs/13-device-checklist.md). Compilation and native tests alone do not establish interoperability.
+Android 2.2.0 has verified the Stick's announcement and completed a real Noise handshake. The owner also confirmed network visibility, corrected JoyC navigation and successful use of the installed message-sending flow on 2026-11-11. The owner subsequently confirmed that Bitchat Stick works with the iPhone app. Individual receipt transitions, indirect two-phone relay, background behavior, and battery endurance still require the [device acceptance checklist](docs/13-device-checklist.md). Compilation and native tests alone do not establish interoperability.
 
 ## Build and upload
 
@@ -59,6 +59,10 @@ The interface uses FreeMono Regular/Bold, warm cream `#EBDCBA` instead of pure w
 Private media, private groups, Nostr, gossip/history synchronization, arbitrary routed Noise forwarding, OTA, persistent chat history remain future scope. See the [wire contract and security limits](docs/12-wire-contract.md) and [current implementation plan](docs/11-implementation-plan.md).
 
 The official project distinguishes the offline BLE `#bluetooth` context from geographic channels carried over Nostr and the internet. Do not assume arbitrary channels, passwords, or historical `/j` and `/pass` commands work in installed versions. See the [official channel description](https://github.com/permissionlesstech/bitchat#channel-types).
+
+## Project website
+
+The one-page website lives in [`website/`](website/README.md), alongside the firmware. It uses Astro, Tailwind CSS and GSAP, with all application source in `website/src/`. See the [website guide](website/README.md) for Node requirements, local preview, browser checks and GitHub Pages setup. Website commands do not flash the device.
 
 ## Documentation
 

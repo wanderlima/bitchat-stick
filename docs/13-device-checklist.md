@@ -15,7 +15,8 @@ Updated: **2026-11-11**. Device name: **Bitchat Stick**. Supported context: publ
 - [x] Owner confirmed Android DM delivery status and reading the DM on the Stick.
 - [x] Owner confirmed JoyC HAT detection and correct navigation in all four directions.
 - [x] Owner confirmed the installed message-sending flow worked well; phone platform, individual input paths and receipt states were not specified.
-- [ ] Final display, unread/read-status acceptance, full iOS messaging, controlled relay and endurance below.
+- [x] Owner confirmed that Bitchat Stick works with the iPhone app. Exact app/OS versions and each receipt/reconnect scenario were not provided with this report.
+- [ ] Final display, unread/read-status acceptance, detailed iPhone receipt/reconnect scenarios, controlled relay and endurance below.
 
 ## 1. Display and navigation
 

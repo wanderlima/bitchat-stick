@@ -1,0 +1,51 @@
+---
+import SectionHeading from './SectionHeading.astro';
+import Device from './Device.astro';
+import '../styles/hardware.css';
+import { hardwareChapters as chapters, initialPreviewScreens as frames } from '../data/hardware';
+const actions=[['up','↑','Move up'],['left','←','Go back'],['confirm','●','Confirm selection'],['right','→','Open selection'],['down','↓','Move down']];
+---
+<section id="controls" class="section hardware-story" data-controls data-hardware-story aria-label="Interactive hardware walkthrough">
+  <div class="hardware-stage container controls-layout" data-hardware-stage>
+    <div class="controls-copy">
+      <div class="hardware-chapter-window">
+        <div class="hardware-chapters" data-hardware-chapters style={`width:${chapters.length*100}%`}>
+          {chapters.map((chapter,index)=><article class="hardware-chapter" style={`flex-basis:${100/chapters.length}%`} data-chapter={index} aria-hidden={index===0?undefined:'true'} inert={index!==0}>
+            {index===0 ? <SectionHeading label="02 / PHYSICAL BY DESIGN" title={chapter.title}><p>{chapter.body}</p></SectionHeading> : <div class="section-heading"><p class="eyebrow">02 / PHYSICAL BY DESIGN</p><h3>{chapter.title}</h3><p>{chapter.body}</p></div>}
+          </article>)}
+        </div>
+      </div>
+      <nav class="hardware-steps" aria-label="Hardware walkthrough">
+        {chapters.map((chapter,index)=><button type="button" data-hardware-step={index} aria-current={index===0?'step':undefined} disabled><span class="hardware-step-mark" aria-hidden="true"></span>{chapter.label}</button>)}
+      </nav>
+      <div class="hardware-inputs">
+        <div class="joystick-pad" role="group" aria-label="Try the Mini JoyC joystick" data-joystick-pad>
+          {actions.map(([action,symbol,label])=><button type="button" class={`joystick-direction joystick-${action}`} data-joy-action={action} aria-label={label} disabled><span aria-hidden="true">{symbol}</span></button>)}
+        </div>
+        <div class="physical-buttons" role="group" aria-label="Try the physical controls">
+          <button type="button" disabled data-control="A" aria-label="A — confirm"><span>A</span><span class="control-hint">Confirm</span></button>
+          <button type="button" disabled data-control="B" aria-label="B — move up; hold to go back"><span>B</span><span class="control-hint">Up / hold: back</span></button>
+          <button type="button" disabled data-control="C" aria-label="C — move down"><span>C</span><span class="control-hint">Down</span></button>
+        </div>
+      </div>
+      <div class="hardware-demo-next">
+        <p class="hardware-demo-hint" data-demo-hint>Up/down choose. Right opens. Left returns.</p>
+        <button type="button" class="hardware-receive" data-demo-receive disabled>Receive a message</button>
+      </div>
+      <div class="controls-details">
+        <article><h3>Your choice of controls.</h3><p>Use the joystick above, the A/B/C buttons, or arrow keys while a joystick control has focus.</p></article>
+        <article><h3>Scroll to explore.</h3><p>The view follows the page. Your input controls the app. Mini JoyC is optional on the real device.</p></article>
+      </div>
+    </div>
+    <figure class="control-preview">
+      <div class="hardware-canvas" data-hardware-canvas aria-hidden="true" data-model-url={`${import.meta.env.BASE_URL}models/bitchat-stick-wire.glb`} data-screen-base={`${import.meta.env.BASE_URL}screens/`}>
+        <svg class="control-device" viewBox="0 0 212 404"><Device screens={frames} initial="home-nearby" controls /><image data-preview-dynamic href={`${import.meta.env.BASE_URL}screens/home-nearby.png`} x="25" y="24" width="162" height="288" opacity="0" class="firmware-screen" /></svg>
+      </div>
+      <figcaption>
+        <p class="control-feedback" role="status" aria-live="polite">Nearby selected.</p>
+        <p class="preview-note">Interactive preview · Simulated data</p>
+        <p class="hardware-render-note" data-hardware-note>StickC Plus2 + Mini JoyC</p>
+      </figcaption>
+    </figure>
+  </div>
+</section>
