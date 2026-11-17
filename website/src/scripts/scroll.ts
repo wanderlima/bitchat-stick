@@ -12,8 +12,21 @@ export async function initSmoothScroll(){
     const root=document.documentElement;
     root.setAttribute('data-smooth-scroll','');
     let anchorFocus=false;
-    const smoother=ScrollSmoother.create({wrapper:'#smooth-wrapper',content:'#smooth-content',smooth:.65,smoothTouch:0,effects:false,normalizeScroll:false,onFocusIn:()=>anchorFocus ? false : undefined});
+    const wrapper=document.querySelector<HTMLElement>('#smooth-wrapper')!;
+    const smoother=ScrollSmoother.create({wrapper,content:'#smooth-content',smooth:.65,smoothTouch:0,effects:false,normalizeScroll:false,onFocusIn:()=>anchorFocus?false:undefined});
     const controller=new AbortController();
+    let folding=false;
+    // overflow:hidden still scrolls. scrollIntoView then offsets this wrapper on top
+    // of the smoother transform, and the next focus snaps it back under the pointer.
+    wrapper.addEventListener('scroll',()=>{
+      if(folding)return;
+      const delta=wrapper.scrollTop;
+      if(!delta)return;
+      folding=true;
+      wrapper.scrollTop=0;
+      smoother.scrollTop(smoother.scrollTop()+delta);
+      folding=false;
+    },{signal:controller.signal});
     document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach(link=>{
       link.addEventListener('click',event=>{
         if(event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;

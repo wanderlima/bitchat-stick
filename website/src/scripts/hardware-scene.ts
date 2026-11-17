@@ -28,10 +28,15 @@ export async function mountHardwareScene(root:HTMLElement) {
   let pulse:gsap.core.Timeline|undefined;
   let resetTimer:ReturnType<typeof setTimeout>|undefined;
   const media=window.matchMedia('(hover: hover) and (pointer: fine)');
-  const motion=new MutationObserver(()=>{pointer.x=0;pointer.y=0;requestRender();});
+  const syncMotion=()=>{
+    pointer.x=0;pointer.y=0;
+    if(reducedMotion()){floatTime=0;root.dataset.floatY='0.000000';}
+    requestRender();
+  };
+  const motion=new MutationObserver(syncMotion);
   motion.observe(document.documentElement,{attributes:true,attributeFilter:['data-reduce-motion']});
   const systemMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
-  systemMotion.addEventListener('change',()=>{pointer.x=0;pointer.y=0;requestRender();},{signal});
+  systemMotion.addEventListener('change',syncMotion,{signal});
   let joystick:THREE.Object3D|undefined;
   let lastFrame=0,floatTime=0;
   const basePivotZ=.002;
@@ -104,6 +109,9 @@ export async function mountHardwareScene(root:HTMLElement) {
     const x=direction==='up'?-.32:direction==='down'?.32:0;
     const y=direction==='left'?-.32:direction==='right'?.32:0;
     const pressed=direction==='confirm';
+    // Publish the commanded deflection immediately. A slow frame can finish the
+    // whole pulse before the canvas samples it, which would leave the peak at 0.
+    root.dataset.joystickTilt=Math.hypot(x,y).toFixed(3);
     root.querySelectorAll<HTMLElement>('[data-joy-action]').forEach(button=>button.toggleAttribute('data-active',button.dataset.joyAction===direction));
     const clear=()=>{
       root.querySelectorAll('[data-active]').forEach(button=>button.removeAttribute('data-active'));
@@ -124,7 +132,8 @@ export async function mountHardwareScene(root:HTMLElement) {
   const screen=new THREE.Mesh(new THREE.PlaneGeometry(.01485,.0248),screenMaterial);
   screen.name='live-firmware-screen';screen.position.set(0,-.00885,.00343);screen.renderOrder=2;pose.add(screen);
   const observer=new IntersectionObserver(entries=>{
-    visible=entries[0].isIntersecting;
+    const rect=host.getBoundingClientRect();
+    visible=entries[0].isIntersecting||(rect.bottom>0&&rect.top<innerHeight&&rect.width>0);
     if(visible){lastFrame=0;requestRender();}else{cancelAnimationFrame(frame);frame=0;}
   });
   const sizeObserver=new ResizeObserver(resize);

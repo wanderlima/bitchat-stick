@@ -96,18 +96,32 @@ export function initControls() {
   });
   root.querySelectorAll<HTMLButtonElement>('[data-control]').forEach(button=>{
     button.disabled=false;const key=button.dataset.control;
-    let longPress=false,timer:ReturnType<typeof setTimeout>|undefined;
+    let longPress=false,timer:ReturnType<typeof setTimeout>|undefined,pressStarted=0;
+    const hold=700;
     button.addEventListener('click',event=>{if(longPress){longPress=false;return;}act(key==='A'?'confirm':key==='B'?'up':'down',event.detail===0?'keyboard':'pointer');});
     const clear=()=>{clearTimeout(timer);timer=undefined;};
-    button.addEventListener('pointerdown',event=>{longPress=false;if(key==='B'){button.setPointerCapture(event.pointerId);timer=setTimeout(()=>{longPress=true;back();},700);}});
-    button.addEventListener('pointerup',clear);
-    button.addEventListener('pointercancel',()=>{clear();longPress=false;});
-    button.addEventListener('lostpointercapture',clear);
-    button.addEventListener('keydown',event=>{
-      if(key==='B'&&(event.key===' '||event.key==='Enter')){event.preventDefault();if(!event.repeat){longPress=false;timer=setTimeout(()=>{longPress=true;back('keyboard');},700);}}
+    // A busy frame can deliver pointerup before the timer callback. The held duration still counts.
+    const finishHold=(source:InputSource)=>{
+      if(!longPress&&pressStarted&&performance.now()-pressStarted>=hold){longPress=true;back(source);}
+      pressStarted=0;clear();
+    };
+    button.addEventListener('pointerdown',event=>{
+      longPress=false;pressStarted=0;
+      if(key!=='B')return;
+      pressStarted=performance.now();
+      try{button.setPointerCapture(event.pointerId);}catch{/* The pointer can already be released. */}
+      timer=setTimeout(()=>{if(!pressStarted)return;longPress=true;pressStarted=0;back();},hold);
     });
-    button.addEventListener('keyup',event=>{if(key==='B'&&(event.key===' '||event.key==='Enter')){event.preventDefault();clear();button.click();}});
-    button.addEventListener('blur',clear);
+    button.addEventListener('pointerup',()=>finishHold('pointer'));
+    button.addEventListener('pointercancel',()=>{pressStarted=0;clear();longPress=false;});
+    button.addEventListener('keydown',event=>{
+      if(key==='B'&&(event.key===' '||event.key==='Enter')){event.preventDefault();if(!event.repeat){longPress=false;pressStarted=performance.now();timer=setTimeout(()=>{if(!pressStarted)return;longPress=true;pressStarted=0;back('keyboard');},hold);}}
+    });
+    button.addEventListener('keyup',event=>{
+      if(key!=='B'||(event.key!==' '&&event.key!=='Enter'))return;
+      event.preventDefault();finishHold('keyboard');button.click();
+    });
+    button.addEventListener('blur',()=>{pressStarted=0;clear();});
   });
   render();
 }
