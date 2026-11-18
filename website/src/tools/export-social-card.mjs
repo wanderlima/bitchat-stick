@@ -21,7 +21,7 @@ try {
     .hero-intro { width:530px;margin-top:40px }
     h1 { font-size:64px;line-height:68px }
     .hero-description { width:510px;font-size:20px;line-height:30px }
-    .mesh-desktop { left:-220px;top:0;transform:scale(.85);transform-origin:top left }
+    .mesh-desktop { position:absolute;left:-220px;top:0;width:1600px;transform:scale(.85);transform-origin:top left }
     .hero-caption { position:absolute;left:0;top:420px;width:280px;margin:0;font-size:12px;line-height:18px }
   `,
   });

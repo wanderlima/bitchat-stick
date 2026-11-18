@@ -82,6 +82,7 @@ h3 {
 }
 .container {
   width: min(100% - 192px, 1248px);
+  max-width: none;
   margin-inline: auto;
 }
 .section {
@@ -211,12 +212,17 @@ h3 {
   height: 20px;
 }
 .hero {
+  --mesh-top: 16px;
   position: relative;
   overflow: clip;
-  min-height: 900px;
+  min-height: calc(100vh - 92px);
+  min-height: max(
+    calc(100svh - 92px),
+    calc(var(--mesh-top) + min(100vw, 1600px) * 0.38 + 210px)
+  );
 }
 .hero-content {
-  padding-block: 40px 48px;
+  padding-block: 16px 32px;
   position: relative;
   pointer-events: none;
 }
@@ -224,10 +230,10 @@ h3 {
   pointer-events: auto;
 }
 .hero-intro {
-  margin-top: 48px;
-  width: 580px;
+  margin-top: 8px;
+  width: 560px;
   display: grid;
-  gap: 20px;
+  gap: 12px;
 }
 h1 {
   font-size: 72px;
@@ -246,7 +252,11 @@ h1 {
   line-height: 24px;
 }
 .hero-statement {
-  margin-top: 112px;
+  position: absolute;
+  left: 0;
+  margin: 0;
+  /* Sits just below the west peer, which ends near 80% of the mesh. */
+  top: calc(var(--mesh-top) + min(100vw, 1600px) * 760 / 1600 * 0.8);
   font-family: var(--font-display);
   font-size: 28px;
   line-height: 34px;
@@ -258,7 +268,7 @@ h1 {
 }
 .mesh-desktop {
   position: absolute;
-  top: 70px;
+  top: var(--mesh-top);
   left: 50%;
   width: min(1600px, 100%);
   height: auto;
@@ -307,11 +317,15 @@ h1 {
   image-rendering: pixelated;
 }
 .hero-caption {
+  position: absolute;
+  left: 0;
   display: flex;
   align-items: flex-start;
   gap: 20px;
-  max-width: 520px;
-  margin-top: 66px;
+  width: 430px;
+  max-width: calc(100% - 24px);
+  margin: 0;
+  top: calc(var(--mesh-top) + min(100vw, 1600px) * 760 / 1600 * 0.8 + 80px);
   font-size: 16px;
   line-height: 24px;
 }
@@ -583,48 +597,117 @@ details[open] .disclosure-mark::after {
     transition-timing-function: steps(2);
   }
 }
-@media (min-width: 1600px) {
+@media (max-width: 1399px) and (min-width: 1166px) {
   .hero {
-    max-width: 1760px;
-    margin-inline: auto;
+    --mesh-top: 28px;
+  }
+  .hero-actions .action {
+    min-width: 0;
+  }
+  .hero-meta {
+    max-width: none;
+    padding-left: 12px;
+    font-size: 14px;
+    line-height: 20px;
   }
 }
-@media (max-width: 1199px) and (min-width: 901px) {
-  .container {
-    width: calc(100% - 96px);
+@media (max-width: 1279px) and (min-width: 1166px) {
+  .hero {
+    --mesh-top: 52px;
   }
-  .hero-intro {
+  .hero-meta {
+    font-size: 13px;
+    line-height: 18px;
+  }
+}
+@media (min-width: 1440px) {
+  .hero-caption {
     width: 500px;
   }
+}
+@media (max-width: 1165px) and (min-width: 1024px) {
+  .hero {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .hero-content {
+    display: contents;
+  }
+  .hero-lead,
+  .hero-follow {
+    width: min(100% - 192px, 1248px);
+    margin-inline: auto;
+  }
+  .hero-lead {
+    order: 1;
+    padding-top: 16px;
+  }
+  .hero-intro {
+    width: min(100%, 640px);
+    margin-top: 0;
+    gap: 8px;
+  }
   h1 {
-    font-size: 60px;
-    line-height: 64px;
+    font-size: 56px;
+    line-height: 60px;
   }
   .hero-description {
-    max-width: 480px;
+    max-width: 640px;
   }
   .hero-actions {
-    max-width: 480px;
+    max-width: 560px;
   }
   .hero-actions .action {
     min-width: 0;
     flex: 1;
-    padding-inline: 14px;
+    padding-inline: 16px;
+  }
+  .hero-statement,
+  .hero-caption {
+    position: static;
+    top: auto;
+    width: auto;
+    max-width: 640px;
+  }
+  .hero-statement {
+    margin-top: 20px;
+  }
+  .hero-caption {
+    margin-top: 12px;
+  }
+  .hero-follow {
+    order: 3;
+    padding-bottom: 32px;
   }
   .mesh-desktop {
-    width: min(1480px, 100%);
+    order: 2;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    margin-top: 4px;
+    transform: none;
   }
   .control-hint {
     display: none;
   }
 }
-@media (max-width: 900px) {
+@media (max-width: 1165px) and (min-width: 1024px) {
+  .container,
+  .hero-lead,
+  .hero-follow {
+    width: calc(100% - 96px);
+  }
+}
+@media (max-width: 1023px) {
   :root {
     font-size: 16px;
     line-height: 26px;
   }
   .container {
     width: calc(100% - 48px);
+    max-width: none;
   }
   .section {
     padding-block: 48px;
@@ -640,26 +723,16 @@ details[open] .disclosure-mark::after {
     font-size: 24px;
     line-height: 30px;
   }
-  .site-header {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 12px;
-    padding-block: 24px 16px;
-  }
-  .site-header nav {
-    gap: 20px;
-    justify-content: space-between;
-    width: 100%;
-  }
   .hero {
     min-height: 0;
   }
   .hero-content {
-    padding-block: 24px 48px;
+    padding-block: 12px 32px;
   }
   .hero-intro {
     width: 100%;
-    margin-top: 28px;
+    margin-top: 12px;
+    gap: 12px;
   }
   h1 {
     font-size: 44px;
@@ -678,26 +751,11 @@ details[open] .disclosure-mark::after {
   .hero-meta {
     line-height: 24px;
   }
-  .hero-statement,
-  .mesh-desktop {
-    display: none;
-  }
-  .mesh-mobile,
-  .mobile-graph {
-    display: block;
-  }
-  .mobile-graph {
-    position: relative;
-    margin: 28px auto 0;
-    max-width: 430px;
-    width: 100%;
-  }
-  .mesh-mobile {
-    width: 100%;
-    height: auto;
-  }
   .hero-caption {
-    margin: 0;
+    position: static;
+    top: auto;
+    width: auto;
+    margin-top: 16px;
     max-width: 100%;
   }
   .overview {
@@ -758,18 +816,138 @@ details[open] .disclosure-mark::after {
     padding-block: 32px;
   }
 }
+@media (max-width: 639px) {
+  .hero-statement,
+  .mesh-desktop {
+    display: none;
+  }
+  .mesh-mobile,
+  .mobile-graph {
+    display: block;
+  }
+  .mobile-graph {
+    position: relative;
+    margin: 8px auto 0;
+    width: min(100%, calc((100svh - 32rem) * 327 / 420));
+    max-width: 100%;
+  }
+  .mesh-mobile {
+    width: 100%;
+    height: auto;
+  }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .hero {
+    display: flex;
+    flex-direction: column;
+  }
+  .hero-content {
+    display: contents;
+  }
+  .hero-lead,
+  .hero-follow {
+    width: calc(100% - 48px);
+    margin-inline: auto;
+  }
+  .hero-lead {
+    order: 1;
+    padding-top: 8px;
+  }
+  .hero-statement,
+  .hero-caption {
+    position: static;
+    top: auto;
+    width: auto;
+    max-width: 640px;
+  }
+  .hero-statement {
+    margin-top: 16px;
+  }
+  .hero-caption {
+    margin-top: 8px;
+  }
+  .hero-follow {
+    order: 3;
+    padding-bottom: 28px;
+  }
+  .mesh-desktop {
+    order: 2;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    margin-top: 4px;
+    transform: none;
+  }
+}
+@media (min-width: 640px) and (max-width: 767px) {
+  h1 {
+    font-size: 40px;
+    line-height: 44px;
+  }
+  .hero-intro {
+    width: min(100%, 560px);
+  }
+}
+@media (min-width: 768px) and (max-width: 899px) {
+  h1 {
+    font-size: 48px;
+    line-height: 52px;
+  }
+  .hero-intro {
+    width: min(100%, 640px);
+  }
+  .mesh-desktop {
+    margin-top: 12px;
+  }
+}
+@media (min-width: 900px) and (max-width: 1023px) {
+  h1 {
+    font-size: 52px;
+    line-height: 56px;
+  }
+  .hero-intro {
+    width: min(100%, 720px);
+  }
+  .hero-lead,
+  .hero-follow {
+    width: calc(100% - 64px);
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .site-header {
+    padding-block: 20px;
+  }
+}
+@media (max-width: 700px) {
+  .site-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding-block: 16px 8px;
+  }
+  .site-header nav {
+    gap: 16px;
+    justify-content: space-between;
+    width: 100%;
+  }
+}
 @media (max-width: 480px) {
   h1 {
     font-size: 36px;
     line-height: 40px;
   }
   .hero-actions {
-    flex-direction: column;
+    flex-direction: row;
   }
-  .hero-actions .action,
-  .action {
-    width: 100%;
+  .hero-actions .action {
+    width: auto;
+    flex: 1;
     min-width: 0;
+    padding-inline: 8px;
+    gap: 6px;
+    font-size: 14px;
+    line-height: 18px;
   }
   .feature-grid {
     gap: 8px;

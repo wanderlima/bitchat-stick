@@ -2,10 +2,41 @@ import gsap from 'gsap';
 import { desktopRoutes, mobileRoutes, length, type Route } from '../data/mesh';
 import { reducedMotion } from './preferences';
 
+const PORTRAIT_RATIO = 327 / 420;
+
+/** Sizes the portrait diagram to the column, without growing taller than the screen. */
+function fitPortraitGraph(hero: HTMLElement) {
+  const graph = hero.querySelector<HTMLElement>('.mobile-graph');
+  if (!graph) {
+    return;
+  }
+  if (getComputedStyle(graph).display === 'none') {
+    graph.style.removeProperty('width');
+    return;
+  }
+  const header = document.querySelector('.site-header');
+  const lead = hero.querySelector('.hero-lead');
+  if (!header || !lead) {
+    return;
+  }
+  const top =
+    header.getBoundingClientRect().height + lead.getBoundingClientRect().height + 24;
+  const room = window.innerHeight - top;
+  const column = graph.parentElement?.clientWidth ?? window.innerWidth;
+  const fromHeight = Math.max(0, room) * PORTRAIT_RATIO;
+  const width = Math.round(Math.min(column, Math.max(fromHeight, Math.min(column, 220))));
+  graph.style.width = `${width}px`;
+}
+
 /** Two stories: the Stick sends one message, then receives one. The envelope glides, and peers stay lit until that message arrives. */
 export async function initHero() {
   const hero = document.querySelector<HTMLElement>('.hero');
-  if (!hero) return;
+  if (!hero) {
+    return;
+  }
+  fitPortraitGraph(hero);
+  window.addEventListener('resize', () => fitPortraitGraph(hero), { passive: true });
+  document.fonts.ready.then(() => fitPortraitGraph(hero));
   const sources = [
     ...new Set(
       Array.from(hero.querySelectorAll<SVGImageElement>('[data-screen]')).map((image) =>
@@ -31,8 +62,8 @@ export async function initHero() {
   let entrancePlayed = false;
   media.add(
     {
-      desktop: '(min-width: 901px)',
-      mobile: '(max-width: 900px)',
+      desktop: '(min-width: 640px)',
+      mobile: '(max-width: 639px)',
       reduce: '(prefers-reduced-motion: reduce)',
     },
     (context) => {
@@ -184,7 +215,7 @@ export async function initHero() {
         });
         entrance
           .from(
-            hero.querySelector('.hero-content > .eyebrow'),
+            hero.querySelector('.hero-lead > .eyebrow'),
             { opacity: 0, y: 4, duration: 0.16 },
             0,
           )
@@ -196,7 +227,8 @@ export async function initHero() {
           .from(hero.querySelector('.hero-description'), { opacity: 0, y: 8, duration: 0.24 }, 0.1)
           .from(hero.querySelector('.hero-actions'), { opacity: 0, y: 8, duration: 0.24 }, 0.18)
           .from(hero.querySelector('.hero-meta'), { opacity: 0, duration: 0.2 }, 0.24)
-          .from(scene, { opacity: 0, y: 12, duration: 0.32, ease: 'steps(4)' }, 0.12)
+          // Opacity only. A y tween rewrites translateX(-50%) as pixels, so the mesh slides off on resize.
+          .from(scene, { opacity: 0, duration: 0.32, ease: 'steps(4)' }, 0.12)
           .from(
             scene.querySelectorAll('[data-peer]'),
             { opacity: 0, duration: 0.16, stagger: 0.04 },
