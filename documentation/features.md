@@ -55,18 +55,18 @@ A peer may trigger a reply at most once every three seconds. A separate one-seco
 | C short | Down. C is the Plus2 power button |
 | B held at least 700 ms | Back. From Home, return to Start |
 | C held 6 seconds | Power off. A long C press does not become Down on release |
-| JoyC left / right | Back / confirm, after recentering |
-| JoyC up / down | Move, repeating every 1.5 seconds while held past the activation threshold |
+| JoyC left / right | Back / confirm, after recentering. On the keyboard, left and right move between keys |
+| JoyC up / down | Move, repeating every 0.5 seconds while held. On the keyboard every direction repeats |
 
-The splash screen shows the name and control hints. Only A leaves the splash. Navigation hints are not repeated on later screens. The first press after the screen turns off only wakes it.
+The splash screen shows the name and `A Start`. Later screens keep a one-line footer for B/C, hold-B, and A. The first press after the screen turns off only wakes it. The status bar shows BLE state, the civil clock as `HH:MM`, the battery, and a green envelope while any incoming message is unread.
 
-Settings includes brightness at 5, 25, 50, 75, and 100 percent, default 50 percent. Sound has independent persisted checkboxes for interaction beeps, DM alerts, and `#bluetooth` alerts. JoyC HAT settings add optional click confirmation and LED pulse, both off by default. About credits Wander Lima and shows a QR code for `https://github.com/wanderlima/bitchat-stick`. Diagnostics shows counters, not message bodies.
+Settings includes brightness at 5, 25, 50, 75, and 100 percent, default 50 percent. Sound has independent persisted checkboxes for interaction beeps, DM alerts, and `#bluetooth` alerts. JoyC HAT settings add optional click confirmation and LED pulse, both off by default. Date & time edits the civil clock written to the RTC. An invalid date is rejected. A failed save shows Not saved and does not change the clock already in use. About credits Wander Lima and shows a QR code for `https://wanderlima.github.io/bitchat-stick/`. Diagnostics shows counters, not message bodies.
 
-Drawing uses a 135 × 240 offscreen framebuffer before the panel updates.
+Drawing uses a 240 × 135 offscreen framebuffer before the panel updates. The panel rotation is 1.
 
 ## Screens
 
-`src/Ui.cpp` implements Splash, Home, Nearby, Channels, Messages, InfoBot, Settings, Brightness, Battery, About, Diagnostics, Sound, JoyC HAT, Reply, Short msgs, Keyboard, and Confirm.
+`src/Ui.cpp` implements Splash, Home, Nearby, Channels, Messages, InfoBot, Settings, Brightness, Battery, About, Diagnostics, Sound, JoyC HAT, Date & time, Reply, Short msgs, Keyboard, and Confirm.
 
 ## Website
 

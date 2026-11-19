@@ -2,16 +2,14 @@
 import Peer from './Peer.astro';
 import Device from './Device.astro';
 import { desktopRoutes, mobileRoutes, length } from '../data/mesh';
+
 interface Props {
   mobile?: boolean;
 }
 const { mobile = false } = Astro.props;
 const routes = mobile ? mobileRoutes : desktopRoutes;
 const base = import.meta.env.BASE_URL;
-const stroke = mobile ? 1 : 2;
-const device = mobile
-  ? { x: 101.6667, y: 21.6667, scale: 0.8333333 }
-  : { x: 974, y: 157, scale: 1 };
+const stroke = mobile ? 2 : 4;
 ---
 
 <svg
@@ -20,69 +18,46 @@ const device = mobile
   viewBox={mobile ? '0 0 327 420' : '0 0 1600 760'}
   aria-hidden="true"
 >
-  <g
-    class="mesh-routes"
-    fill="none"
-    stroke="#5a5a5a"
-    stroke-width={stroke}
-    stroke-linecap="butt"
-    stroke-linejoin="miter"
-  >
+  <g class="mesh-routes" fill="none" stroke="#5a5a5a" stroke-width={stroke} stroke-linejoin="miter">
     {routes.map((route) => (
-      <polyline points={route.points.map((p) => p.join(',')).join(' ')} />
+      <polyline points={route.points.map((point) => point.join(',')).join(' ')} />
     ))}
   </g>
-  <g
-    class="lit-routes"
-    fill="none"
-    stroke="#84ff84"
-    stroke-width={stroke}
-    stroke-linecap="butt"
-    stroke-linejoin="miter"
-  >
+  <g class="lit-routes" fill="none" stroke="#84ff84" stroke-width={stroke} stroke-linejoin="miter">
     {routes.map((route, index) => (
       <g data-route={index} opacity="0">
         <polyline
-          points={route.points.map((p) => p.join(',')).join(' ')}
+          points={route.points.map((point) => point.join(',')).join(' ')}
           pathLength={length(route.points)}
           stroke-dasharray={`0 ${length(route.points)}`}
         />
       </g>
     ))}
   </g>
-  <g class="ripples" fill="none" stroke="#84ff84" stroke-width={mobile ? 1.5 : 2}>
+  <g class="ripples" fill="none" stroke="#84ff84" stroke-width={stroke}>
     <circle class="ripple" cx="0" cy="0" r="0" opacity="0" />
     <circle class="ripple" cx="0" cy="0" r="0" opacity="0" />
   </g>
+  {
+    mobile ? (
+      <>
+        <Peer x={-5} y={151} name="west" label="WEST" scale={0.28} labelX={18} labelAnchor="start" />
+        <Peer x={66} y={266} name="relay" label="RELAY" scale={0.42} />
+        <Peer x={299} y={29} name="north" label="NORTH" scale={0.28} labelX={92} labelAnchor="end" />
+        <Peer x={314} y={277} name="east" label="EAST" scale={0.28} labelX={46} labelAnchor="end" />
+        <Device x={115} y={90} scale={0.45} screens={['home', 'writing', 'confirm', 'queued', 'received']} />
+      </>
+    ) : (
+      <>
+        <Peer x={14} y={424} name="west" label="PEER / WEST" />
+        <Peer x={714} y={524} name="relay" label="RELAY" />
+        <Peer x={1334} y={84} name="north" label="PEER / NORTH" />
+        <Peer x={1444} y={514} name="east" label="PEER / EAST" />
+        <Device x={902} y={229} screens={['home', 'writing', 'confirm', 'queued', 'received']} />
+      </>
+    )
+  }
   <g class="packet" opacity="0">
     <image href={`${base}icons/envelope.svg`} x="-15" y="-11" width="30" height="22" />
   </g>
-  <rect
-    x={device.x}
-    y={device.y}
-    width={212 * device.scale}
-    height={356 * device.scale}
-    fill="#000"
-  />
-  {mobile ? (
-    <>
-      <Peer x={14} y={151} name="west" label="WEST" scale={0.28} labelX={18} labelAnchor="start" />
-      <Peer x={66} y={266} name="relay" label="RELAY" scale={0.42} />
-      <Peer x={286} y={29} name="north" label="NORTH" scale={0.28} labelX={92} labelAnchor="end" />
-      <Peer x={286} y={277} name="east" label="EAST" scale={0.28} labelX={46} labelAnchor="end" />
-    </>
-  ) : (
-    <>
-      <Peer x={12} y={424} name="west" label="PEER / WEST" />
-      <Peer x={714} y={524} name="relay" label="RELAY" />
-      <Peer x={1334} y={84} name="north" label="PEER / NORTH" />
-      <Peer x={1444} y={514} name="east" label="PEER / EAST" />
-    </>
-  )}
-  <Device
-    x={device.x}
-    y={device.y}
-    scale={device.scale}
-    screens={['home', 'writing', 'confirm', 'queued', 'received']}
-  />
 </svg>

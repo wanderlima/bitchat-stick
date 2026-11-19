@@ -13,7 +13,7 @@ Versions below are the ones declared or recorded in this repository. Host-tool v
 | Board base | `m5stick-c` | Overridden for 8 MB flash, PSRAM, and `partitions.csv` |
 | Xtensa GCC | `8.4.0+2021r2-patch5` | Recorded compiler for the validated firmware build |
 | M5Unified | 0.2.8 | Plus2 power, buttons, RTC, speaker, and external I2C |
-| M5GFX | 0.2.36 | 135 × 240 panel |
+| M5GFX | 0.2.36 | 240 × 135 landscape UI on the Plus2 panel |
 | NimBLE-Arduino | 2.5.0 | BLE scanning, advertising, and GATT |
 | Monocypher | commit `0d85f98c9d9b0227e42cf795cb527dff372b40a4` | Ed25519, Noise primitives, and hashing |
 

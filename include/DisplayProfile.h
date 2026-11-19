@@ -15,7 +15,7 @@ constexpr bool sameText(const char* left, const char* right) {
   return *left == *right && (!*left || sameText(left + 1, right + 1));
 }
 
-// The only layout this firmware draws. A different resolution needs its own layout.
-constexpr DisplayProfile kDisplayProfile{"m5stickc-plus2", "135x240-portrait", 135, 240, 0, 16};
+// The only layout this firmware draws. Rotation 1 is +90° from portrait.
+constexpr DisplayProfile kDisplayProfile{"m5stickc-plus2", "240x135-landscape", 240, 135, 1, 16};
 constexpr const DisplayProfile& displayProfile() { return kDisplayProfile; }
 }

@@ -16,7 +16,7 @@ export const hardwareChapters = [
   },
   {
     title: 'A message finds you.',
-    body: '“Hello from a phone.” A nearby peer joins the conversation. Push right to reply to Test phone.',
+    body: '“Hey, are you nearby?” A nearby peer joins the conversation. Push right to reply to Test phone.',
     label: 'Receive',
   },
   {

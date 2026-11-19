@@ -4,6 +4,15 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 ## Unreleased
 
+### 1.1.00 — Pocket UI
+
+- Replaced the portrait 135×240 FreeMono layout with the 240×135 landscape Pocket UI on the M5StickC Plus2. Rotation is 3 (−90°). Version label is `1.1.00`.
+- Home is a four-item menu: Nearby, Channels, InfoBot, Settings. The status bar shows BLE state, civil `HH:MM`, and battery. Unread counts stay on the rows.
+- Settings adds Date & time. The entered civil time is what the status clock shows and what is written to the RTC. Invalid dates are rejected. A failed save shows Not saved and does not replace the applied clock.
+- About QR points to `https://wanderlima.github.io/bitchat-stick/`. Type is VT323 Regular, rasterized to 1-bit ASCII.
+- The website hero and hardware scene use the landscape screenshots, with the Stick turned so the firmware text stays upright.
+- Physical checks still open: rotation direction against buttons A/B, JoyC axes after that rotation, QR scan, and RTC save on the device.
+
 ### Modular Plus2 profile
 
 - Split the firmware into a shared ESP32 core and a compile-time M5StickC Plus2 profile. Power, RTC, buttons, the optional JoyC HAT and the 135×240 panel stay in that profile. Layout code draws through a small display surface. The core does not name M5StickC or include M5Unified. The Plus2 image is not a universal ESP32 binary.

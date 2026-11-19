@@ -67,7 +67,7 @@ Source: [Bitchat Stick — refinado in Figma](https://www.figma.com/design/z2zlf
 
 Tokens: black `#000000`, cream `#EBDCBA`, mint `#84FF84`, forest `#082D21`, panel `#101418`. Pixelify Sans 500 is reserved for short headings; Courier Prime 400/700 is used for readable body copy. Fonts are self-hosted through Fontsource; the deployed font licenses are included in `public/font-licenses.txt`. Icons remain decorative alongside visible link labels.
 
-The hero uses exact 135:240 UI proportions and nearest-neighbor image sampling. Desktop device geometry matches the Figma component; mobile uses its dedicated connected scene. The desktop intentionally clips peers beyond the safe area. There is no horizontal document overflow.
+The hero uses the 240×135 landscape UI and nearest-neighbor image sampling. The Stick is turned on its side so that firmware text stays upright. Mobile uses its dedicated connected scene. The desktop intentionally clips peers beyond the safe area. There is no horizontal document overflow.
 
 ### Hero sequence
 
@@ -175,6 +175,6 @@ The generator reads approved solids and contours from `../../m5stickc-plus2-mode
 npm run build:demo-screens
 ```
 
-This compiles a temporary native harness from `test/ui_preview.cpp` against the real UI and pinned font renderer, using simulated data. It exports 132 small 135×240 PNGs for reply methods, short-message selections, Send/Cancel focus and Queued states, and extracts the 32 preset strings from `src/MessageComposer.h` into `src/data/short-messages.json`. Existing PlatformIO library dependencies under `.pio/libdeps/m5stickc-plus2/` and a native C/C++ compiler are required only for regeneration. Normal website builds use the committed screenshots.
+This compiles `test/ui_preview.cpp` against the real UI and the VT323 bitmaps, using simulated data. It exports 240×135 PNGs for the hero, the hardware walkthrough, reply methods, short-message selections, Send/Cancel focus and Queued states. Existing PlatformIO library dependencies under `.pio/libdeps/m5stickc-plus2/` and a native C/C++ compiler are required only for regeneration. Normal website builds use the committed screenshots.
 
 The hardware tests also cover the receive/reply/Cancel/Send flow in normal and reduced-motion modes, first/last preset wraparound, text settling after partial scrolling, vertical floating, and offscreen/reduced-motion pause behavior.

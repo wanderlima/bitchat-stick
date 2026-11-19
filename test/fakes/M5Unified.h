@@ -53,15 +53,15 @@ struct FakeDisplay {
   void print(const char* s) {
     texts.push_back({s,x,y});
     ops.push_back("T "+std::to_string(x)+" "+std::to_string(y)+" "+std::to_string(font->kind)+" "+std::to_string(ink)+" "+std::to_string(textScale)+" "+s);
-    if (x<0 || y<0 || x+textWidth(s)>135 || y+font->height*textScale>240) boundsOk=false;
+    if (x<0 || y<0 || x+textWidth(s)>240 || y+font->height*textScale>135) boundsOk=false;
   }
-  void fillScreen(uint16_t color) { ++clears; texts.clear();rects.clear();ops.clear();boundsOk=true;fillRect(0,0,135,240,color); }
+  void fillScreen(uint16_t color) { ++clears; texts.clear();rects.clear();ops.clear();boundsOk=true;fillRect(0,0,240,135,color); }
   void startWrite() {}
   void endWrite() {}
   void fillRect(int a,int b,int w,int h,uint16_t c) {
     rects.push_back({a,b,w,h,c});
     ops.push_back("F "+std::to_string(a)+" "+std::to_string(b)+" "+std::to_string(w)+" "+std::to_string(h)+" "+std::to_string(c));
-    if(a<0 || b<0 || a+w>135 || b+h>240) boundsOk=false;
+    if(a<0 || b<0 || a+w>240 || b+h>135) boundsOk=false;
   }
   void drawRect(int a,int b,int w,int h,uint16_t c) {
     fillRect(a,b,w,1,c);fillRect(a,b+h-1,w,1,c);fillRect(a,b,1,h,c);fillRect(a+w-1,b,1,h,c);

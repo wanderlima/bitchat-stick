@@ -1,48 +1,78 @@
 #!/usr/bin/env python3
-"""Render UI trace files from test/ui_preview.cpp using the pinned font bitmaps."""
+"""Render UI trace files from test/ui_preview.cpp with the VT323 1-bit bitmaps."""
 from pathlib import Path
-import re,zlib,struct,sys,math
-root=Path(__file__).resolve().parents[1]
-output=Path(sys.argv[1])
-fontroot=root / Path('.pio/libdeps/m5stickc-plus2/M5GFX/src/lgfx/Fonts/GFXFF')
-fonts={}
-for kind,name in [(0,'FreeMono9pt7b'),(1,'FreeMonoBold9pt7b'),(2,'FreeMonoBold12pt7b'),(3,'FreeMonoCompact14'),(4,'FreeMonoBody16')]:
- s=(fontroot/(name+'.h')).read_text() if kind<3 else (root/'src/assets/UiFonts.h').read_text().split('const uint8_t '+name+'Bitmaps')[1].split('const lgfx::GFXfont '+name)[0]
- if kind>=3:s='Bitmaps'+s
- raw=re.split(r'Bitmaps\[\](?: PROGMEM)? = \{',s,maxsplit=1)[1].split('};',1)[0]
- bits=bytes(int(x,16) for x in re.findall(r'0x([0-9A-Fa-f]{2})',raw))
- glyphs={int(m[6],16):tuple(map(int,m[:6])) for m in re.findall(r'\{\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(-?\d+),\s*(-?\d+)\s*\}[^\n]*// 0x([0-9A-Fa-f]+)',s)}
- fonts[kind]=(bits,glyphs,max(-g[5] for g in glyphs.values()))
-def rgb(c):return bytes((((c>>11)&31)*255//31,((c>>5)&63)*255//63,(c&31)*255//31))
-def png(path,pixels,w,h):
- def chunk(tag,data):return struct.pack('!I',len(data))+tag+data+struct.pack('!I',zlib.crc32(tag+data)&0xffffffff)
- data=b''.join(b'\0'+pixels[y*w*3:(y+1)*w*3] for y in range(h))
- path.write_bytes(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('!IIBBBBB',w,h,8,2,0,0,0))+chunk(b'IDAT',zlib.compress(data))+chunk(b'IEND',b''))
-for source in output.glob('*.ops'):
- pixels=bytearray(135*240*3)
- def put(x,y,c):
-  if 0<=x<135 and 0<=y<240:pixels[(y*135+x)*3:(y*135+x)*3+3]=c
- for op in source.read_text().splitlines():
-  if op.startswith('F '):
-   _,x,y,w,h,c=op.split();x,y,w,h,c=map(int,(x,y,w,h,c));col=rgb(c)
-   for row in range(y,y+h):
-    for xx in range(x,x+w):put(xx,row,col)
-  else:
-   _,x,y,kind,c,scale,text=op.split(' ',6);x,y,kind,c=map(int,(x,y,kind,c));scale=float(scale);col=rgb(c)
-   bits,glyphs,baseline=fonts[kind]
-   cursor=float(x)
-   for char in text:
-    off,w,h,advance,xoff,yoff=glyphs[ord(char)]
-    # Nearest-neighbor approximation of M5GFX's fractional FreeMono scaling.
-    for row in range(math.ceil((baseline+yoff)*scale),math.ceil((baseline+yoff+h)*scale)):
-     sy=math.floor(row/scale)-baseline-yoff
-     for xx in range(math.ceil(xoff*scale),math.ceil((xoff+w)*scale)):
-      sx=math.floor(xx/scale)-xoff
-      bit=sy*w+sx
-      if 0<=sx<w and 0<=sy<h and bits[off+bit//8]&(0x80>>(bit%8)):put(int(cursor)+xx,y+row,col)
-    cursor+=advance*scale
- rows=[]
- for y in range(240):
-  row=b''.join(bytes(pixels[(y*135+x)*3:(y*135+x)*3+3])*4 for x in range(135));rows.extend([row]*4)
- png(source.with_suffix('.png'),b''.join(rows),540,960)
-print('FreeMono/cream previews rendered from the current UI.')
+import re, zlib, struct, sys, math
+
+root = Path(__file__).resolve().parents[1]
+output = Path(sys.argv[1])
+scale = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+width, height = 240, 135
+text = (root / "src/assets/UiFonts.h").read_text()
+fonts = {}
+for size in (16, 17, 18, 19, 20, 21, 22, 23, 31):
+    name = f"Vt323{size}"
+    block = text.split(f"const uint8_t {name}Bitmaps")[1].split(f"const lgfx::GFXfont {name} ")[0]
+    raw = block.split("= {", 1)[1].split("};", 1)[0]
+    bits = bytes(int(value, 16) for value in re.findall(r"0x([0-9A-Fa-f]{2})", raw))
+    glyphs = {}
+    for match in re.findall(
+        r"\{\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(-?\d+),\s*(-?\d+)\s*\}[^\n]*// 0x([0-9A-Fa-f]+)",
+        block,
+    ):
+        glyphs[int(match[6], 16)] = tuple(map(int, match[:6]))
+    fonts[size] = (bits, glyphs, max(-glyph[5] for glyph in glyphs.values()))
+
+def rgb(color):
+    return bytes((((color >> 11) & 31) * 255 // 31, ((color >> 5) & 63) * 255 // 63, (color & 31) * 255 // 31))
+
+def png(path, pixels, image_width, image_height):
+    def chunk(tag, data):
+        return struct.pack("!I", len(data)) + tag + data + struct.pack("!I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+    rows = b"".join(b"\0" + pixels[y * image_width * 3:(y + 1) * image_width * 3] for y in range(image_height))
+    path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack("!IIBBBBB", image_width, image_height, 8, 2, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(rows))
+        + chunk(b"IEND", b"")
+    )
+
+for source in output.glob("*.ops"):
+    pixels = bytearray(width * height * 3)
+    def put(x, y, color):
+        if 0 <= x < width and 0 <= y < height:
+            pixels[(y * width + x) * 3:(y * width + x) * 3 + 3] = color
+    for op in source.read_text().splitlines():
+        if op.startswith("F "):
+            _, x, y, w, h, color = op.split()
+            x, y, w, h, color = map(int, (x, y, w, h, color))
+            col = rgb(color)
+            for row in range(y, y + h):
+                for column in range(x, x + w):
+                    put(column, row, col)
+        elif op.startswith("T "):
+            _, x, y, kind, color, _, glyph_text = op.split(" ", 6)
+            x, y, kind, color = map(int, (x, y, kind, color))
+            bits, glyphs, baseline = fonts[kind]
+            col = rgb(color)
+            cursor = x
+            for char in glyph_text:
+                glyph = glyphs.get(ord(char))
+                if not glyph:
+                    cursor += kind // 2
+                    continue
+                offset, gw, gh, advance, x_offset, y_offset = glyph
+                for row in range(gh):
+                    for column in range(gw):
+                        bit = row * gw + column
+                        if bits[offset + bit // 8] & (0x80 >> (bit % 8)):
+                            put(cursor + x_offset + column, y + baseline + y_offset + row, col)
+                cursor += advance
+    if scale == 1:
+        png(source.with_suffix(".png"), bytes(pixels), width, height)
+        continue
+    rows = []
+    for y in range(height):
+        row = b"".join(bytes(pixels[(y * width + x) * 3:(y * width + x) * 3 + 3]) * scale for x in range(width))
+        rows.extend([row] * scale)
+    png(source.with_suffix(".png"), b"".join(rows), width * scale, height * scale)
+print(f"VT323 previews rendered at {width}x{height}.")

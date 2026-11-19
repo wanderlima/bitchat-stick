@@ -62,8 +62,8 @@ export async function initHero() {
   let entrancePlayed = false;
   media.add(
     {
-      desktop: '(min-width: 640px)',
-      mobile: '(max-width: 639px)',
+      desktop: '(min-width: 1024px)',
+      mobile: '(max-width: 1023px)',
       reduce: '(prefers-reduced-motion: reduce)',
     },
     (context) => {
@@ -73,7 +73,7 @@ export async function initHero() {
         hero.dataset.motion = 'reduced';
         return;
       }
-      const desktop = context.conditions?.desktop;
+      const desktop = Boolean(context.conditions?.desktop);
       const scene = hero.querySelector<SVGSVGElement>(
         `[data-mesh="${desktop ? 'desktop' : 'mobile'}"]`,
       )!;
@@ -134,10 +134,54 @@ export async function initHero() {
           trail.setAttribute('stroke-dashoffset', '0');
         };
         const [source, destination] = pair;
+        // The envelope is 30×22 and centered. Stop it short of each body so it
+        // never slides under the Stick. The lit line still uses `points`.
+        const packetPath = points.map((point): [number, number] => [point[0], point[1]]);
+        const trimEnd = (distance: number) => {
+          let left = distance;
+          for (let i = packetPath.length - 1; i > 0 && left > 0; i--) {
+            const end = packetPath[i];
+            const start = packetPath[i - 1];
+            const dx = start[0] - end[0];
+            const dy = start[1] - end[1];
+            const span = Math.hypot(dx, dy);
+            if (span === 0) {
+              packetPath.pop();
+              continue;
+            }
+            if (left < span) {
+              packetPath[i] = [end[0] + (dx / span) * left, end[1] + (dy / span) * left];
+              packetPath.splice(i + 1);
+              return;
+            }
+            left -= span;
+            packetPath.pop();
+          }
+        };
+        trimEnd(28);
+        let leadIn = 16;
+        for (let i = 0; i < packetPath.length - 1 && leadIn > 0; i++) {
+          const start = packetPath[0];
+          const next = packetPath[1];
+          const dx = next[0] - start[0];
+          const dy = next[1] - start[1];
+          const span = Math.hypot(dx, dy);
+          if (span === 0) {
+            packetPath.shift();
+            i -= 1;
+            continue;
+          }
+          const step = Math.min(leadIn, Math.max(0, span - 1));
+          packetPath[0] = [start[0] + (dx / span) * step, start[1] + (dy / span) * step];
+          leadIn = 0;
+        }
+        for (const waypoint of packetPath) {
+          if (waypoint[1] < 14) waypoint[1] = 14;
+        }
         timeline.call(paint, [], at);
         timeline.set(edge, { opacity: 1 }, at);
         timeline.set(source, { opacity: 1 }, at);
-        timeline.set(packet, { x: points[0][0], y: points[0][1], opacity: 1 }, at);
+        timeline.set(packet, { x: packetPath[0][0], y: packetPath[0][1], opacity: 1 }, at);
         if (pulseOrigin) ripple(points[0][0], points[0][1], at);
         let cursor = at,
           covered = 0;
@@ -153,8 +197,30 @@ export async function initHero() {
             { covered, duration, ease: 'none', immediateRender: false, onUpdate: paint },
             cursor,
           );
-          timeline.to(packet, { x: points[i][0], y: points[i][1], duration, ease: 'none' }, cursor);
           cursor += duration;
+        }
+        const packetDistance = packetPath.slice(1).reduce((total, point, index) => {
+          const prev = packetPath[index];
+          return total + Math.hypot(point[0] - prev[0], point[1] - prev[1]);
+        }, 0);
+        let packetCursor = at;
+        for (let i = 1; i < packetPath.length; i++) {
+          const prev = packetPath[i - 1];
+          const point = packetPath[i];
+          const leg = Math.hypot(point[0] - prev[0], point[1] - prev[1]);
+          const duration = packetDistance > 0 ? (route.duration * leg) / packetDistance : 0;
+          timeline.to(
+            packet,
+            {
+              x: point[0],
+              y: point[1],
+              duration,
+              ease: 'none',
+              immediateRender: false,
+            },
+            packetCursor,
+          );
+          packetCursor += duration;
         }
         timeline.set(destination, { opacity: 1 }, at + route.duration);
         ripple(points[points.length - 1][0], points[points.length - 1][1], at + route.duration);

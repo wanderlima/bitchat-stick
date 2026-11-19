@@ -2,13 +2,13 @@
 
 The full record is [CHANGELOG.md](../CHANGELOG.md). Dates there are the date of the recorded change or report. This summary does not add releases that the changelog does not contain.
 
-`include/Version.h` still defines `STICK_VERSION` as `1.0.00`. Work listed under Unreleased is in the tree and is not a new tagged firmware release.
+`include/Version.h` defines `STICK_VERSION` as `1.1.00`. Work listed under Unreleased is in the tree and is not a new tagged firmware release.
 
 ## Unreleased
 
 ### Modular Plus2 profile
 
-The firmware is split into a shared ESP32 core and a compile-time M5StickC Plus2 profile. Power, RTC, buttons, the optional JoyC HAT, and the 135 × 240 panel stay in that profile. Layout draws through a display surface. The core does not name M5StickC or include M5Unified. `!info` identifies the device as Bitchat Stick on ESP32, with local `#bluetooth` relay and private text DMs.
+The firmware is split into a shared ESP32 core and a compile-time M5StickC Plus2 profile. Power, RTC, buttons, the optional JoyC HAT, and the 240 × 135 landscape panel stay in that profile. Layout draws through a display surface. The core does not name M5StickC or include M5Unified. `!info` identifies the device as Bitchat Stick on ESP32, with local `#bluetooth` relay and private text DMs. Version 1.1.00 is the Pocket UI.
 
 On 2026-11-17, Wander Lima confirmed InfoBot replies and correct delivered/read checks on Android and iPhone after this profile was flashed. Controlled relay, reconnect, range, and battery checks stayed open.
 

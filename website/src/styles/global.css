@@ -255,7 +255,6 @@ h1 {
   position: absolute;
   left: 0;
   margin: 0;
-  /* Sits just below the west peer, which ends near 80% of the mesh. */
   top: calc(var(--mesh-top) + min(100vw, 1600px) * 760 / 1600 * 0.8);
   font-family: var(--font-display);
   font-size: 28px;
@@ -431,7 +430,7 @@ h1 {
   display: block;
   width: min(100%, 254.4px);
   height: auto;
-  aspect-ratio: 212 / 404;
+  aspect-ratio: 356 / 260;
   overflow: visible;
 }
 .control-preview figcaption {
@@ -629,7 +628,6 @@ details[open] .disclosure-mark::after {
   .hero {
     display: flex;
     flex-direction: column;
-    min-height: 0;
   }
   .hero-content {
     display: contents;
@@ -796,7 +794,7 @@ details[open] .disclosure-mark::after {
     grid-row: 3;
   }
   .control-device {
-    width: 212px;
+    width: 320px;
   }
   .status-grid {
     margin-top: 24px;
@@ -817,23 +815,17 @@ details[open] .disclosure-mark::after {
   }
 }
 @media (max-width: 639px) {
-  .hero-statement,
   .mesh-desktop {
     display: none;
   }
-  .mesh-mobile,
-  .mobile-graph {
-    display: block;
-  }
-  .mobile-graph {
-    position: relative;
-    margin: 8px auto 0;
-    width: min(100%, calc((100svh - 32rem) * 327 / 420));
-    max-width: 100%;
-  }
   .mesh-mobile {
+    display: block;
     width: 100%;
     height: auto;
+  }
+  .hero-lead,
+  .hero-follow {
+    width: calc(100% - 32px);
   }
 }
 @media (min-width: 640px) and (max-width: 1023px) {

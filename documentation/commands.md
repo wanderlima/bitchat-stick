@@ -38,7 +38,7 @@ Asset generators under `tools/` (`generate-ui-fonts.py`, `generate-ui-bitmaps.py
 | `npm test` | Playwright against the production preview |
 | `npm run render:social` | Export `public/social-card.png` from a preview on port 4322 |
 | `npm run build:wire-model` | Rebuild `public/models/bitchat-stick-wire.glb` from approved CAD outside this build |
-| `npm run build:demo-screens` | Rebuild simulated 135 × 240 screen PNGs from the firmware UI |
+| `npm run build:demo-screens` | Rebuild simulated 240 × 135 screen PNGs from the firmware UI |
 
 `npm run build:wire-model` reads solids from `../../m5stickc-plus2-models/`. That directory is outside this repository. The committed GLB is what normal website builds use.
 

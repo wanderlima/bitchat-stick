@@ -162,7 +162,7 @@ for (const heroWidth of [375, 1440])
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('');
     await expect(page.locator('.hero')).toHaveAttribute('data-motion', 'playing');
-    const scene = heroWidth >= 640 ? '.mesh-desktop' : '.mesh-mobile';
+    const scene = heroWidth >= 1024 ? '.mesh-desktop' : '.mesh-mobile';
     const seen = new Set<string>();
     let sawActiveRoute = false;
     let maxAccents = 0;

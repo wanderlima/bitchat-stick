@@ -5,7 +5,7 @@ Bitchat Stick is one shared ESP32 core plus a compile-time board profile. The de
 ```mermaid
 flowchart TD
   inputs[Buttons and optional JoyC] --> profile[Plus2 board profile]
-  panel[135 x 240 panel] --> profile
+  panel[240 x 135 landscape panel] --> profile
   profile --> loop[Application loop in src/main.cpp]
   loop --> scanner[Passive scanner]
   loop --> mesh[Mesh owner]

@@ -5,12 +5,20 @@ export type Route = {
   steps: number;
   destination: string;
 };
+
+/** Drawn shell, and the 2:1 slot the landscape model actually fills. */
+export const deviceShell = { width: 356, height: 212 };
+export const deviceSlot = { x: 0, y: 17, width: 356, height: 178 };
+
+/** Same dogleg network as the first hero. Endpoints stop on the landscape shell. */
 export const desktopRoutes: Route[] = [
   {
     points: [
-      [58, 490],
-      [640, 490],
-      [640, 590],
+      [60, 490],
+      [160, 490],
+      [160, 210],
+      [550, 210],
+      [550, 590],
       [760, 590],
     ],
     duration: 1.8,
@@ -20,8 +28,9 @@ export const desktopRoutes: Route[] = [
   {
     points: [
       [760, 590],
-      [760, 400],
-      [1080, 400],
+      [900, 590],
+      [900, 335],
+      [902, 335],
     ],
     duration: 1,
     steps: 20,
@@ -29,8 +38,10 @@ export const desktopRoutes: Route[] = [
   },
   {
     points: [
-      [1080, 190],
-      [1380, 190],
+      [1258, 335],
+      [1320, 335],
+      [1320, 150],
+      [1334, 150],
     ],
     duration: 0.9,
     steps: 18,
@@ -38,21 +49,24 @@ export const desktopRoutes: Route[] = [
   },
   {
     points: [
-      [1380, 150],
-      [1380, 580],
-      [1490, 580],
+      [1426, 150],
+      [1436, 150],
+      [1436, 580],
+      [1444, 580],
     ],
     duration: 1.2,
     steps: 24,
     destination: 'east',
   },
 ];
+
 export const mobileRoutes: Route[] = [
   {
     points: [
-      [27, 170],
-      [48, 170],
-      [48, 294],
+      [8, 170],
+      [38, 170],
+      [38, 240],
+      [85, 240],
       [85, 294],
     ],
     duration: 1.8,
@@ -62,8 +76,9 @@ export const mobileRoutes: Route[] = [
   {
     points: [
       [85, 294],
-      [85, 200],
-      [190, 200],
+      [96, 294],
+      [96, 170],
+      [115, 170],
     ],
     duration: 1,
     steps: 20,
@@ -71,8 +86,10 @@ export const mobileRoutes: Route[] = [
   },
   {
     points: [
-      [190, 48],
-      [299, 48],
+      [275, 170],
+      [288, 170],
+      [288, 52],
+      [312, 52],
     ],
     duration: 0.9,
     steps: 18,
@@ -80,19 +97,23 @@ export const mobileRoutes: Route[] = [
   },
   {
     points: [
-      [299, 66],
-      [299, 277],
+      [312, 52],
+      [326, 52],
+      [326, 300],
+      [327, 300],
     ],
     duration: 1.2,
     steps: 24,
     destination: 'east',
   },
 ];
+
 export function length(points: readonly Point[]) {
   return points
     .slice(1)
     .reduce(
-      (total, p, i) => total + Math.abs(p[0] - points[i][0]) + Math.abs(p[1] - points[i][1]),
+      (total, point, index) =>
+        total + Math.abs(point[0] - points[index][0]) + Math.abs(point[1] - points[index][1]),
       0,
     );
 }

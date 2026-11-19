@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 namespace stick {
-enum class UiFont { Body16, Compact14, Bold9, Bold12 };
+enum class UiFont { Vt16, Vt17, Vt18, Vt19, Vt20, Vt21, Vt22, Vt23, Vt31 };
 
 bool surfaceBegin();
 void displaySetBrightness(uint8_t brightness);
