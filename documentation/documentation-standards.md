@@ -14,7 +14,7 @@ This repository is not an npm workspace monorepo. Do not add `monorepo.md` unles
 
 - Directories and handbook pages use lowercase kebab-case: `overview.md`, `tech-stack.md`.
 - ADR files live in `documentation/adr/` and match `adr-0000-short-title.md`, with a four-digit id.
-- `README.md` at the repository root, under `website/`, and under `models/` stays uppercase because those are existing entry points.
+- `README.md` at the repository root and under `website/` stays uppercase because those are existing entry points. This repository has no `models/` directory.
 
 `.github/workflows/documentation.yml` checks out the tree and fails when a file under `documentation/` breaks these rules: a non-markdown file, a directory that is not kebab-case, a handbook page that is not kebab-case, or an ADR whose name does not match the pattern above.
 

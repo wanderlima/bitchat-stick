@@ -2,19 +2,15 @@
 
 The full record is [CHANGELOG.md](../CHANGELOG.md). Dates there are the date of the recorded change or report. This summary does not add releases that the changelog does not contain.
 
-`include/Version.h` defines `STICK_VERSION` as `1.1.00`. Work listed under Unreleased is in the tree and is not a new tagged firmware release.
+`include/Version.h` defines `STICK_VERSION` as `1.1.00`. That is the current source label. This summary does not create a Git tag.
 
-## Unreleased
+## 1.1.00 — 2026-11-19
 
-### Modular Plus2 profile
+The Pocket UI replaces the portrait layout with a 240 × 135 landscape panel, rotation 1, VT323, a civil status clock, and Date & time stored on the RTC. JoyC up and down repeat every 0.5 seconds. The firmware remains a shared ESP32 core plus a compile-time M5StickC Plus2 profile. `!info` identifies the device as Bitchat Stick on ESP32.
 
-The firmware is split into a shared ESP32 core and a compile-time M5StickC Plus2 profile. Power, RTC, buttons, the optional JoyC HAT, and the 240 × 135 landscape panel stay in that profile. Layout draws through a display surface. The core does not name M5StickC or include M5Unified. `!info` identifies the device as Bitchat Stick on ESP32, with local `#bluetooth` relay and private text DMs. Version 1.1.00 is the Pocket UI.
+On 2026-11-17, Wander Lima confirmed InfoBot replies and correct delivered/read checks on Android and iPhone. Controlled relay, reconnect, range, and battery checks stayed open. Rotation against buttons A/B, JoyC axes after that rotation, the About QR, and an RTC save on the device are still open.
 
-On 2026-11-17, Wander Lima confirmed InfoBot replies and correct delivered/read checks on Android and iPhone after this profile was flashed. Controlled relay, reconnect, range, and battery checks stayed open.
-
-### Website
-
-`website/` is an Astro, Tailwind CSS, and GSAP one-page site with local fonts, firmware UI renders, a GitHub Pages workflow, and Playwright coverage. Later website passes added the hero entrance, the reduced-motion control, section motion, the hardware walkthrough, structured data, and production-only analytics. Those passes do not flash the Stick and do not by themselves publish GitHub Pages.
+The website is an Astro, Tailwind CSS, and GSAP one-page site. The hero uses the landscape screens. Its loop is one send and one receive, about 11.4 seconds. Publishing the site still requires the GitHub Pages workflow on `main`.
 
 ## 1.0.00 — 2026-11-11
 

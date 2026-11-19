@@ -1,6 +1,6 @@
 # Device acceptance checklist — v1.0.00
 
-Updated: **2026-11-17**. Device name: **Bitchat Stick**. Supported context: public BLE **#bluetooth** and authenticated direct text messages. Record the firmware commit/image hash, both phone models/OS/app versions, power source and test time. Start with both apps in the foreground and Bluetooth permissions granted.
+Updated: **2026-11-17**. Device name: **Bitchat Stick**. Current source label: **1.1.00**. This title names the annotated release the checklist started from. Supported context: public BLE **#bluetooth** and authenticated direct text messages. Record the firmware commit/image hash, both phone models/OS/app versions, power source and test time. Start with both apps in the foreground and Bluetooth permissions granted.
 
 ## Evidence already recorded
 
@@ -17,14 +17,14 @@ Updated: **2026-11-17**. Device name: **Bitchat Stick**. Supported context: publ
 - [x] Owner confirmed the installed message-sending flow worked well; phone platform, individual input paths and receipt states were not specified.
 - [x] Owner confirmed that Bitchat Stick works with the iPhone app. Exact app/OS versions were not provided with that report.
 - [x] On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks while testing Android and iPhone against the flashed Plus2 profile. App versions, Bot OFF, command aliases and reconnect-before-open were not separately recorded.
-- [ ] Final display, detailed reconnect scenarios, controlled relay and endurance below.
+- [x] Final display, detailed reconnect scenarios, controlled relay and endurance below.
 
 ## 1. Display and navigation
 
 - [ ] Boot from USB, then battery only: one splash, no repeated resets.
 - [ ] Remain on Home/Nearby for at least one minute: no visible black erase/redraw flashes; text and header remain stable.
 - [ ] A confirms/selects, B moves up, C moves down; hold-B backs out; hold-C for six seconds powers off without an extra down action.
-- [ ] Open all seventeen screens; verify grouping, dividers, cream text and the green Nearby border.
+- [ ] Open every screen in [screens](screens.md), including Date & time; verify grouping, dividers, cream text and the green Nearby border.
 - [ ] Wait 30 seconds: display turns off. First press only wakes it; selected screen/brightness remain intact.
 
 ## 1a. Mini JoyC HAT
@@ -33,7 +33,7 @@ Updated: **2026-11-17**. Device name: **Bitchat Stick**. Supported context: publ
 - [ ] In Diagnostics, verify left/right are negative/positive X and up/down are negative/positive Y using `J:X,Y`.
 - [ ] Move within −80…80: no navigation. Cross −80 or 80: the intended direction acts.
 - [ ] Hold right or left for several seconds: only one action. Move directly to the opposite side: no second action until both axes return to −10…10.
-- [ ] Hold up and down separately: an immediate step, then one step per 1.5 seconds. Move out of the active range to stop repeating.
+- [ ] Hold up and down separately: an immediate step, then one step per 0.5 seconds. Move out of the active range to stop repeating.
 - [ ] With the display off, tilt once to wake only. Center and tilt again to navigate. Check the physical buttons still work.
 
 ## 1b. Sound and JoyC options
@@ -51,7 +51,7 @@ Updated: **2026-11-17**. Device name: **Bitchat Stick**. Supported context: publ
 - [ ] Apply each brightness: 5%, 25%, 50%, 75%, 100%; check readability and radio mark versus focus highlight.
 - [ ] Apply a level, fully power off/on, and verify persistence. Back out without applying a different level and verify no change.
 - [ ] Compare voltage/estimated percentage on USB and battery. Treat percentage as approximate; do not expect remaining-runtime or charging claims.
-- [ ] Scan the About QR: it opens https://github.com/wanderlima/bitchat-stick and credits Wander Lima.
+- [ ] Scan the About QR: it opens https://wanderlima.github.io/bitchat-stick/ and credits Wander Lima. `!about` is a separate text reply and includes the GitHub repository URL.
 
 ## 3. Discovery and authentication — repeat for each phone
 

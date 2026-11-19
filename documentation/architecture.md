@@ -6,7 +6,9 @@ Bitchat Stick is one shared ESP32 core plus a compile-time board profile. The de
 flowchart TD
   inputs[Buttons and optional JoyC] --> profile[Plus2 board profile]
   panel[240 x 135 landscape panel] --> profile
+  rtc[Plus2 RTC] --> profile
   profile --> loop[Application loop in src/main.cpp]
+  loop --> clock[Civil clock]
   loop --> scanner[Passive scanner]
   loop --> mesh[Mesh owner]
   loop --> transport[GATT transport]
@@ -31,6 +33,7 @@ NimBLE callbacks only enqueue fixed-size events. The application loop is the sin
 | Path | Responsibility |
 | --- | --- |
 | `src/main.cpp` | Init order and the single owner loop |
+| `src/Clock.cpp` | UTC civil clock. Reads and writes the board RTC. Falls back to the build-time floor when the RTC is missing or older |
 | `src/boards/m5stickc-plus2/` | GPIO hold, M5 init, Plus2 guard, RTC, buttons, battery, speaker, display, JoyC polling |
 | `src/Ui.cpp` | Screens and navigation. Draws only through `include/DrawSurface.h` |
 | `src/NavigationInput.h` | A/B/C semantics, long-press suppression, wake suppression |
@@ -84,7 +87,7 @@ The bot must not change the power mode on its own. Reducing scan duty changes di
 
 ## Persistence and power
 
-Brightness, sound and JoyC checkboxes, and the local identity are versioned NVS records. Observations, messages, unread state, peer pins, and the Bot ON/OFF switch are RAM-only. Bot returns to ON after reboot. Identity keys live in unencrypted NVS. No secure-boot or flash-encryption provisioning is part of this project.
+Brightness, sound and JoyC checkboxes, and the local identity are versioned NVS records. The civil clock is not an NVS record. Date & time writes it to the Plus2 RTC after rejecting an invalid date, and a failed save leaves the clock already in use. The process timezone is `UTC0`. Observations, messages, unread state, peer pins, and the Bot ON/OFF switch are RAM-only. Bot returns to ON after reboot. Identity keys live in unencrypted NVS. No secure-boot or flash-encryption provisioning is part of this project.
 
 The screen can turn off while scanning continues. Deep sleep would stop the radio, so the Plus2 profile does not use sleep as a messaging power mode. Button C remains the power button: a 6-second hold keeps the power-off behavior, and a long C press is never a down action on release.
 
@@ -100,3 +103,4 @@ The site is a static Astro project. HTML is prerendered. GSAP and Three.js load 
 - [Wire contract](wire-contract.md)
 - [Adding a board](adding-a-board.md)
 - [Adding a display](adding-a-display.md)
+- [Screens and controls](screens.md)

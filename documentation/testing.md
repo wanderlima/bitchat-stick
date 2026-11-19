@@ -114,7 +114,7 @@ The combined feedback revision passed seventeen native suites plus the independe
 
 ## HAT reference comparison — 2026-11-11
 
-Settings now places About last. The supplied local `m5stick-nemo-wl` reference uses M5Unified Ex_I2C and STOP-separated register reads, with 0x54/0x38 discovery. The Bitchat driver now follows that interface; its direction mapping was subsequently corrected using owner feedback below. The runtime libraries were pinned to the reference's M5GFX 0.2.36 and M5Unified 0.2.8. RTC setup verifies writes through readback for the older API.
+On this date, Settings placed About last. The current list ends with Date & time; see [screens](screens.md). The supplied local `m5stick-nemo-wl` reference uses M5Unified Ex_I2C and STOP-separated register reads, with 0x54/0x38 discovery. The Bitchat driver now follows that interface; its direction mapping was subsequently corrected using owner feedback below. The runtime libraries were pinned to the reference's M5GFX 0.2.36 and M5Unified 0.2.8. RTC setup verifies writes through readback for the older API.
 
 A temporary address/pin diagnostic found no acknowledgement and observed the GPIO26 line low. The probe was removed and normal firmware restored. Seventeen native suites passed, and the target built/uploaded successfully, with RTC and the application loop alive. The captured runtime still showed `joyc=absent`. A full power cycle/remount was requested to check for a stalled accessory. At that diagnostic stage, successful physical HAT navigation was not yet confirmed.
 

@@ -1,8 +1,10 @@
 # Bitchat Stick
 
-Firmware **v1.0.00** · Default language: **English (en-US)**.
+Firmware **1.1.00** · Default language: **English (en-US)**.
 
 Website: <https://wanderlima.github.io/bitchat-stick/>.
+
+**1.1.00** is the current firmware. It draws the Pocket UI at 240 × 135 in landscape, rotation 1, and keeps a civil clock that Date & time can store on the RTC. The previous release is **1.0.00** (2026-11-11).
 
 Modular BLE Bitchat firmware for ESP32. The initial supported profile is the M5StickC Plus2, with the Mini JoyC HAT as an optional peripheral of that profile. The firmware implements signed discovery and public chat, automatic identity-bound Noise sessions, bounded public-packet relay, and signed-public/private InfoBot commands. Other Bitchat users see the device as **Bitchat Stick** in the local `#bluetooth` context. Other ESP32 boards are not supported yet, and the Plus2 binary is not a universal image.
 
@@ -35,7 +37,7 @@ Exit the monitor with `Ctrl+C` before uploading again. Deployment currently mean
 - **Hold B for 700 ms:** go back; from Home, return to Start.
 - **Hold C for 6 seconds:** retain the power-off behavior. A long C press never becomes a down action on release.
 
-The optional **M5Stack Mini JoyC HAT (U156)** also navigates the menus: left goes back, right confirms, and up/down move and repeat every 1.5 seconds when held past the activation threshold. Left/right require recentering before another action. The physical buttons remain available. Settings → JoyC HAT adds optional Click confirmation and LED pulse, both disabled by default. See the [JoyC controls](documentation/screens.md#optional-mini-joyc-hat) and [device checks](documentation/device-checklist.md#1a-mini-joyc-hat).
+The optional **M5Stack Mini JoyC HAT (U156)** also navigates the menus: left goes back, right confirms, and up/down move and repeat every 0.5 seconds when held past the activation threshold. Left/right require recentering before another action. The physical buttons remain available. Settings → JoyC HAT adds optional Click confirmation and LED pulse, both disabled by default. See the [JoyC controls](documentation/screens.md#optional-mini-joyc-hat) and [device checks](documentation/device-checklist.md#1a-mini-joyc-hat).
 
 The splash screen shows the project name and `A Start`, aligned to the landscape Figma frames. Press A to enter Home. Each screen keeps a short footer for B/C, hold-B, and A. The first press after the screen turns off only wakes it. The status line shows BLE, the civil clock, and the battery.
 
@@ -47,7 +49,7 @@ The interface uses VT323, warm cream `#EBDCBA` instead of pure white, a 20 px st
 
 ## Live features and remaining scope
 
-- Home, Nearby, Channels, Messages, InfoBot, Settings, Brightness, Battery, About, and Diagnostics use real firmware state.
+- Home, Nearby, Channels, Messages, InfoBot, Settings, Brightness, Battery, About, Diagnostics, Sound, JoyC HAT, and Date & time use real firmware state.
 - Nearby distinguishes service-advertisement candidates, signed peers, and Noise-authenticated peers. A signed name is not an out-of-band verified human identity.
 - Channels separates **#bluetooth** (the shared public BLE `#bluetooth` context) and **Direct DMs** (private messages addressed to this Stick). It does not create a new channel. Messages reads signed public text and authenticated DMs, with explicit BLE/DM labels. It keeps twelve RAM-only entries, with message paging and text scrolling; at most 192 bytes are rendered per entry, with an explicit truncation mark.
 - Signed public announcements and text are verified, deduplicated, and eligible for TTL-limited forwarding without echoing the ingress link. Queue acceptance is not a delivery acknowledgement.

@@ -41,8 +41,8 @@ The firmware supports the [M5Stack Mini JoyC HAT (U156)](https://docs.m5stack.co
 |---|---|---|
 | Left | X < −80 | Back once |
 | Right | X > 80 | Confirm once |
-| Up | Y < −80 | Move up; repeat every 1.5 s while held |
-| Down | Y > 80 | Move down; repeat every 1.5 s while held |
+| Up | Y < −80 | Move up; repeat every 0.5 s while held |
+| Down | Y > 80 | Move down; repeat every 0.5 s while held |
 
 Exactly −80 or 80 is inactive. To rearm left/right, return both axes to the inclusive −10…10 center range. The stronger axis wins on a diagonal; equal diagonals do nothing. A deflection wakes a dark screen without navigating; center before the next gesture. Physical buttons take priority if used together. After detection or reconnection, the HAT must report center before it can navigate. Missing/failed reads are ignored and retried without delaying startup.
 

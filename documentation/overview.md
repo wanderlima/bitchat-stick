@@ -1,6 +1,6 @@
 # Overview
 
-**Bitchat Stick** is open-source ESP32 firmware, by **Wander Lima**, that participates in the local Bitchat BLE mesh. Other Bitchat users see the device as **Bitchat Stick** in the shared `#bluetooth` context. The source label in `include/Version.h` is **1.0.00**. Unreleased work after the `v1.0.00` tag does not create a new firmware release by itself.
+**Bitchat Stick** is open-source ESP32 firmware, by **Wander Lima**, that participates in the local Bitchat BLE mesh. Other Bitchat users see the device as **Bitchat Stick** in the shared `#bluetooth` context. The source label in `include/Version.h` is **1.1.00**. That label is unreleased work after the `v1.0.00` tag and does not create a new firmware release by itself.
 
 The supported device is the **M5StickC Plus2** (ESP32-PICO-V3-02, 240 × 135 landscape UI, nominal 200 mAh battery). The **M5Stack Mini JoyC HAT (U156)** is an optional peripheral of that profile. The Plus2 binary is not a universal ESP32 image. ESP32-C3, C6, and S3 binaries are not interchangeable with this target, and the original StickC or StickC Plus are not supported.
 
@@ -15,6 +15,7 @@ The Plus2 profile implements:
 - Bounded forwarding of verified public packets, with TTL reduction and no echo on the ingress link.
 - Signed-public and authenticated-private InfoBot commands.
 - On-device menus for nearby peers, channels, messages, InfoBot, settings, and a private/public composer.
+- A UTC civil clock in the status bar. Date & time stores a valid time on the Plus2 RTC.
 
 Queue acceptance is not a delivery acknowledgement. A signed peer name is not an out-of-band verified human identity. Public `#bluetooth` text is readable to nearby participants.
 
@@ -33,7 +34,6 @@ This is a two-part repository, not an npm or pnpm workspace.
 | Firmware | repository root (`platformio.ini`, `src/`, `include/`, `test/`) | PlatformIO/Arduino image for the Plus2 |
 | Website | `website/` | Static Astro site deployed by GitHub Actions |
 | Documentation | `documentation/` | Handbook, specs, checklists, screen notes, and ADRs |
-| CAD references | `models/` | StickC Plus2 and Mini JoyC model notes |
 
 Every project document lives in `documentation/`. Each topic has one page: setup, architecture, features, the wire contract, screens, tests, and the device checklist are not split across a second folder.
 

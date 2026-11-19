@@ -67,31 +67,29 @@ Source: [Bitchat Stick — refinado in Figma](https://www.figma.com/design/z2zlf
 
 Tokens: black `#000000`, cream `#EBDCBA`, mint `#84FF84`, forest `#082D21`, panel `#101418`. Pixelify Sans 500 is reserved for short headings; Courier Prime 400/700 is used for readable body copy. Fonts are self-hosted through Fontsource; the deployed font licenses are included in `public/font-licenses.txt`. Icons remain decorative alongside visible link labels.
 
-The hero uses the 240×135 landscape UI and nearest-neighbor image sampling. The Stick is turned on its side so that firmware text stays upright. Mobile uses its dedicated connected scene. The desktop intentionally clips peers beyond the safe area. There is no horizontal document overflow.
+The hero uses the 240×135 landscape UI and nearest-neighbor image sampling. The Stick is turned on its side so that firmware text stays upright. Viewports below 640 px use the centered mobile scene. Wider viewports use the desktop scene, with the outer peers inside the 1600×760 frame. There is no horizontal document overflow.
 
 ### Hero sequence
 
-One 15,460 ms timeline contains two conceptual scenarios:
+One 11.4-second timeline contains two conceptual scenarios: the Stick sends one message, then receives one.
 
-| Moment                                    |       Duration |
-| ----------------------------------------- | -------------: |
-| Home                                      |         800 ms |
-| Writing                                   |       1,200 ms |
-| Send selected                             |         600 ms |
-| Queued                                    |         400 ms |
-| Stick → North, then hop accent            |   900 + 120 ms |
-| North → East, then hop accent             | 1,200 + 120 ms |
-| Hold and reset                            | 1,000 + 120 ms |
-| West → Relay, then hop accent             | 1,800 + 120 ms |
-| Relay → Stick, then hop accent            | 1,000 + 120 ms |
-| Received screen hold after arrival accent |       1,700 ms |
-| Stick → North, then hop accent            |   900 + 120 ms |
-| North → East, then hop accent             | 1,200 + 120 ms |
-| Rest and reset                            | 1,800 + 120 ms |
+| Moment | Start | Duration |
+| --- | ---: | ---: |
+| Home | 0 | 800 ms |
+| Writing | 0.8 s | 1,200 ms |
+| Send selected | 2.0 s | 600 ms |
+| Queued | 2.6 s | 400 ms |
+| Stick → North | 3.0 s | 900 ms |
+| North → East | 3.9 s | 1,200 ms |
+| Hold, then clear the outbound route | 5.1 s | until 6.4 s |
+| West → Relay, screen returns to Home | 6.4 s | 1,800 ms |
+| Relay → Stick | 8.2 s | 1,000 ms |
+| Received | 9.2 s | until the route clears at 11.2 s |
+| Rest | 11.0 s | loop ends at 11.4 s |
 
-Each route is decomposed into cardinal legs, with discrete steps and a single envelope. The active connection is rendered as contiguous mint segments revealed by transform scaling; base forest routes stay visible. The source and destination silhouettes, controls and labels receive the same mint accent for the duration of the hop. Inactive peers return to cream; there are no permanently green West/Relay peers or detached blinking rectangles. Screens swap as complete bitmaps. No typing is fabricated on top of the firmware images. Queued never claims Delivered or Read.
+Each route is a polyline between device centers. One envelope glides along that line while the active stroke grows behind it. A ripple starts at the sending device, and another starts at the destination when the envelope arrives. The second hop of each story does not ripple the intermediate peer again. Source and destination stay accented until that story's route clears. Base forest routes stay visible. Inactive peers return to cream. Screens swap as complete bitmaps. No typing is fabricated on top of the firmware images. Queued never claims Delivered or Read.
 
-The 15.46-second timeline repeats indefinitely while visible. There is no play/pause button on the hero. The footer offers a labeled **Reduce motion** checkbox, also reachable through a keyboard-only Motion settings shortcut. It stops the loop and other movement and restores the static Received frame. The OS reduced-motion preference is always honored; when active, the site checkbox is checked and disabled with an explanation. Leaving the viewport or hiding the tab pauses the loop automatically. All content and FAQ remain usable without JavaScript; the interactive controls demo is disabled until its script loads.
+The 11.4-second timeline repeats indefinitely while visible. There is no play/pause button on the hero. The footer offers a labeled **Reduce motion** checkbox, also reachable through a keyboard-only Motion settings shortcut. It stops the loop and other movement and restores the static Received frame. The OS reduced-motion preference is always honored; when active, the site checkbox is checked and disabled with an explanation. Leaving the viewport or hiding the tab pauses the loop automatically. All content and FAQ remain usable without JavaScript; the interactive controls demo is disabled until its script loads.
 
 Every section h2 uses the same capped SplitText character reveal (80ms per character group, at most 17 stagger slots). Section text, facts, cards, documentation links and the controls illustration enter in small batches with y=12px and opacity, 220ms per item and a 55ms stagger. Each entrance runs once. Content remains present in the static HTML, and focused interactive items are not faded out. FAQ layout opens immediately, with at most a 120ms pointer fade; keyboard actions are immediate. Transform and opacity are the only animated visual properties.
 
@@ -147,7 +145,7 @@ To regenerate the share image, run the production preview on port 4322, then `np
 
 ### Initial hero entrance
 
-On first load, a 520ms stepped entrance reveals the eyebrow, title, description, actions and metadata, followed by the connected illustration and its five devices. The existing 15.46-second network loop starts after the entrance and never repeats it. Resizing or revisiting the hero within the same page does not replay the entrance. Reduced motion shows the final static layout immediately; focusing a hero action completes the entrance so a keyboard user never lands on a transparent link. The technical disclosure remains readable throughout.
+On first load, a 520ms stepped entrance reveals the eyebrow, title, description, actions and metadata, followed by the connected illustration and its five devices. The existing 11.4-second network loop starts after the entrance and never repeats it. Resizing or revisiting the hero within the same page does not replay the entrance. Reduced motion shows the final static layout immediately; focusing a hero action completes the entrance so a keyboard user never lands on a transparent link. The technical disclosure remains readable throughout.
 
 The entrance revision passed `npm run check`, `npm run build` and all 17 browser tests, including once-only entrance, resize and live reduced-motion changes.
 

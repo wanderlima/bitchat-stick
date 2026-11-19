@@ -25,7 +25,7 @@ Crypto and protocol code in the shared core does not include `M5Unified.h` and d
 
 | Component | Declared version | Role |
 | --- | --- | --- |
-| Node.js | `>=22.23.4`; `.node-version` is `24` | Astro supports even-numbered Node releases. The current documented minimum is 22.23.4. CI uses Node 24 |
+| Node.js | `>=22.23.4`; `.node-version` is `24` | Astro's current install guide requires Node `v22.23.4` or higher and does not support odd-numbered releases such as 23. CI uses Node 24 |
 | npm | lockfile in `website/package-lock.json` | `npm ci` is the install used by CI |
 | Astro | `~7.4.11` | Static site. `output: 'static'` prerenders pages |
 | Tailwind CSS | `^4.3.5` | Utility CSS through the Vite plugin |
