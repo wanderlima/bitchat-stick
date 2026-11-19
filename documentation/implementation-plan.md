@@ -1,6 +1,6 @@
 # Implementation plan by screen and complexity
 
-Updated: **2026-11-17**. English (en-US) firmware v1.0.00. Source implementation is a shared ESP32 core plus the Plus2 profile, with the seventeen-screen public-BLE, received-DM and private-composer scope. Physical acceptance is intentionally separate: use the [device checklist](device-checklist.md). Future boards and product ideas are not represented as implemented.
+Updated for the current Plus2 source. English (en-US). The source label in `include/Version.h` is **1.1.00**. That label is not a new Git tag; `v1.0.00` remains the annotated release. Physical acceptance is intentionally separate: use the [device checklist](device-checklist.md). Future boards and product ideas are not represented as implemented.
 
 ## Screen order — lowest to highest complexity
 
@@ -8,7 +8,7 @@ Updated: **2026-11-17**. English (en-US) firmware v1.0.00. Source implementation
 |---|---|---|---|
 | 1 | Start | Shared controls, project name, A opens Home | Battery boot, readability, wake suppression |
 | 2 | About | Wander Lima, open-source credit, repository QR | Camera scan at practical brightness |
-| 3 | Settings | Six destinations, shared navigation, About last | Return/focus behavior on the device |
+| 3 | Settings | Seven destinations. Date & time is last | Return/focus behavior on the device |
 | 4 | Brightness | 5/25/50/75/100%, explicit apply, NVS persistence/error handling | All levels on USB/battery; full power cycle |
 | 5 | Battery | Voltage, approximate percentage, unknown/low states | Compare USB/battery; measure actual endurance |
 | 6 | Diagnostics | BLE reports/drops, heap, uptime, mesh accept/reject and clock | Long-run counters and memory trend |
@@ -18,11 +18,12 @@ Updated: **2026-11-17**. English (en-US) firmware v1.0.00. Source implementation
 | 10 | Channels | Public #bluetooth and Direct DMs, unread counts and reply entry | Offline context and controlled indirect forwarding |
 | 11 | InfoBot | Signed public/private commands, !about, ON/OFF control and private first-DM introduction | Owner confirmed replies on 2026-11-17. Cooldown and reply-loop checks remain open |
 | 12 | Sound | Persistent independent interaction/DM/channel checkboxes | Buzzer audibility and incoming alert behavior |
-| 13 | JoyC HAT | Corrected axes, optional click/LED, release-to-arm and repeat rules | Click/LED edge cases; directions confirmed by owner |
+| 13 | JoyC HAT | Optional click/LED, release-to-arm, and 0.5-second vertical repeat. Left and right are one action until recenter | Click/LED edge cases. Directions were confirmed before the landscape rotation; axes after rotation 1 are still open |
 | 14 | Reply | Captured recipient ID or public channel, Short msg/Keyboard/Welcome msg choices | Entry paths individually recorded |
 | 15 | Short msgs | 32 English presets, sliding list and confirmation | Presets individually recorded |
 | 16 | Keyboard | Bounded 192-character draft, case/numbers, space/delete | Full limit/key usability checks |
 | 17 | Confirm | Send/Cancel, retained draft on failure, authenticated receipt state | Owner confirmed delivered/read checks on 2026-11-17. Disconnect checks remain open |
+| 18 | Date & time | Shows the applied UTC civil time. Set date and Set time edit one field. Invalid dates are rejected. A failed RTC save shows Not saved | RTC save and the status clock on the device |
 
 ## Completed engineering groups
 

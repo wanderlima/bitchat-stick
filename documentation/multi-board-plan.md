@@ -19,7 +19,7 @@ The Plus2 currently has hardware evidence for discovery, Noise authentication an
 | Existing area | Portability constraint |
 | --- | --- |
 | `src/main.cpp` | Calls the selected board adapter. GPIO4 HOLD, M5Unified, the Plus2 board guard, button polling, power-off and JoyC status stay in `src/boards/m5stickc-plus2/` |
-| `src/Ui.cpp` | Draws through the display surface. Coordinates stay 135×240. Only `src/boards/m5stickc-plus2/Display.cpp` talks to the panel |
+| `src/Ui.cpp` | Draws through the display surface. Coordinates are the 240×135 landscape layout. Only `src/boards/m5stickc-plus2/Display.cpp` talks to the panel |
 | `src/Joyc.cpp`, `src/Feedback.cpp` | JoyC I2C and the speaker still use the Plus2 profile. JoyC is an optional peripheral, not a second firmware target |
 | `src/Clock.cpp` | Shared UTC policy with a board RTC adapter. A bare DevKit normally has no equivalent RTC |
 | `src/Scanner.cpp`, `src/Transport.cpp` | NimBLE initialization, bounded queues, peripheral GATT links, advertising restart and notification behavior must survive the split |

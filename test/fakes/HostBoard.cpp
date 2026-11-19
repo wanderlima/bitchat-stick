@@ -13,16 +13,42 @@ std::vector<SurfaceText> texts;
 std::vector<SurfaceRect> rects;
 std::vector<std::string> ops;
 bool boundsOk = true;
-UiFont fontId = UiFont::Body16;
-int fontKind = 4;
+UiFont fontId = UiFont::Vt16;
+int fontKind = 16;
 int fontHeight = 16;
 float textScale = 1;
 uint16_t ink = 0xFFFF;
 bool buttonA = false, buttonB = false, buttonPower = false;
 
-const unsigned char bold9[] = {11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11};
-const unsigned char bold12[] = {14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,15,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14};
-const unsigned char mono9[] = {11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11};
+const lgfx::GFXfont* gfxFor(UiFont font) {
+  switch (font) {
+    case UiFont::Vt16: return &assets::Vt32316;
+    case UiFont::Vt17: return &assets::Vt32317;
+    case UiFont::Vt18: return &assets::Vt32318;
+    case UiFont::Vt19: return &assets::Vt32319;
+    case UiFont::Vt20: return &assets::Vt32320;
+    case UiFont::Vt21: return &assets::Vt32321;
+    case UiFont::Vt22: return &assets::Vt32322;
+    case UiFont::Vt23: return &assets::Vt32323;
+    case UiFont::Vt31: return &assets::Vt32331;
+  }
+  return &assets::Vt32316;
+}
+
+int fontPixels(UiFont font) {
+  switch (font) {
+    case UiFont::Vt16: return 16;
+    case UiFont::Vt17: return 17;
+    case UiFont::Vt18: return 18;
+    case UiFont::Vt19: return 19;
+    case UiFont::Vt20: return 20;
+    case UiFont::Vt21: return 21;
+    case UiFont::Vt22: return 22;
+    case UiFont::Vt23: return 23;
+    case UiFont::Vt31: return 31;
+  }
+  return 16;
+}
 
 void rememberRect(int x, int y, int width, int height, uint16_t color) {
   rects.push_back({x, y, width, height, color});
@@ -34,7 +60,7 @@ void rememberRect(int x, int y, int width, int height, uint16_t color) {
 
 bool surfaceBegin() {
   textScale = 1;
-  frameSetFont(UiFont::Body16);
+  frameSetFont(UiFont::Vt16);
   return true;
 }
 
@@ -65,21 +91,16 @@ void frameHLine(int x, int y, int width, uint16_t color) { frameFillRect(x, y, w
 
 void frameSetFont(UiFont font) {
   fontId = font;
-  if (font == UiFont::Compact14) { fontKind = 3; fontHeight = 14; }
-  else if (font == UiFont::Bold9) { fontKind = 1; fontHeight = 18; }
-  else if (font == UiFont::Bold12) { fontKind = 2; fontHeight = 24; }
-  else { fontKind = 4; fontHeight = 16; }
+  fontKind = fontPixels(font);
+  fontHeight = fontKind;
 }
 
 int frameTextWidth(const char* text) {
-  const lgfx::GFXfont* gfx = fontId == UiFont::Compact14 ? &assets::FreeMonoCompact14
-                            : fontId == UiFont::Body16 ? &assets::FreeMonoBody16 : nullptr;
+  const lgfx::GFXfont* gfx = gfxFor(fontId);
   int width = 0;
   for (const unsigned char c : std::string(text ? text : "")) {
-    if (gfx && c >= 32 && c < 127) width += gfx->glyph[c - 32].xAdvance;
-    else if (fontKind && c >= 32 && c < 127) width += (fontKind == 1 ? bold9 : bold12)[c - 32];
-    else if (c >= 32 && c < 128) width += mono9[c - 32];
-    else width += 8;
+    if (c >= 32 && c <= 126) width += gfx->glyph[c - 32].xAdvance;
+    else width += fontHeight;
   }
   return int(width * textScale);
 }

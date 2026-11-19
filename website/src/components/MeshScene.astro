@@ -1,88 +1,107 @@
 ---
 import Peer from './Peer.astro';
 import Device from './Device.astro';
-import { desktopRoutes, mobileRoutes, length } from '../data/mesh';
+import { desktopScene, mobileScene, meshBounds, peerNames } from '../data/mesh';
+
 interface Props {
   mobile?: boolean;
 }
 const { mobile = false } = Astro.props;
-const routes = mobile ? mobileRoutes : desktopRoutes;
+const variant = mobile ? 'mobile' : 'desktop';
+const {
+  layout,
+  size: [width, height],
+  routes,
+} = mobile ? mobileScene : desktopScene;
 const base = import.meta.env.BASE_URL;
-const stroke = mobile ? 1 : 2;
-const device = mobile
-  ? { x: 101.6667, y: 21.6667, scale: 0.8333333 }
-  : { x: 974, y: 157, scale: 1 };
+const mask = `mesh-clear-${variant}`;
+const stroke = mobile ? 1 : 1.5;
+const packetWidth = mobile ? 18 : 30;
 ---
 
 <svg
-  class:list={['mesh-scene', mobile ? 'mesh-mobile' : 'mesh-desktop']}
-  data-mesh={mobile ? 'mobile' : 'desktop'}
-  viewBox={mobile ? '0 0 327 420' : '0 0 1600 760'}
+  class:list={['mesh-scene', `mesh-${variant}`]}
+  data-mesh={variant}
+  viewBox={`0 0 ${width} ${height}`}
   aria-hidden="true"
 >
-  <g
-    class="mesh-routes"
-    fill="none"
-    stroke="#5a5a5a"
-    stroke-width={stroke}
-    stroke-linecap="butt"
-    stroke-linejoin="miter"
-  >
-    {routes.map((route) => (
-      <polyline points={route.points.map((p) => p.join(',')).join(' ')} />
-    ))}
+  <defs>
+    <mask id={mask} maskUnits="userSpaceOnUse" x="0" y="0" width={width} height={height}>
+      <rect width={width} height={height} fill="white" />
+      {peerNames.map((name) => {
+        const box = meshBounds(layout, name);
+        const padding = name === 'stick' ? (mobile ? 4 : 8) : mobile ? 2 : 4;
+        return (
+          <rect
+            x={box.x - padding}
+            y={box.y - padding}
+            width={box.width + 2 * padding}
+            height={box.height + 2 * padding}
+            fill="black"
+          />
+        );
+      })}
+    </mask>
+  </defs>
+  <g mask={`url(#${mask})`}>
+    <g
+      class="mesh-routes"
+      fill="none"
+      stroke="#5a5a5a"
+      stroke-width={stroke}
+      stroke-linejoin="round"
+    >
+      {routes.map((route) => (
+        <polyline points={route.points.map((point) => point.join(',')).join(' ')} />
+      ))}
+    </g>
+    <g
+      class="lit-routes"
+      fill="none"
+      stroke="#84ff84"
+      stroke-width={stroke}
+      stroke-linejoin="round"
+    >
+      {routes.map((route, index) => (
+        <g data-route={index} opacity="0">
+          <polyline points={route.points.map((point) => point.join(',')).join(' ')} />
+        </g>
+      ))}
+    </g>
+    <g class="ripples" fill="none" stroke="#84ff84" stroke-width={stroke}>
+      {peerNames.map((name) => {
+        const box = meshBounds(layout, name);
+        return (
+          <circle
+            class="ripple"
+            data-ripple={name}
+            cx={box.x + box.width / 2}
+            cy={box.y + box.height / 2}
+            r="0"
+            opacity="0"
+          />
+        );
+      })}
+    </g>
+    <g class="packet" opacity="0">
+      <image
+        href={`${base}icons/envelope.svg`}
+        x={-packetWidth / 2}
+        y={(-packetWidth * 11) / 30}
+        width={packetWidth}
+        height={(packetWidth * 22) / 30}
+      />
+    </g>
   </g>
-  <g
-    class="lit-routes"
-    fill="none"
-    stroke="#84ff84"
-    stroke-width={stroke}
-    stroke-linecap="butt"
-    stroke-linejoin="miter"
-  >
-    {routes.map((route, index) => (
-      <g data-route={index} opacity="0">
-        <polyline
-          points={route.points.map((p) => p.join(',')).join(' ')}
-          pathLength={length(route.points)}
-          stroke-dasharray={`0 ${length(route.points)}`}
-        />
-      </g>
-    ))}
-  </g>
-  <g class="ripples" fill="none" stroke="#84ff84" stroke-width={mobile ? 1.5 : 2}>
-    <circle class="ripple" cx="0" cy="0" r="0" opacity="0" />
-    <circle class="ripple" cx="0" cy="0" r="0" opacity="0" />
-  </g>
-  <g class="packet" opacity="0">
-    <image href={`${base}icons/envelope.svg`} x="-15" y="-11" width="30" height="22" />
-  </g>
-  <rect
-    x={device.x}
-    y={device.y}
-    width={212 * device.scale}
-    height={356 * device.scale}
-    fill="#000"
-  />
-  {mobile ? (
-    <>
-      <Peer x={14} y={151} name="west" label="WEST" scale={0.28} labelX={18} labelAnchor="start" />
-      <Peer x={66} y={266} name="relay" label="RELAY" scale={0.42} />
-      <Peer x={286} y={29} name="north" label="NORTH" scale={0.28} labelX={92} labelAnchor="end" />
-      <Peer x={286} y={277} name="east" label="EAST" scale={0.28} labelX={46} labelAnchor="end" />
-    </>
-  ) : (
-    <>
-      <Peer x={12} y={424} name="west" label="PEER / WEST" />
-      <Peer x={714} y={524} name="relay" label="RELAY" />
-      <Peer x={1334} y={84} name="north" label="PEER / NORTH" />
-      <Peer x={1444} y={514} name="east" label="PEER / EAST" />
-    </>
+  {peerNames.map((name) =>
+    name === 'stick' ? (
+      <Device {...layout[name]} screens={['home', 'writing', 'confirm', 'queued', 'received']} />
+    ) : (
+      <Peer
+        {...layout[name]}
+        name={name}
+        label={mobile || name === 'relay' ? name.toUpperCase() : `PEER / ${name.toUpperCase()}`}
+      />
+    ),
   )}
-  <Device
-    x={device.x}
-    y={device.y}
-    scale={device.scale}
-    screens={['home', 'writing', 'confirm', 'queued', 'received']}
-  />
 </svg>

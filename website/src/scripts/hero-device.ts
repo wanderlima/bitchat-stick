@@ -41,7 +41,8 @@ export async function mountHeroDevice() {
   let visible = false;
   let disposed = false;
   let lastFrame = 0;
-  let modelHeight = 0.048;
+  let modelHeight = 0.024;
+  let modelWidth = 0.048;
   let shown = '';
   let litState = false;
   const screenMaterial = new THREE.MeshBasicMaterial({ toneMapped: false });
@@ -114,7 +115,8 @@ export async function mountHeroDevice() {
     if (!width || !height) return;
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    const visibleHeight = modelHeight * (1 + PAD * 2);
+    const fit = Math.max(modelHeight, (modelWidth * height) / Math.max(width, 1));
+    const visibleHeight = fit * (1 + PAD * 2);
     camera.position.z = visibleHeight / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     camera.updateProjectionMatrix();
     requestRender();
@@ -215,18 +217,29 @@ export async function mountHeroDevice() {
       });
       pose.add(source);
     }
+    solid.scene.rotation.z = Math.PI / 2;
+    contours.scene.rotation.z = Math.PI / 2;
     const bounds = new THREE.Box3().setFromObject(solid.scene);
     const center = bounds.getCenter(new THREE.Vector3());
     solid.scene.position.sub(center);
     contours.scene.position.sub(center);
     solid.scene.updateWorldMatrix(true, true);
-    modelHeight = new THREE.Box3().setFromObject(solid.scene).getSize(new THREE.Vector3()).y;
+    const fitted = new THREE.Box3().setFromObject(solid.scene).getSize(new THREE.Vector3());
+    modelHeight = fitted.y;
+    modelWidth = fitted.x;
     const glass = solid.scene.getObjectByName('display_glass');
     if (glass) {
       const glassBox = new THREE.Box3().setFromObject(glass);
       const size = glassBox.getSize(new THREE.Vector3());
       const glassCenter = glassBox.getCenter(new THREE.Vector3());
-      screen.scale.set(size.x * 0.98, size.y * 0.98, 1);
+      // Frames are 240×135. The glass is a little taller, so fit the picture
+      // inside the opening instead of stretching it to the glass.
+      const frameAspect = 240 / 135;
+      const openingWidth = size.x * 0.98;
+      const openingHeight = size.y * 0.98;
+      const frameHeight = Math.min(openingHeight, openingWidth / frameAspect);
+      const frameWidth = frameHeight * frameAspect;
+      screen.scale.set(frameWidth, frameHeight, 1);
       screen.position.set(glassCenter.x, glassCenter.y, glassBox.max.z + 0.00012);
     }
     host.append(renderer.domElement);

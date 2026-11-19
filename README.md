@@ -1,8 +1,10 @@
 # Bitchat Stick
 
-Firmware **v1.0.00** · Default language: **English (en-US)**.
+Firmware **1.1.00** · Default language: **English (en-US)**.
 
 Website: <https://wanderlima.github.io/bitchat-stick/>.
+
+**1.1.00** is the current firmware. It draws the Pocket UI at 240 × 135 in landscape, rotation 1, and keeps a civil clock that Date & time can store on the RTC. The previous release is **1.0.00** (2026-11-11).
 
 Modular BLE Bitchat firmware for ESP32. The initial supported profile is the M5StickC Plus2, with the Mini JoyC HAT as an optional peripheral of that profile. The firmware implements signed discovery and public chat, automatic identity-bound Noise sessions, bounded public-packet relay, and signed-public/private InfoBot commands. Other Bitchat users see the device as **Bitchat Stick** in the local `#bluetooth` context. Other ESP32 boards are not supported yet, and the Plus2 binary is not a universal image.
 
@@ -35,28 +37,28 @@ Exit the monitor with `Ctrl+C` before uploading again. Deployment currently mean
 - **Hold B for 700 ms:** go back; from Home, return to Start.
 - **Hold C for 6 seconds:** retain the power-off behavior. A long C press never becomes a down action on release.
 
-The optional **M5Stack Mini JoyC HAT (U156)** also navigates the menus: left goes back, right confirms, and up/down move and repeat every 1.5 seconds when held past the activation threshold. Left/right require recentering before another action. The physical buttons remain available. Settings → JoyC HAT adds optional Click confirmation and LED pulse, both disabled by default. See the [JoyC controls](documentation/screens.md#optional-mini-joyc-hat) and [device checks](documentation/device-checklist.md#1a-mini-joyc-hat).
+The optional **M5Stack Mini JoyC HAT (U156)** also navigates the menus: left goes back, right confirms, and up/down move and repeat every 0.5 seconds when held past the activation threshold. Left/right require recentering before another action. The physical buttons remain available. Settings → JoyC HAT adds optional Click confirmation and LED pulse, both disabled by default. See the [JoyC controls](documentation/screens.md#optional-mini-joyc-hat) and [device checks](documentation/device-checklist.md#1a-mini-joyc-hat).
 
-The splash screen shows the project name and controls, aligned to the current Figma design. Press A to enter Home. Navigation instructions are shown only on the splash screen, freeing space on the other screens. The first press after the screen turns off only wakes it.
+The splash screen shows the project name and `A Start`, aligned to the landscape Figma frames. Press A to enter Home. Each screen keeps a short footer for B/C, hold-B, and A. The first press after the screen turns off only wakes it. The status line shows BLE, the civil clock, and the battery.
 
 Settings → Sound offers independent checkboxes for interaction beeps, received DMs and #bluetooth messages. Choices persist across restart.
 
-Settings offers 5%, 25%, 50%, 75%, and 100% brightness, with 50% as the default. About credits **Wander Lima** and includes a real QR code for [the project repository](https://github.com/wanderlima/bitchat-stick). A radio mark shows the applied brightness; the cream highlight shows the focused option.
+Settings offers 5%, 25%, 50%, 75%, and 100% brightness, with 50% as the default. About credits **Wander Lima** and includes a QR code for [the project website](https://wanderlima.github.io/bitchat-stick/). A radio mark shows the applied brightness; the cream highlight shows the focused option. Date & time sets the civil clock stored on the device.
 
-The interface uses FreeMono Regular/Bold, warm cream `#EBDCBA` instead of pure white, an outlined BLE header, high-contrast selection, grouped panels, and dividers between menu items and information groups. Nearby retains a dark-green peer card and a bright-green left border.
+The interface uses VT323, warm cream `#EBDCBA` instead of pure white, a 20 px status bar, high-contrast selection, and a footer on every screen after Start. Nearby shows a signed peer or an unverified advertisement, not a dashboard card.
 
 ## Live features and remaining scope
 
-- Home, Nearby, Channels, Messages, InfoBot, Settings, Brightness, Battery, About, and Diagnostics use real firmware state.
+- Home, Nearby, Channels, Messages, InfoBot, Settings, Brightness, Battery, About, Diagnostics, Sound, JoyC HAT, and Date & time use real firmware state.
 - Nearby distinguishes service-advertisement candidates, signed peers, and Noise-authenticated peers. A signed name is not an out-of-band verified human identity.
 - Channels separates **#bluetooth** (the shared public BLE `#bluetooth` context) and **Direct DMs** (private messages addressed to this Stick). It does not create a new channel. Messages reads signed public text and authenticated DMs, with explicit BLE/DM labels. It keeps twelve RAM-only entries, with message paging and text scrolling; at most 192 bytes are rendered per entry, with an explicit truncation mark.
 - Signed public announcements and text are verified, deduplicated, and eligible for TTL-limited forwarding without echoing the ingress link. Queue acceptance is not a delivery acknowledgement.
 - InfoBot supports `!info`, `!rules`, `!help`, and `!about`, plus `!regras`/`!ajuda` aliases. `!info` answers `InfoBot: Bitchat Stick | ESP32 | #bluetooth local relay and private text DMs.` Signed public commands receive public replies; authenticated DMs receive private replies. A three-second peer limit and one-second global limit prevent reply floods. The InfoBot screen shows its latest reply/block status. See [usage and troubleshooting](documentation/infobot.md). The on-device `Bot: ON/OFF` switch applies immediately for the current boot.
 - Public channel-join greetings remain OFF because discovery/reconnection does not reliably prove channel entry. With Bot ON, the first fresh authenticated DM from each person receives a private introduction explaining !help/!about, once per boot for up to 32 identities.
-- An envelope in the header indicates unread incoming messages. Home and each inbox show unread counts; opening a DM sends an encrypted read receipt. New arrivals preserve the current reading position. Unread state is RAM-only.
+- Home and each inbox show unread counts as `N new`. The status bar draws a green envelope while any incoming message is unread. Opening a DM sends an encrypted read receipt. New arrivals preserve the current reading position. Unread state is RAM-only.
 - Channels → #bluetooth offers Read chat and Write msg; public drafts show the channel explicitly and use signed public sending. Replying to a user remains private.
 - Nearby users and Channels messages open a private composer: 32 scrolling Short msg presets, a QWERTY keyboard, or Welcome msg using the shared introduction, then Send/Cancel. Drafts are bounded to 192 ASCII characters. Sending requires an authenticated live session; Queued, Delivered and Read are distinct states. See the [composer and device checklist](documentation/direct-message-composer.md).
-- Drawing uses a 135 × 240 offscreen framebuffer before updating the display, avoiding the visible erase/redraw cycle.
+- Drawing uses a 240 × 135 offscreen framebuffer before updating the display, avoiding the visible erase/redraw cycle. The panel uses rotation 1.
 
 Private media, private groups, Nostr, gossip/history synchronization, arbitrary routed Noise forwarding, OTA, persistent chat history remain future scope. See the [wire contract and security limits](documentation/wire-contract.md) and [current implementation plan](documentation/implementation-plan.md).
 
@@ -93,6 +95,6 @@ The public site is <https://wanderlima.github.io/bitchat-stick/>. Source lives i
 
 ## Hardware and evidence
 
-Initial hardware: M5StickC Plus2 with ESP32-PICO-V3-02, 135 × 240 display, and nominal 200 mAh battery. The Mini JoyC HAT is optional on that profile. Refer to the [M5Stack hardware documentation](https://docs.m5stack.com/en/core/StickC-Plus2). Binaries built for ESP32-C3/C6/S3 are not interchangeable with this target.
+Initial hardware: M5StickC Plus2 with ESP32-PICO-V3-02, 240 × 135 landscape UI on the 135 × 240 panel, and nominal 200 mAh battery. The Mini JoyC HAT is optional on that profile. Refer to the [M5Stack hardware documentation](https://docs.m5stack.com/en/core/StickC-Plus2). Binaries built for ESP32-C3/C6/S3 are not interchangeable with this target.
 
 “Documented upstream” means described by the cited source. “Third-party claim” is not an independent test. “Proposed” means future work. “Unverified” requires an experiment. The Android discovery/signature/Noise path has hardware evidence. Full messaging compatibility, controlled indirect relay, range, and battery runtime have not yet been established.

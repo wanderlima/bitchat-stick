@@ -97,7 +97,11 @@ export async function mountHardwareScene(root: HTMLElement) {
     const { width, height } = host.getBoundingClientRect();
     if (!width || !height) return;
     renderer.setSize(width, height, false);
-    const halfHeight = 0.0475;
+    const margin = 1.22;
+    const halfHeight =
+      (Math.max(deviceHeight, (deviceWidth * height) / Math.max(width, 1)) * margin) / 2;
+    camera.top = halfHeight;
+    camera.bottom = -halfHeight;
     camera.left = (-halfHeight * width) / height;
     camera.right = -camera.left;
     camera.updateProjectionMatrix();
@@ -208,11 +212,12 @@ export async function mountHardwareScene(root: HTMLElement) {
   }
   const screenMaterial = new THREE.MeshBasicMaterial({ toneMapped: false });
   materials.add(screenMaterial);
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.01485, 0.0248), screenMaterial);
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), screenMaterial);
   screen.name = 'live-firmware-screen';
-  screen.position.set(0, -0.00885, 0.00343);
   screen.renderOrder = 2;
   pose.add(screen);
+  let deviceWidth = 0.04;
+  let deviceHeight = 0.022;
   const observer = new IntersectionObserver((entries) => {
     const rect = host.getBoundingClientRect();
     visible =
@@ -281,7 +286,35 @@ export async function mountHardwareScene(root: HTMLElement) {
         materials.add(material);
       }
     });
-    pose.add(asset.scene);
+    const turned = new THREE.Group();
+    turned.rotation.z = Math.PI / 2;
+    turned.add(asset.scene);
+    pose.add(turned);
+    turned.updateWorldMatrix(true, true);
+    const bounds = new THREE.Box3().setFromObject(turned);
+    turned.position.sub(bounds.getCenter(new THREE.Vector3()));
+    turned.updateWorldMatrix(true, true);
+    const fitted = new THREE.Box3().setFromObject(turned).getSize(new THREE.Vector3());
+    turned.scale.setScalar(0.046 / Math.max(fitted.x, fitted.y));
+    turned.updateWorldMatrix(true, true);
+    const placed = new THREE.Box3().setFromObject(turned).getSize(new THREE.Vector3());
+    deviceWidth = placed.x;
+    deviceHeight = placed.y;
+    const glass = asset.scene.getObjectByName('stickc-plus2_display_glass_depth');
+    if (glass) {
+      const glassBox = new THREE.Box3().setFromObject(glass);
+      const size = glassBox.getSize(new THREE.Vector3());
+      const glassCenter = glassBox.getCenter(new THREE.Vector3());
+      // Frames are 240×135. The glass is a little taller, so fit the picture
+      // inside the opening instead of stretching it to the glass.
+      const frameAspect = 240 / 135;
+      const openingWidth = size.x * 0.98;
+      const openingHeight = size.y * 0.98;
+      const frameHeight = Math.min(openingHeight, openingWidth / frameAspect);
+      const frameWidth = frameHeight * frameAspect;
+      screen.scale.set(frameWidth, frameHeight, 1);
+      screen.position.set(glassCenter.x, glassCenter.y, glassBox.max.z + 0.00012);
+    }
     joystick = asset.scene.getObjectByName('joystick-pivot');
     if (!joystick) throw new Error('Missing joystick articulation');
     host.append(renderer.domElement);

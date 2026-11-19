@@ -83,8 +83,13 @@ bool Mesh::announce(uint16_t target){if(!ready())return false;
   payload[p++]=3;payload[p++]=32;std::memcpy(payload+p,identity_->signingPublic(),32);p+=32;
   wire::FrameView f;f.type=1;f.ttl=7;f.payload={payload,p};return emit(f,target);
 }
-bool Mesh::sendText(const char* text){if(!text)return false;size_t n=std::strlen(text);if(!n||n>192||!textValid({reinterpret_cast<const uint8_t*>(text),n}))return false;
-  wire::FrameView f;f.type=2;f.ttl=7;f.payload={reinterpret_cast<const uint8_t*>(text),n};if(!emit(f))return false;store("You",f.payload,true);return true;
+bool Mesh::sendText(const char* text){
+  sendStatus_="Not ready";if(!ready()||!send_)return false;
+  sendStatus_="Bad text";if(!text)return false;size_t n=std::strlen(text);
+  if(!n||n>192||!textValid({reinterpret_cast<const uint8_t*>(text),n}))return false;
+  wire::FrameView f;f.type=2;f.ttl=7;f.payload={reinterpret_cast<const uint8_t*>(text),n};
+  if(!emit(f)){sendStatus_="No phone";return false;}
+  store("You",f.payload,true);sendStatus_="Queued";return true;
 }
 bool Mesh::sendDirect(const uint8_t recipient[8],const char* text) {
   sendStatus_="Not ready";
@@ -109,7 +114,7 @@ bool Mesh::sendDirect(const uint8_t recipient[8],const char* text) {
   crypto::wipe(payload,sizeof(payload));
   if(!encryptedOk){peer->authenticated=false;live->noise.reset();live->used=false;startNoise(*peer,peer->link);sendStatus_="Connecting";return false;}
   wire::FrameView frame;frame.type=0x11;frame.ttl=7;frame.sender={identity_->id(),8};frame.recipient={recipient,8};frame.timestamp=epoch_;frame.payload={encrypted,written};
-  if(!emit(frame,live->link,kAnyLink,false)){sendStatus_="Link / queue";return false;}
+  if(!emit(frame,live->link,kAnyLink,false)){sendStatus_="Busy";return false;}
   auto* message=store(peer->name,{reinterpret_cast<const uint8_t*>(text),length},true,true);
   std::memcpy(message->senderId,recipient,8);std::memcpy(message->messageId,id,32);message->messageIdLength=32;
   message->readReceiptSent=true;sendStatus_="Queued";return true;

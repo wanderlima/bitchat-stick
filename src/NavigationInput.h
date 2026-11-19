@@ -2,7 +2,7 @@
 #include <cstdint>
 
 namespace stick {
-enum class NavigationAction { None, Wake, Select, Up, Down, Back };
+enum class NavigationAction { None, Wake, Select, Up, Down, Back, Left, Right };
 
 // C is the Plus2 power button: only a short release may navigate.
 // B-long fires once while held and never becomes B-short on release.

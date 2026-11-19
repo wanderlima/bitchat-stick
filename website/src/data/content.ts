@@ -25,7 +25,7 @@ export const facts = [
   ['Firmware', 'Modular ESP32 core · one profile per build'],
   ['Board', 'Initial support: M5StickC Plus2'],
   ['Controls', 'Buttons · optional Mini JoyC HAT'],
-  ['Display', '135 × 240 pixels'],
+  ['Display', '240 × 135 pixels'],
   ['Connection', 'Bluetooth Low Energy'],
   ['Install', 'PlatformIO Core + USB'],
   ['Project', 'Open source · by Wander Lima'],

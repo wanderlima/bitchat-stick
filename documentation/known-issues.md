@@ -30,6 +30,10 @@ Wander Lima's 2026-11-17 report covers InfoBot replies and delivered/read checks
 - Individual disconnect, retry, and reconnect cases beyond the reported delivered/read checks.
 - Click, LED, and sound behavior as a recorded device pass.
 - Every keyboard key and the draft length limit on the physical panel.
+- Landscape rotation against physical buttons A and B.
+- JoyC axis directions after that rotation. Navigation confirmed before the landscape UI does not close this check.
+- A camera scan of the About QR, which encodes `https://wanderlima.github.io/bitchat-stick/`.
+- Saving Date & time to the RTC on the device. Invalid dates are rejected in host tests. A successful panel save is not recorded.
 
 Upload success, a green host-test run, and a website build do not close those items.
 

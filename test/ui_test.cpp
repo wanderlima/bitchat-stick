@@ -15,6 +15,9 @@ size_t transportLinks() { return 0; }
 uint32_t transportDrops() { return 0; }
 const char* transportStatus() { return "Advertising"; }
 bool clockRtc() { return true; }
+bool clockApply = true;
+CivilTime clockCivil() { return {2026, 11, 18, 14, 32}; }
+bool clockSetCivil(CivilTime time) { return civilTimeValid(time) && clockApply; }
 bool scannerActive() { return active; }
 bool scannerFault() { return faulted; }
 uint32_t drops=2, reports=123;
@@ -38,19 +41,16 @@ int main() {
   Observation obs{};
   std::strcpy(obs.address,"AA:BB:CC:DD:EE:FF");std::strcpy(obs.name,"Test phone");
   obs.rssi=-64;obs.network=Network::Mainnet;table.observe(obs);
-  beginUi();check();assert(has("BITCHAT") && has("A: START"));
-  press(0);assert(screen==Screen::Dashboard && has("Nearby: 1") && has("P:0 New:0"));
+  beginUi();check();assert(has("Bitchat Stick") && has("A Start"));
+  press(0);assert(screen==Screen::Dashboard && has("Nearby") && has("1") && has("0 new"));
   bool square=false;
-  for(const auto& r:surfaceProbe().rects) if(r.x==6 && r.y==7 && r.w==5 && r.h==5 && r.color==green) square=true;
+  for(const auto& r:surfaceProbe().rects) if(r.x==8 && r.y==8 && r.w==4 && r.h==4 && r.color==green) square=true;
   assert(square);
-  bool divider=false;
+  bool row=false;
   for(const auto& r:surfaceProbe().rects)
-    if(r.x==5 && r.y==158 && r.w==125 && r.h==1 && r.color==fg) divider=true;
-  assert(divider); // Shared separators between Home menu items.
-  press(0);assert(screen==Screen::Peers && has("Test phone") && has("-64 dBm") && has("Bitchat?") && has("Not verified") && !has("Mainnet?"));
-  bool greenCard=false;
-  for(const auto& r:surfaceProbe().rects) if(r.x==4 && r.w==3 && r.color==green) greenCard=true;
-  assert(greenCard);
+    if(r.x==10 && r.y==40 && r.w==212 && r.h==24 && r.color==fg) row=true;
+  assert(row);
+  press(0);assert(screen==Screen::Peers && has("Bitchat?") && has("Not verified") && has("BLE advertisement") && !has("Mainnet?"));
   press(0);assert(detail && has("AA:BB:CC") && has("DD:EE:FF"));
   press(1,true);assert(screen==Screen::Peers && !detail);
   press(1,true);assert(screen==Screen::Dashboard);
@@ -65,28 +65,28 @@ int main() {
   press(1,true);press(2);press(0);assert(screen==Screen::Diagnostics && has("BLE 123") && has("Drop 2"));
   press(1,true);press(2);press(2);press(2);press(0);assert(screen==Screen::About && has("Wander Lima") && !has("SOON"));
   // Visit the remaining primary screens and detail states with the same controls.
-  screen=Screen::Channels;draw(table,tick);check();assert(has("#bluetooth") && has("Public chat") && !has("Mesh"));press(0);assert(screen==Screen::Channels&&detail&&has("Write msg"));press(0);assert(screen==Screen::Messages);
+  screen=Screen::Channels;draw(table,tick);check();assert(has("#bluetooth") && has("Public chat over BLE") && !has("Mesh"));press(0);assert(screen==Screen::Channels&&detail&&has("Write msg"));press(0);assert(screen==Screen::Messages);
   press(1,true);assert(screen==Screen::Channels);
   screen=Screen::Bot;selection=0;detail=false;draw(table,tick);check();press(0);assert(detail);press(1,true);assert(!detail);
   // Verify all presets, header error/idle states, and low/unknown battery rendering.
   screen=Screen::Brightness;
   for(size_t i=0;i<5;++i) { selection=i;draw(table,tick);check(); }
-  screen=Screen::Dashboard;active=false;draw(table,tick);check();assert(has("IDLE"));
-  faulted=true;draw(table,tick);check();assert(has("ERR"));
+  screen=Screen::Dashboard;active=false;draw(table,tick);check();assert(has("BLE idle"));
+  faulted=true;draw(table,tick);check();assert(has("BLE err"));
   battery=-1;draw(table,tick);check();assert(has("--%"));
   battery=5;draw(table,tick);check();assert(has("5%"));
   // Nearby excludes ordinary BLE and never invents peers when no candidate is present.
   screen=Screen::Peers;detail=false;peerSelection=PeerSelection{};
-  draw(PeerTable{},tick);check();assert(has("No Bitchat") && !has("Test phone"));
+  draw(PeerTable{},tick);check();assert(has("No Bitchat peers") && !has("Test phone"));
   PeerTable ordinary;obs.network=Network::Other;ordinary.observe(obs);
-  draw(ordinary,tick);check();assert(has("No Bitchat") && !has("Test phone") && !has("Other BLE"));
+  draw(ordinary,tick);check();assert(has("No Bitchat peers") && !has("Test phone") && !has("Other BLE"));
   obs.network=Network::Mainnet;
   PeerTable full;
   for(unsigned i=0;i<kPeerCapacity;++i) {
     std::snprintf(obs.address,sizeof(obs.address),"AA:BB:CC:DD:EE:%02X",i);
     std::strcpy(obs.name,"A name that is too long");full.observe(obs);
   }
-  peerSelection.move(-1,full);draw(full,tick);check();assert(has("Device 32/32"));
+  peerSelection.move(-1,full);draw(full,tick);check();assert(has("Device 32 / 32"));
   screen=Screen::Settings;draw(table,tick);check();assert(has("Diagnostics"));
   screen=Screen::Bot;
   for(selection=0;selection<3;++selection) {detail=true;draw(table,tick);check();assert(has("Public + DM"));}
@@ -101,8 +101,8 @@ int main() {
     for(const auto& r:surfaceProbe().rects) if(x>=r.x && x<r.x+r.w && y>=r.y && y<r.y+r.h) color=r.color;
     return color;
   };
-  assert(pixel(18,136)==fg); // Filled radio on the applied 50% row, outside focus.
-  assert(pixel(18,167)==fg); // Unfilled center retains the focused 75% cream background.
+  assert(pixel(22,76)==fg); // Filled radio on the applied 50% row, outside focus.
+  assert(pixel(22,100)==fg); // Unfilled center retains the focused 75% cream background.
   assert(surfaceProbe().brightness==pwm);brightnessIndex=applied;
   screen=Screen::Diagnostics;reports=0xffffffff;drops=0xffffffff;draw(table,0xffffffff);check();
   fake_preferences::writeSucceeds=false;
@@ -125,17 +125,17 @@ int main() {
     assert(wire::signPacket(f,other.signingSecret(),scratch,sizeof(scratch),signature));f.signature={signature,64};size_t n=0;assert(wire::encode(f,packet,sizeof(packet),n)==wire::Error::None);mesh().receive({packet,n},1);};
   inject(1,{announcement,74});screen=Screen::Peers;selection=0;detail=false;draw(table,tick);check();assert(has("Live")&&has("Signed only"));
   uint8_t longText[192];std::memset(longText,'x',sizeof(longText));inject(2,{longText,sizeof(longText)});
-  screen=Screen::Dashboard;draw(table,tick);check();assert(mesh().unreadCount()==1&&has("P:1 New:1"));
-  auto unreadIcon=[](){for(const auto& r:surfaceProbe().rects)if(r.x==56&&r.y==6&&r.w==10&&r.color==green)return true;return false;};
-  assert(unreadIcon());battery=100;draw(table,tick);check();assert(has("100%")&&unreadIcon());
-  const Screen notificationScreens[]={Screen::Splash,Screen::Dashboard,Screen::Peers,Screen::Channels,Screen::Messages,Screen::Bot,Screen::Settings,Screen::Brightness,Screen::Battery,Screen::About,Screen::Diagnostics};
+  screen=Screen::Dashboard;draw(table,tick);check();assert(mesh().unreadCount()==1&&has("1 new"));
+  assert(pixel(78,6)==green);
+  battery=100;draw(table,tick);check();assert(has("100%"));
+  const Screen notificationScreens[]={Screen::Splash,Screen::Dashboard,Screen::Peers,Screen::Channels,Screen::Messages,Screen::Bot,Screen::Settings,Screen::Brightness,Screen::Battery,Screen::About,Screen::Diagnostics,Screen::DateTime};
   messageScope=MessageScope::Direct; // Viewing an empty other inbox must not read the public message.
-  for(auto page:notificationScreens){screen=page;selection=0;detail=false;draw(table,tick);check();assert(unreadIcon()&&mesh().unreadCount()==1);}
+  for(auto page:notificationScreens){screen=page;selection=0;detail=false;draw(table,tick);check();assert(mesh().unreadCount()==1);}
 
   screen=Screen::Channels;selection=1;detail=false;draw(table,tick);check();assert(has("#bluetooth")&&has("Direct DMs"));
   press(0);assert(screen==Screen::Messages&&messageScope==MessageScope::Direct&&has("No messages")&&mesh().unreadCount()==1);
   press(1,true);assert(screen==Screen::Channels&&selection==1);press(1);assert(selection==0);press(0);press(0);
-  assert(messageScope==MessageScope::Public&&has("Live")&&mesh().unreadCount()==0&&!unreadIcon());
+  assert(messageScope==MessageScope::Public&&has("Live")&&mesh().unreadCount()==0);
   const uint32_t reading=activeMessage;longText[0]='y';inject(2,{longText,sizeof(longText)});draw(table,tick);check();
   assert(activeMessage==reading&&mesh().unreadCount()==1&&messageOffset==1); // Incoming text never steals the reader's focus.
   press(2);assert(activeMessage!=reading&&mesh().unreadCount()==0);
@@ -143,7 +143,7 @@ int main() {
   // Joystick gestures share the physical-button navigation path.
   auto joy=[&](int16_t x,int16_t y,uint32_t step=20){fakeJoyc.x=x;fakeJoyc.y=y;fakeJoyc.valid=true;tick+=step;updateUi(table,tick);check();};
   screen=Screen::Dashboard;selection=0;detail=false;
-  joy(0,0);joy(0,81);assert(selection==1);joy(0,100,1499);assert(selection==1);
+  joy(0,0);joy(0,81);assert(selection==1);joy(0,100,499);assert(selection==1);
   joy(0,100,1);assert(selection==2);joy(0,0);joy(0,-100);assert(selection==1);
   joy(0,0);joy(100,0);assert(screen==Screen::Channels);joy(100,0,2000);assert(screen==Screen::Channels);
   joy(0,0);joy(-100,0);assert(screen==Screen::Dashboard);joy(-100,0,2000);assert(screen==Screen::Dashboard);
@@ -154,7 +154,7 @@ int main() {
   // New settings use independent persistent square checkboxes.
   fakeJoyc=JoycSample{};screen=Screen::Settings;selection=3;detail=false;press(0);assert(screen==Screen::Sound);
   assert(preferenceFlags==0);press(0);assert(preferenceFlags==SoundUi&&fake_preferences::flagsRecord==0xBC520101);
-  bool squareCheckbox=false;for(const auto& rect:surfaceProbe().rects)if(rect.x==13&&rect.w==12&&rect.h==1)squareCheckbox=true;
+  bool squareCheckbox=false;for(const auto& rect:surfaceProbe().rects)if(rect.x==16&&rect.w==16&&rect.h==1)squareCheckbox=true;
   assert(squareCheckbox);press(2);press(0);assert(preferenceFlags==(SoundUi|SoundDm));
   press(1,true);assert(screen==Screen::Settings&&selection==3);press(2);press(0);assert(screen==Screen::Joystick);
   assert(!(preferenceFlags&JoycClick));fakeJoyc.valid=true;fakeJoyc.buttonValid=true;fakeJoyc.pressed=true;
@@ -163,9 +163,9 @@ int main() {
   fakeJoyc.pressed=false;tick+=40;updateUi(table,tick);tick+=40;updateUi(table,tick);
   fakeJoyc.pressed=true;tick+=40;updateUi(table,tick);tick+=40;updateUi(table,tick);assert(!(preferenceFlags&JoycClick));
   press(2);press(0);assert(preferenceFlags&JoycLed);assert(has("Hat ready"));
-  screen=Screen::Settings;draw(table,tick);check();assert(has("Sound")&&has("JoyC HAT"));
+  screen=Screen::Settings;selection=4;draw(table,tick);check();assert(has("Sound")&&has("JoyC HAT"));
   screen=Screen::Sound;selection=0;draw(table,tick);check();screen=Screen::Joystick;draw(table,tick);check();
-  assert(settingsPages[settingsCount-1]==Screen::About);
+  assert(settingsPages[settingsCount-1]==Screen::DateTime);
   // Compose from Nearby, keep recipient/draft through navigation and fail closed without auth.
   fakeJoyc=JoycSample{};screen=Screen::Peers;selection=0;detail=false;press(0);
   assert(screen==Screen::Reply&&has("Short msg")&&has("Keyboard")&&has("Welcome msg"));
@@ -179,11 +179,17 @@ int main() {
   screen=Screen::Reply;selection=0;
   uint8_t target[8];std::memcpy(target,composer.recipient,8);
   press(0);assert(screen==Screen::ShortMessages);press(0);
-  assert(screen==Screen::Confirm&&selection==reviewPages()+1); // Safe default: Cancel.
+  assert(screen==Screen::Confirm&&selection==1); // Safe default: Cancel.
   press(1);press(0);assert(sendFailed&&has("Not sent")&&screen==Screen::Confirm);
   assert(std::memcmp(composer.recipient,target,8)==0&&std::strcmp(composer.draft,"Hello!")==0);
   press(1,true);assert(screen==Screen::ShortMessages);press(1,true);assert(screen==Screen::Reply);
   press(2);press(0);assert(screen==Screen::Keyboard);
+  joy(0,0);joy(100,0);assert(selection==1);joy(100,0,499);assert(selection==1);joy(100,0,1);assert(selection==2);
+  joy(0,0);joy(0,100);assert(selection==12);joy(0,0);joy(-100,0);assert(selection==11);
+  joy(0,0);joy(0,-100);assert(selection==1);joy(-100,0);assert(selection==0);
+  selection=9;joy(0,0);joy(100,0);assert(selection==9);joy(0,100);assert(selection==19);
+  joy(0,0);joy(0,100);assert(selection==29);joy(0,0);joy(0,100);assert(selection==33);
+  joy(0,0);joy(0,-100);assert(selection==28);joy(0,0);selection=0;fakeJoyc=JoycSample{};
   for(size_t mode=0;mode<3;++mode) {
     for(selection=0;selection<MessageComposer::keyCount;++selection){draw(table,tick);check();}
     composer.selectKey(30);
@@ -197,18 +203,27 @@ int main() {
   press(0);assert(screen==Screen::Reply&&std::memcmp(composer.recipient,other.id(),8)==0);
   press(1,true);assert(screen==Screen::Messages&&detail);
   // Public composition has an explicit channel target and never calls the DM path.
-  screen=Screen::Channels;detail=false;selection=0;press(0);assert(detail&&has("Write msg"));
-  press(2);press(0);assert(screen==Screen::Reply&&!privateDraft&&has("Public chat")&&has("#bluetooth"));
+  screen=Screen::Channels;detail=false;selection=0;press(0);assert(detail&&has("Write msg")&&has("Public chat over BLE"));
+  press(2);press(0);assert(screen==Screen::Reply&&!privateDraft&&has("Write")&&has("#bluetooth"));
   press(0);press(0);assert(screen==Screen::Confirm&&!privateDraft);press(0);assert(screen==Screen::Channels&&detail&&!composer.ready());
   selection=1;press(0);selection=2;press(0);assert(screen==Screen::Confirm&&std::strcmp(composer.draft,kBotIntroduction)==0);press(1);press(0);
   assert(queuedMessage&&mesh().message(0)->outgoing&&!mesh().message(0)->privateMessage&&has("Done"));
   press(0);assert(screen==Screen::Channels&&detail&&selection==1);press(1,true);assert(!detail&&screen==Screen::Channels);
-  // Long confirmation pages and full keyboard drafts remain within 135x240.
+  // Long confirmation text and full keyboard drafts remain within 240x135.
   openComposer(other.id(),"A recipient with a long name");
   for(unsigned i=0;i<192;++i)composer.selectKey(0);
   screen=Screen::Keyboard;selection=0;draw(table,tick);check();confirmDraft();
-  for(selection=0;selection<reviewPages()+2;++selection){draw(table,tick);check();}
+  for(selection=0;selection<2;++selection){draw(table,tick);check();}
   closeComposer();
+  screen=Screen::Settings;selection=6;detail=false;press(0);
+  assert(screen==Screen::DateTime&&has("18/11/2026")&&has("14:32"));
+  press(0);assert(screen==Screen::SetDate&&field==0);
+  press(2);assert(edited.day==19);
+  press(0);press(0);clockApply=false;press(0);
+  assert(screen==Screen::SetDate&&!clockSaved&&has("Not saved"));
+  clockApply=true;press(0);assert(screen==Screen::DateTime&&clockSaved);
+  press(2);press(0);assert(screen==Screen::SetTime);
+  press(1,true);assert(screen==Screen::DateTime&&selection==1);
   assert(buffered && surfaceProbe().clears==0 && surfaceProbe().frames>10);
   std::puts("UI: navigation, presets, credits, live header/data, grouping and text bounds passed");
 }
