@@ -213,13 +213,13 @@ h3 {
 }
 .hero {
   --mesh-top: 16px;
+  --mesh-width: min(100vw, 1900px);
+  max-width: 1900px;
+  margin-inline: auto;
   position: relative;
   overflow: clip;
   min-height: calc(100vh - 92px);
-  min-height: max(
-    calc(100svh - 92px),
-    calc(var(--mesh-top) + min(100vw, 1600px) * 0.38 + 210px)
-  );
+  min-height: max(calc(100svh - 92px), calc(var(--mesh-top) + var(--mesh-width) * 0.38 + 210px));
 }
 .hero-content {
   padding-block: 16px 32px;
@@ -255,7 +255,7 @@ h1 {
   position: absolute;
   left: 0;
   margin: 0;
-  top: calc(var(--mesh-top) + min(100vw, 1600px) * 760 / 1600 * 0.8);
+  top: calc(var(--mesh-top) + var(--mesh-width) * 760 / 1600 * 0.8);
   font-family: var(--font-display);
   font-size: 28px;
   line-height: 34px;
@@ -269,7 +269,7 @@ h1 {
   position: absolute;
   top: var(--mesh-top);
   left: 50%;
-  width: min(1600px, 100%);
+  width: 100%;
   height: auto;
   aspect-ratio: 1600 / 760;
   transform: translateX(-50%);
@@ -312,6 +312,13 @@ h1 {
 .stick-label {
   font: 700 14px var(--font-mono);
 }
+.mesh-scene :is(.peer-label, .stick-label) {
+  paint-order: stroke;
+  stroke: #000;
+  stroke-width: 5px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
 .firmware-screen {
   image-rendering: pixelated;
 }
@@ -324,7 +331,7 @@ h1 {
   width: 430px;
   max-width: calc(100% - 24px);
   margin: 0;
-  top: calc(var(--mesh-top) + min(100vw, 1600px) * 760 / 1600 * 0.8 + 80px);
+  top: calc(var(--mesh-top) + var(--mesh-width) * 760 / 1600 * 0.8 + 80px);
   font-size: 16px;
   line-height: 24px;
 }
@@ -596,6 +603,23 @@ details[open] .disclosure-mark::after {
     transition-timing-function: steps(2);
   }
 }
+/* Keep the hero copy clear of the mesh and its transparent canvases. */
+@media (min-width: 1166px) {
+  .hero-content {
+    z-index: 3;
+  }
+  .hero-lead > .eyebrow,
+  .hero-intro > *,
+  .hero-statement,
+  .hero-caption {
+    background: #000;
+    box-shadow: 0 0 0 6px #000;
+  }
+  .hero-lead > .eyebrow,
+  .hero-statement {
+    width: fit-content;
+  }
+}
 @media (max-width: 1399px) and (min-width: 1166px) {
   .hero {
     --mesh-top: 28px;
@@ -624,7 +648,7 @@ details[open] .disclosure-mark::after {
     width: 500px;
   }
 }
-@media (max-width: 1165px) and (min-width: 1024px) {
+@media (1024px <= width < 1166px) {
   .hero {
     display: flex;
     flex-direction: column;
@@ -691,14 +715,14 @@ details[open] .disclosure-mark::after {
     display: none;
   }
 }
-@media (max-width: 1165px) and (min-width: 1024px) {
+@media (1024px <= width < 1166px) {
   .container,
   .hero-lead,
   .hero-follow {
     width: calc(100% - 96px);
   }
 }
-@media (max-width: 1023px) {
+@media (width < 1024px) {
   :root {
     font-size: 16px;
     line-height: 26px;
@@ -814,7 +838,7 @@ details[open] .disclosure-mark::after {
     padding-block: 32px;
   }
 }
-@media (max-width: 639px) {
+@media (width < 640px) {
   .mesh-desktop {
     display: none;
   }
@@ -823,12 +847,23 @@ details[open] .disclosure-mark::after {
     width: 100%;
     height: auto;
   }
-  .hero-lead,
-  .hero-follow {
+  .hero-content {
     width: calc(100% - 32px);
   }
+  .hero-statement {
+    position: static;
+    margin-top: 24px;
+  }
+  .mobile-graph {
+    display: block;
+    width: min(100%, 327px);
+    margin: 12px auto 0;
+  }
+  .hero-actions .action {
+    min-width: min(100%, 240px);
+  }
 }
-@media (min-width: 640px) and (max-width: 1023px) {
+@media (640px <= width < 1024px) {
   .hero {
     display: flex;
     flex-direction: column;

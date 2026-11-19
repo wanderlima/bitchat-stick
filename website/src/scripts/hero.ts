@@ -1,32 +1,6 @@
 import gsap from 'gsap';
-import { desktopRoutes, mobileRoutes, length, type Route } from '../data/mesh';
+import { desktopScene, mobileScene, peerNames } from '../data/mesh';
 import { reducedMotion } from './preferences';
-
-const PORTRAIT_RATIO = 327 / 420;
-
-/** Sizes the portrait diagram to the column, without growing taller than the screen. */
-function fitPortraitGraph(hero: HTMLElement) {
-  const graph = hero.querySelector<HTMLElement>('.mobile-graph');
-  if (!graph) {
-    return;
-  }
-  if (getComputedStyle(graph).display === 'none') {
-    graph.style.removeProperty('width');
-    return;
-  }
-  const header = document.querySelector('.site-header');
-  const lead = hero.querySelector('.hero-lead');
-  if (!header || !lead) {
-    return;
-  }
-  const top =
-    header.getBoundingClientRect().height + lead.getBoundingClientRect().height + 24;
-  const room = window.innerHeight - top;
-  const column = graph.parentElement?.clientWidth ?? window.innerWidth;
-  const fromHeight = Math.max(0, room) * PORTRAIT_RATIO;
-  const width = Math.round(Math.min(column, Math.max(fromHeight, Math.min(column, 220))));
-  graph.style.width = `${width}px`;
-}
 
 /** Two stories: the Stick sends one message, then receives one. The envelope glides, and peers stay lit until that message arrives. */
 export async function initHero() {
@@ -34,9 +8,6 @@ export async function initHero() {
   if (!hero) {
     return;
   }
-  fitPortraitGraph(hero);
-  window.addEventListener('resize', () => fitPortraitGraph(hero), { passive: true });
-  document.fonts.ready.then(() => fitPortraitGraph(hero));
   const sources = [
     ...new Set(
       Array.from(hero.querySelectorAll<SVGImageElement>('[data-screen]')).map((image) =>
@@ -62,8 +33,8 @@ export async function initHero() {
   let entrancePlayed = false;
   media.add(
     {
-      desktop: '(min-width: 1024px)',
-      mobile: '(max-width: 1023px)',
+      desktop: '(width >= 640px)',
+      mobile: '(width < 640px)',
       reduce: '(prefers-reduced-motion: reduce)',
     },
     (context) => {
@@ -77,25 +48,20 @@ export async function initHero() {
       const scene = hero.querySelector<SVGSVGElement>(
         `[data-mesh="${desktop ? 'desktop' : 'mobile'}"]`,
       )!;
-      const routes = desktop ? desktopRoutes : mobileRoutes;
+      const { routes } = desktop ? desktopScene : mobileScene;
       const packet = scene.querySelector<SVGGElement>('.packet')!;
-      const rings = [...scene.querySelectorAll<SVGCircleElement>('.ripple')];
-      let rippleCursor = 0;
-      const ripple = (x: number, y: number, at: number) => {
-        const ring = rings[rippleCursor++ % rings.length];
-        const max = desktop ? 118 : 50;
-        const state = { radius: max * 0.25, opacity: 0.85 };
-        const draw = () => {
-          ring.setAttribute('cx', String(x));
-          ring.setAttribute('cy', String(y));
-          ring.setAttribute('r', state.radius.toFixed(1));
-          ring.setAttribute('opacity', state.opacity.toFixed(3));
-        };
-        timeline.set(state, { radius: max * 0.25, opacity: 0.85 }, at);
-        timeline.call(draw, [], at);
-        timeline.to(
-          state,
-          { radius: max, opacity: 0, duration: 0.85, ease: 'power2.out', onUpdate: draw },
+      const ripple = (name: (typeof peerNames)[number], at: number) => {
+        const ring = scene.querySelector(`[data-ripple="${name}"]`);
+        const radius = name === 'stick' ? (desktop ? 210 : 84) : desktop ? 110 : 48;
+        timeline.fromTo(
+          ring,
+          { attr: { r: 0, opacity: 0.9 } },
+          {
+            attr: { r: radius, opacity: 0 },
+            duration: 0.95,
+            ease: 'power1.out',
+            immediateRender: false,
+          },
           at,
         );
       };
@@ -115,115 +81,35 @@ export async function initHero() {
         timeline.set(screens, { opacity: 0 }, at);
         timeline.set(scene.querySelector(`[data-screen="${name}"]`), { opacity: 1 }, at);
       };
-      function travel(route: Route, index: number, at: number, pulseOrigin = true) {
-        const points = route.points,
-          distance = length(points);
+      function travel(index: number, at: number, pulseOrigin = true) {
+        const { duration } = routes[index];
         const edge = scene.querySelector<SVGGElement>(`[data-route="${index}"]`)!;
-        const nodes = ['west', 'relay', 'stick', 'north', 'east'];
-        const pair = [
-          scene.querySelector(`[data-peer="${nodes[index]}"] .device-accent`),
-          scene.querySelector(`[data-peer="${nodes[index + 1]}"] .device-accent`),
-        ];
-        const trail = edge.querySelector<SVGPolylineElement>('polyline')!;
+        const trail = edge.querySelector('polyline')!;
+        const distance = trail.getTotalLength();
+        const source = peerNames[index];
+        const destination = peerNames[index + 1];
+        const accent = (name: string) =>
+          scene.querySelector(`[data-peer="${name}"] .device-accent`);
         const head = { covered: 0 };
         const paint = () => {
-          trail.style.removeProperty('stroke-dasharray');
-          trail.style.removeProperty('stroke-dashoffset');
-          const drawn = Math.max(0, Math.min(distance, head.covered));
-          trail.setAttribute('stroke-dasharray', `${drawn.toFixed(2)} ${distance}`);
-          trail.setAttribute('stroke-dashoffset', '0');
+          const { x, y } = trail.getPointAtLength(head.covered);
+          packet.setAttribute('transform', `translate(${x} ${y})`);
+          trail.setAttribute('stroke-dasharray', `${head.covered} ${distance}`);
         };
-        const [source, destination] = pair;
-        // The envelope is 30×22 and centered. Stop it short of each body so it
-        // never slides under the Stick. The lit line still uses `points`.
-        const packetPath = points.map((point): [number, number] => [point[0], point[1]]);
-        const trimEnd = (distance: number) => {
-          let left = distance;
-          for (let i = packetPath.length - 1; i > 0 && left > 0; i--) {
-            const end = packetPath[i];
-            const start = packetPath[i - 1];
-            const dx = start[0] - end[0];
-            const dy = start[1] - end[1];
-            const span = Math.hypot(dx, dy);
-            if (span === 0) {
-              packetPath.pop();
-              continue;
-            }
-            if (left < span) {
-              packetPath[i] = [end[0] + (dx / span) * left, end[1] + (dy / span) * left];
-              packetPath.splice(i + 1);
-              return;
-            }
-            left -= span;
-            packetPath.pop();
-          }
-        };
-        trimEnd(28);
-        let leadIn = 16;
-        for (let i = 0; i < packetPath.length - 1 && leadIn > 0; i++) {
-          const start = packetPath[0];
-          const next = packetPath[1];
-          const dx = next[0] - start[0];
-          const dy = next[1] - start[1];
-          const span = Math.hypot(dx, dy);
-          if (span === 0) {
-            packetPath.shift();
-            i -= 1;
-            continue;
-          }
-          const step = Math.min(leadIn, Math.max(0, span - 1));
-          packetPath[0] = [start[0] + (dx / span) * step, start[1] + (dy / span) * step];
-          leadIn = 0;
-        }
-        for (const waypoint of packetPath) {
-          if (waypoint[1] < 14) waypoint[1] = 14;
-        }
-        timeline.call(paint, [], at);
+
         timeline.set(edge, { opacity: 1 }, at);
-        timeline.set(source, { opacity: 1 }, at);
-        timeline.set(packet, { x: packetPath[0][0], y: packetPath[0][1], opacity: 1 }, at);
-        if (pulseOrigin) ripple(points[0][0], points[0][1], at);
-        let cursor = at,
-          covered = 0;
-        for (let i = 1; i < points.length; i++) {
-          const leg =
-            Math.abs(points[i][0] - points[i - 1][0]) + Math.abs(points[i][1] - points[i - 1][1]);
-          const duration = (route.duration * leg) / distance;
-          const from = covered;
-          covered += leg;
-          timeline.fromTo(
-            head,
-            { covered: from },
-            { covered, duration, ease: 'none', immediateRender: false, onUpdate: paint },
-            cursor,
-          );
-          cursor += duration;
-        }
-        const packetDistance = packetPath.slice(1).reduce((total, point, index) => {
-          const prev = packetPath[index];
-          return total + Math.hypot(point[0] - prev[0], point[1] - prev[1]);
-        }, 0);
-        let packetCursor = at;
-        for (let i = 1; i < packetPath.length; i++) {
-          const prev = packetPath[i - 1];
-          const point = packetPath[i];
-          const leg = Math.hypot(point[0] - prev[0], point[1] - prev[1]);
-          const duration = packetDistance > 0 ? (route.duration * leg) / packetDistance : 0;
-          timeline.to(
-            packet,
-            {
-              x: point[0],
-              y: point[1],
-              duration,
-              ease: 'none',
-              immediateRender: false,
-            },
-            packetCursor,
-          );
-          packetCursor += duration;
-        }
-        timeline.set(destination, { opacity: 1 }, at + route.duration);
-        ripple(points[points.length - 1][0], points[points.length - 1][1], at + route.duration);
+        timeline.set(accent(source), { opacity: 1 }, at);
+        timeline.set(packet, { opacity: 1 }, at);
+        timeline.fromTo(
+          head,
+          { covered: 0 },
+          { covered: distance, duration, ease: 'none', immediateRender: false, onUpdate: paint },
+          at,
+        );
+        timeline.set(packet, { opacity: 0 }, at + duration);
+        timeline.set(accent(destination), { opacity: 1 }, at + duration);
+        if (pulseOrigin) ripple(source, at);
+        ripple(destination, at + duration);
       }
       timeline.addLabel('idle', 0);
       screen('home', 0);
@@ -235,15 +121,15 @@ export async function initHero() {
       timeline.addLabel('queued', 2.6);
       screen('queued', 2.6);
       timeline.addLabel('outbound-north', 3);
-      travel(routes[2], 2, 3);
+      travel(2, 3);
       timeline.addLabel('outbound-east', 3.9);
-      travel(routes[3], 3, 3.9, false);
+      travel(3, 3.9, false);
       timeline.set([lit, accents, packet], { opacity: 0 }, 6.2);
       timeline.addLabel('inbound-west', 6.4);
       screen('home', 6.4);
-      travel(routes[0], 0, 6.4);
+      travel(0, 6.4);
       timeline.addLabel('inbound-relay', 8.2);
-      travel(routes[1], 1, 8.2, false);
+      travel(1, 8.2, false);
       timeline.addLabel('received', 9.2);
       screen('received', 9.2);
       timeline.addLabel('rest', 11);
@@ -300,12 +186,11 @@ export async function initHero() {
             { opacity: 0, duration: 0.16, stagger: 0.04 },
             0.16,
           );
-        if (desktop)
-          entrance.from(
-            hero.querySelector('.hero-statement'),
-            { opacity: 0, y: 8, duration: 0.22 },
-            0.3,
-          );
+        entrance.from(
+          hero.querySelector('.hero-statement'),
+          { opacity: 0, y: 8, duration: 0.22 },
+          0.3,
+        );
       }
       // Keyboard focus never lands on a transparent CTA while the entrance is running.
       const showFocusedAction = () => {
