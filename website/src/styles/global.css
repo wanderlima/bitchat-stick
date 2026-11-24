@@ -818,7 +818,7 @@ details[open] .disclosure-mark::after {
     grid-row: 3;
   }
   .control-device {
-    width: 320px;
+    width: min(100%, 320px);
   }
   .status-grid {
     margin-top: 24px;
