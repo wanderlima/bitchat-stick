@@ -32,7 +32,7 @@ Asset generators under `tools/` (`generate-ui-fonts.py`, `generate-ui-bitmaps.py
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier write |
 | `npm run format:check` | Prettier check |
-| `npm run audit` | Fail on high or critical advisories outside the documented picomatch allowlist |
+| `npm run audit` | Fail on high or critical advisories |
 | `npm run build` | Write `website/dist/` |
 | `npm run preview` | Serve the production build on `127.0.0.1:4321` |
 | `npm test` | Playwright against the production preview |

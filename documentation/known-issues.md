@@ -60,7 +60,6 @@ Only the Plus2 profile has source and a hardware path. The board id in PlatformI
 
 ## Website
 
-- `website/src/tools/audit.mjs` allowlists `GHSA-fc5q-39xc-vjpf` (picomatch, every published release through 4.0.7). The audit script's comment says `npm audit fix --force` would downgrade Astro and still depend on picomatch. The allowlist entry must be removed when npm stops reporting that advisory.
 - `robots.txt` is served under `/bitchat-stick/` on a GitHub project site. Crawlers usually read the domain-root robots file, so this file does not replace the account site's root policy.
 - Hero routes and the hardware walkthrough are illustrations. They are not relay evidence.
 - The configured Pages URL is a target. Publishing still depends on the GitHub Actions source setting and a successful `main` deploy.
