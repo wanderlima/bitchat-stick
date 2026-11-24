@@ -4,12 +4,12 @@
 
 Selecting an identified user in Nearby or replying to a message in Channels opens the private-message flow. Channels → #bluetooth → Write msg opens a new public message using the same editor screens. Read chat opens the public history. BLE advertisements alone are not a verified user and keep their existing inspection view. The recipient is copied by its eight-byte peer ID; changing list order or arriving messages must never change it.
 
-Four screens use the existing cream/green FreeMono style and 135×240 portrait display:
+Four screens use the cream VT323 landscape layout:
 
 1. **Reply**: recipient, Short msg, Keyboard and Welcome msg. Back returns to the exact source screen.
-2. **Short msgs**: 32 English presets with a sliding five-row viewport and scrollbar. Selecting one opens confirmation.
-3. **Keyboard**: draft above a small three-row QWERTY grid. A/right selects; B/C or up/down traverse keys in reading order. A fourth row offers case/numbers, space, delete and Done. Back returns to the method picker and preserves the draft. Limit: 192 ASCII characters; empty/space-only messages cannot proceed.
-4. **Confirm**: recipient, scrollable full message, Send/Cancel. Cancel is initially selected. Back returns to editing without sending. Cancel discards and returns to the source. Private Send requires a current authenticated Noise session and successful transport enqueue. Public Send requires an available subscribed BLE link and queues a signed public message. The destination is explicitly #bluetooth/Public chat for public drafts and a named peer/ID for DMs. Failure keeps the draft for retry. Queued means transport accepted, not delivered. The same screen displays authenticated delivery/read receipts if received.
+2. **Short msgs**: 32 English presets with three visible rows and a scrollbar. Selecting one opens confirmation.
+3. **Keyboard**: draft above a small three-row QWERTY grid, with no status bar. A/right selects; B/C or up/down traverse keys in reading order. A fourth row offers case/numbers, space, delete and Done. Back returns to the method picker and preserves the draft. Limit: 192 ASCII characters; empty/space-only messages cannot proceed.
+4. **Confirm**: recipient, at most two draft lines, Send/Cancel. Cancel is initially selected. Back returns to editing without sending. Cancel discards and returns to the source. Private Send requires a current authenticated Noise session and successful transport enqueue. Public Send requires an available subscribed BLE link and queues a signed public message. The destination is explicitly #bluetooth/Public chat for public drafts and a named peer/ID for DMs. Failure keeps the draft for retry. Queued means transport accepted, not delivered. The same screen displays authenticated delivery/read receipts if received, with the title staying Queued.
 
 Message-reading behavior remains: A opens text scrolling; A again starts a reply. Outgoing DMs retain their recipient for subsequent replies. The recipient's short ID is visible on the method and confirmation screens to disambiguate duplicate names. Unknown/offline recipients can be composed for, but cannot send without an authenticated session. No plaintext/public fallback and no automatic retry after a successful enqueue.
 
@@ -51,7 +51,7 @@ The 32 presets include Come here, Follow me, On my way, Turn right, Turn left, H
 
 ## Session recovery and channel writing
 
-A known user without an authenticated session now triggers negotiation when Send is selected. The draft remains unsent with Connecting; wait for authentication and explicitly select Send again. Peer gone means the recipient has expired from the table; Link / queue means the current link or bounded outgoing queue did not accept the packet. No failed private draft is sent publicly.
+A known user without an authenticated session now triggers negotiation when Send is selected. The draft remains unsent with Connecting; wait for authentication and explicitly select Send again. Peer gone means the recipient has expired from the table. Busy means the current link or bounded outgoing queue did not accept the packet. No phone means a public send found no subscribed phone. None of these keep the text waiting for a later connection. No failed private draft is sent publicly.
 
 The private-session pool now matches the twelve-peer table rather than the two physical BLE connections. Expired/orphaned sessions are released. The two-session configuration was reproduced failing a three-identity regression; the twelve-session configuration passes it. The owner subsequently confirmed that DM and public writing both worked correctly in the tested setup. On 2026-11-17 the owner confirmed that the delivered and read checks are correct on Android and iPhone. Disconnect-before-open remains a separate check.
 

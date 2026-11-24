@@ -1,12 +1,25 @@
 # Changelog
 
-User-visible changes and validation evidence are recorded here in English (en-US). Entries use the date of the recorded change or report. Unreleased changes do not imply a tagged firmware release.
+User-visible changes and validation evidence are recorded here in English (en-US). Entries use the date of the recorded change or report. A version heading records the source label in `include/Version.h`. It does not, by itself, create a Git tag.
 
-## Unreleased
+## 1.1.00 — 2026-11-19
+
+Current firmware. The previous release is 1.0.00.
+
+### Pocket UI
+
+- Replaced the portrait 135×240 FreeMono layout with the 240×135 landscape Pocket UI on the M5StickC Plus2. Rotation is 1 (+90°). Version label is `1.1.00`.
+- JoyC up and down repeat every 0.5 seconds. Left and right stay one action until the stick recenters.
+- Home is a four-item menu: Nearby, Channels, InfoBot, Settings. The status bar shows BLE state, civil `HH:MM`, and battery. Unread counts stay on the rows.
+- Settings adds Date & time. The entered civil time is what the status clock shows and what is written to the RTC. Invalid dates are rejected. A failed save shows Not saved and does not replace the applied clock.
+- About QR points to `https://wanderlima.github.io/bitchat-stick/`. Type is VT323 Regular, rasterized to 1-bit ASCII.
+- The website hero and hardware scene use the landscape screenshots, with the Stick turned so the firmware text stays upright.
+- The hero loop is one send and one receive, about 11.4 seconds. The envelope glides between device centers, ripples start there, and viewports below 640 px use a centered mobile scene. Outer peers stay inside the wide scene.
+- Physical checks still open: rotation direction against buttons A/B, JoyC axes after that rotation, QR scan, and RTC save on the device.
 
 ### Modular Plus2 profile
 
-- Split the firmware into a shared ESP32 core and a compile-time M5StickC Plus2 profile. Power, RTC, buttons, the optional JoyC HAT and the 135×240 panel stay in that profile. Layout code draws through a small display surface. The core does not name M5StickC or include M5Unified. The Plus2 image is not a universal ESP32 binary.
+- Split the firmware into a shared ESP32 core and a compile-time M5StickC Plus2 profile. Power, RTC, buttons, the optional JoyC HAT, and the panel driver stay in that profile. The Pocket UI section above is the current 240×135 layout. Layout code draws through a small display surface. The core does not name M5StickC or include M5Unified. The Plus2 image is not a universal ESP32 binary.
 - `!info` now answers `InfoBot: Bitchat Stick | ESP32 | #bluetooth local relay and private text DMs.` The announced product name remains Bitchat Stick.
 - The website, README and project docs describe that modular boundary. Guides for adding a board or a display are in `documentation/adding-a-display.md` and `documentation/adding-a-board.md`.
 - On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks on Android and iPhone after this profile was flashed. Controlled relay, reconnect, range and battery checks remain open.

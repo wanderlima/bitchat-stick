@@ -4,10 +4,13 @@
 
 namespace stick {
 // Independent of I2C: only valid, signed normalized samples enter this policy.
+// Menus treat left/right as one back/confirm gesture. The keyboard treats every
+// direction as movement and repeats it while the stick stays past the threshold.
 class JoycNavigation {
  public:
+  static constexpr uint32_t repeatInterval = 500;
   NavigationAction update(int16_t x, int16_t y, bool valid, uint32_t now,
-                          bool sleeping, bool buttonsBusy = false) {
+                          bool sleeping, bool buttonsBusy = false, bool grid = false) {
     using A = NavigationAction;
     if (!valid || buttonsBusy) {
       blocked_ = true;
@@ -20,14 +23,14 @@ class JoycNavigation {
       held_ = A::None;
       return A::None;
     }
-    const auto direction = classify(x, y);
+    const auto direction = classify(x, y, grid);
     if (blocked_) return A::None;
     if (sleeping && direction != A::None) {
       blocked_ = true;
       held_ = A::None;
       return A::Wake;
     }
-    if (direction == A::Back || direction == A::Select) {
+    if (!grid && (direction == A::Back || direction == A::Select)) {
       blocked_ = true; // One horizontal action for the whole gesture.
       held_ = A::None;
       return direction;
@@ -36,7 +39,7 @@ class JoycNavigation {
       held_ = A::None; // Middle values do nothing and stop a held repeat.
       return A::None;
     }
-    if (direction != held_ || uint32_t(now - lastRepeat_) >= 1500) {
+    if (direction != held_ || uint32_t(now - lastRepeat_) >= repeatInterval) {
       held_ = direction;
       lastRepeat_ = now;
       return direction;
@@ -44,11 +47,14 @@ class JoycNavigation {
     return A::None;
   }
  private:
-  static NavigationAction classify(int16_t x, int16_t y) {
+  static NavigationAction classify(int16_t x, int16_t y, bool grid) {
     const int ax = x < 0 ? -int(x) : int(x);
     const int ay = y < 0 ? -int(y) : int(y);
     // A diagonal produces at most one action. Equal diagonals are ignored.
-    if (ax > 80 && ax > ay) return x < 0 ? NavigationAction::Back : NavigationAction::Select;
+    if (ax > 80 && ax > ay) {
+      if (grid) return x < 0 ? NavigationAction::Left : NavigationAction::Right;
+      return x < 0 ? NavigationAction::Back : NavigationAction::Select;
+    }
     if (ay > 80 && ay > ax) return y < 0 ? NavigationAction::Up : NavigationAction::Down;
     return NavigationAction::None;
   }

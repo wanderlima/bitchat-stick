@@ -21,7 +21,7 @@ Do not copy the Plus2 flash layout, PSRAM flags, GPIO4 hold, or JoyC pins onto a
 | Buttons | A, B, C as `M5.BtnPWR` |
 | External I2C | JoyC on GPIO 0 and GPIO 26, port 0, 100 kHz |
 | RTC | Internal M5 RTC |
-| Display | `135x240-portrait` via `src/boards/m5stickc-plus2/Display.cpp` |
+| Display | `240x135-landscape` via `src/boards/m5stickc-plus2/Display.cpp` |
 | Product name | `Bitchat Stick` in the core. Not a profile field |
 | `!info` hardware word | `ESP32`, fixed in `src/InfoBot.h` |
 

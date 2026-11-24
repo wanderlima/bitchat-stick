@@ -30,6 +30,10 @@ Wander Lima's 2026-11-17 report covers InfoBot replies and delivered/read checks
 - Individual disconnect, retry, and reconnect cases beyond the reported delivered/read checks.
 - Click, LED, and sound behavior as a recorded device pass.
 - Every keyboard key and the draft length limit on the physical panel.
+- Landscape rotation against physical buttons A and B.
+- JoyC axis directions after that rotation. Navigation confirmed before the landscape UI does not close this check.
+- A camera scan of the About QR, which encodes `https://wanderlima.github.io/bitchat-stick/`.
+- Saving Date & time to the RTC on the device. Invalid dates are rejected in host tests. A successful panel save is not recorded.
 
 Upload success, a green host-test run, and a website build do not close those items.
 
@@ -56,7 +60,6 @@ Only the Plus2 profile has source and a hardware path. The board id in PlatformI
 
 ## Website
 
-- `website/src/tools/audit.mjs` allowlists `GHSA-fc5q-39xc-vjpf` (picomatch, every published release through 4.0.7). The audit script's comment says `npm audit fix --force` would downgrade Astro and still depend on picomatch. The allowlist entry must be removed when npm stops reporting that advisory.
 - `robots.txt` is served under `/bitchat-stick/` on a GitHub project site. Crawlers usually read the domain-root robots file, so this file does not replace the account site's root policy.
 - Hero routes and the hardware walkthrough are illustrations. They are not relay evidence.
 - The configured Pages URL is a target. Publishing still depends on the GitHub Actions source setting and a successful `main` deploy.

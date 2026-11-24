@@ -1,9 +1,8 @@
 import { execFileSync } from 'node:child_process';
 
-// GHSA-fc5q-39xc-vjpf covers every published picomatch release through 4.0.7.
-// `npm audit fix --force` only offers an Astro 5 downgrade, which still depends on picomatch.
-// Remove this entry once a patched release exists and npm audit stops reporting it.
-const allowed = new Set(['GHSA-fc5q-39xc-vjpf']);
+// High and critical advisories fail the build. Add a GHSA id here only while the
+// report is a known, documented exception, and remove it when npm stops reporting it.
+const allowed = new Set();
 const blockingSeverities = new Set(['high', 'critical']);
 
 function advisoryId(via) {
@@ -53,4 +52,4 @@ if (blocking.length > 0) {
   process.exit(1);
 }
 
-console.log('High and critical audit findings are limited to the documented picomatch allowlist.');
+console.log('No high or critical audit findings.');

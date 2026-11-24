@@ -13,11 +13,11 @@ Do not invent pins, probe unknown GPIOs, or copy the Plus2 GPIO4 hold pin. Fill 
 | Board profile id | Yes | `m5stickc-plus2` |
 | Controller | Yes | Panel brought up by `M5.begin` |
 | Bus | Yes | Owned by M5Unified; do not restate raw SPI pins for this profile |
-| Width × height | Yes | 135 × 240 |
-| Rotation | Yes | 0 |
+| Width × height | Yes | 240 × 135 |
+| Rotation | Yes | 3 (−90°) |
 | Color depth | Yes | 16 |
 | Brightness control | Yes | `M5.Display.setBrightness` |
-| Layout id | Yes | `135x240-portrait` |
+| Layout id | Yes | `240x135-landscape` |
 | Usable input | Yes for a composer | Buttons A, B, and C (`M5.BtnPWR`) |
 | Optional HAT | No | Mini JoyC is a Plus2 peripheral, not a separate firmware |
 
@@ -38,7 +38,7 @@ Empty template:
 
 ## What the current layout draws through
 
-`src/Ui.cpp` owns the 135×240 screens. It does not include `M5Unified.h` or LGFX. It calls the surface in `include/DrawSurface.h`:
+`src/Ui.cpp` owns the 240×135 landscape screens. It does not include `M5Unified.h` or LGFX. It calls the surface in `include/DrawSurface.h`:
 
 - `surfaceBegin`
 - `frameStart`, `frameFill`, `frameFillRect`, `frameDrawRect`, `frameHLine`
@@ -46,17 +46,17 @@ Empty template:
 - `frameFinish`
 - `displaySetBrightness`
 
-Fonts are `UiFont::Body16`, `Compact14`, `Bold9`, and `Bold12`. One-bit bitmaps (radio, envelope, QR) are expanded by the layout into horizontal filled rectangles. There is no widget toolkit.
+Fonts are the VT323 sizes `UiFont::Vt16` through `Vt23` and `Vt31`. One-bit icons and the QR are expanded by the layout into horizontal filled rectangles. There is no widget toolkit.
 
-`include/DisplayProfile.h` fixes the only layout this file may draw: `135x240-portrait`, 135×240, rotation 0. `src/Ui.cpp` `static_assert`s that profile. The Plus2 implementation is `src/boards/m5stickc-plus2/Display.cpp`, and it is the only firmware file that talks to the panel with LGFX.
+`include/DisplayProfile.h` fixes the only layout this file may draw: `240x135-landscape`, 240×135, rotation 1. `src/Ui.cpp` `static_assert`s that profile. The Plus2 implementation is `src/boards/m5stickc-plus2/Display.cpp`, and it is the only firmware file that talks to the panel with LGFX.
 
 Buttons, battery percentage, and free heap come from `include/Board.h`, not from the surface. JoyC stays in `src/Joyc.cpp`.
 
-## Path A — same 135×240 portrait, different panel
+## Path A — same 240×135 landscape, different panel
 
 1. Add a new board profile and a new `Display.cpp` that implements `include/DrawSurface.h`.
 2. Keep `src/Ui.cpp` and its coordinates unchanged.
-3. Point that profile's display profile at `135x240-portrait`, 135×240, rotation 0.
+3. Point that profile's display profile at `240x135-landscape`, 240×135, rotation 1.
 4. Run `sh tools/test-native.sh`. The existing pixel assertions in `test/ui_test.cpp` stay the oracle. Do not edit them to fit a new renderer.
 5. `test/ui_preview.cpp` must keep emitting `F` rectangle lines and `T` text lines. `tools/render-previews.py` already reads that format. Do not regenerate the website PNGs unless an operation trace changed and the surface was then corrected back.
 
@@ -64,7 +64,7 @@ The new panel does not have to be LGFX. It has to implement the same surface cal
 
 ## Path B — any other resolution or orientation
 
-1. Do not scale `135x240-portrait` and do not edit its coordinates in place.
+1. Do not scale `240x135-landscape` and do not edit its coordinates in place.
 2. Add a new layout id, a new drawing file, and new pixel tests.
 3. A display without usable buttons does not get the composer. The JoyC HAT does not replace a description of the board's own buttons.
 

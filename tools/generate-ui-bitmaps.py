@@ -1,60 +1,415 @@
 #!/usr/bin/env python3
-"""Rasterize the exact Figma SVG assets into embedded, row-padded 1-bit masks.
+"""Build the Pocket UI masks: 84px site QR, 16px icons, and the start bolt.
 
-No runtime SVG engine or Python dependencies. Run from the repository root.
-QR paths are axis-aligned rectangles; radio assets are circles. Reject other shapes.
+QR destination: https://wanderlima.github.io/bitchat-stick/
+Icons are the 12px Pocket drawings nearest-neighbor scaled to 16px so the
+1px strokes stay readable in a 22px row. The start bolt is the Start frame
+mask, not a stroked polygon. The QR is generated, not fetched at runtime.
 """
 from pathlib import Path
-import math
-import re
-import xml.etree.ElementTree as ET
+import sys
 
-ASSETS = Path(__file__).resolve().parents[1] / 'src/assets'
+root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, '/tmp/pydeps')
+import segno
+from PIL import Image
 
-def mask(name):
-    root = ET.parse(ASSETS / name).getroot()
-    width, height = int(root.attrib['width']), int(root.attrib['height'])
-    pixels = [[False] * width for _ in range(height)]
-    for node in root.iter():
-        tag = node.tag.rsplit('}', 1)[-1]
-        if tag == 'path':
-            if node.attrib.get('fill') != 'black':
-                continue  # Background is painted with the theme color by the UI.
-            paths = re.findall(r'M([^M]+)', node.attrib['d'])
-            for path in paths:
-                values = list(map(float, re.findall(r'-?\d+(?:\.\d+)?', path)))
-                assert len(values) == 6, 'Expected a closed rectangular QR module'
-                x0, y0, x1, y1, x2, y2 = values
-                assert abs(x0 - x2) < .001 and abs(y0 - y2) < .001
-                for y in range(max(0, math.floor(y0)), min(height, math.ceil(y1))):
-                    for x in range(max(0, math.floor(x0)), min(width, math.ceil(x1))):
-                        if x0 <= x + .5 < x1 and y0 <= y + .5 < y1:
-                            pixels[y][x] = True
-        elif tag == 'circle':
-            cx, cy, radius = (float(node.attrib[k]) for k in ('cx', 'cy', 'r'))
-            stroke = float(node.attrib.get('stroke-width', 0))
-            for y in range(height):
-                for x in range(width):
-                    distance = math.hypot(x + .5 - cx, y + .5 - cy)
-                    pixels[y][x] = (radius - stroke / 2 <= distance < radius + stroke / 2
-                                    if stroke else distance < radius)
-    assert any(any(row) for row in pixels), 'Empty SVG mask'
+ASSETS = root / 'src' / 'assets'
+
+
+def pack(pixels, width, height):
     stride = (width + 7) // 8
     data = [0] * (stride * height)
-    for y, row in enumerate(pixels):
-        for x, on in enumerate(row):
-            if on:
+    for y in range(height):
+        for x in range(width):
+            if pixels[y][x]:
                 data[y * stride + x // 8] |= 0x80 >> (x % 8)
-    return width, height, data
+    return data
+
+
+def scale_art(art, size):
+    height, width = len(art), len(art[0])
+    rows = []
+    for y in range(size):
+        source_y = min(height - 1, y * height // size)
+        row = ''
+        for x in range(size):
+            source_x = min(width - 1, x * width // size)
+            row += art[source_y][source_x]
+        rows.append(row)
+    return rows
+
+
+def from_art(art, size=0):
+    if size:
+        art = scale_art(art, size)
+    height, width = len(art), len(art[0])
+    assert all(len(row) == width for row in art), art
+    pixels = [[cell == '#' for cell in row] for row in art]
+    return width, height, pack(pixels, width, height)
+
+
+def from_image(image):
+    width, height = image.size
+    pixels = [[image.getpixel((x, y)) > 0 for x in range(width)] for y in range(height)]
+    return width, height, pack(pixels, width, height)
+
+
+ICONS = {
+    'iconPeer': [
+        '.....##.....',
+        '...######...',
+        '...######...',
+        '.....##.....',
+        '.....##.....',
+        '...######...',
+        '..########..',
+        '.##########.',
+        '.###....###.',
+        '##........##',
+        '............',
+        '............',
+    ],
+    'iconChannels': [
+        '..######....',
+        '.##....##...',
+        '##......##..',
+        '##......##..',
+        '.##....##...',
+        '...####.....',
+        '....######..',
+        '...##....##.',
+        '..##......##',
+        '..##......##',
+        '...##....##.',
+        '.....####...',
+    ],
+    'iconBot': [
+        '.....##.....',
+        '...######...',
+        '..##.##.##..',
+        '..########..',
+        '..##.##.##..',
+        '..########..',
+        '...##..##...',
+        '..########..',
+        '..##....##..',
+        '..##....##..',
+        '...##..##...',
+        '............',
+    ],
+    'iconSettings': [
+        '.....##.....',
+        '..##.##.##..',
+        '...######...',
+        '.##########.',
+        '.##.####.##.',
+        '.##.####.##.',
+        '.##########.',
+        '...######...',
+        '..##.##.##..',
+        '.....##.....',
+        '............',
+        '............',
+    ],
+    'iconHash': [
+        '............',
+        '..##...##...',
+        '..##...##...',
+        '##########..',
+        '..##...##...',
+        '..##...##...',
+        '##########..',
+        '..##...##...',
+        '..##...##...',
+        '............',
+        '............',
+        '............',
+    ],
+    'iconDm': [
+        '############',
+        '##........##',
+        '.##......##.',
+        '..##....##..',
+        '...##..##...',
+        '....####....',
+        '...##..##...',
+        '..##....##..',
+        '.##......##.',
+        '##........##',
+        '############',
+        '............',
+    ],
+    'iconRead': [
+        '............',
+        '.....##.....',
+        '...##..##...',
+        '..##....##..',
+        '.##..##..##.',
+        '##...##...##',
+        '.##..##..##.',
+        '..##....##..',
+        '...##..##...',
+        '.....##.....',
+        '............',
+        '............',
+    ],
+    'iconWrite': [
+        '..........##',
+        '.........##.',
+        '........##..',
+        '.......##...',
+        '..##..##....',
+        '..##.##.....',
+        '..####......',
+        '..##........',
+        '.##.........',
+        '##..........',
+        '............',
+        '............',
+    ],
+    'iconShort': [
+        '.....##.....',
+        '....##......',
+        '...##.......',
+        '..######....',
+        '.########...',
+        '...######...',
+        '......##....',
+        '.....##.....',
+        '....##......',
+        '...##.......',
+        '............',
+        '............',
+    ],
+    'iconKeyboard': [
+        '############',
+        '#..#..#..#.#',
+        '#..#..#..#.#',
+        '############',
+        '#..#..#..#.#',
+        '#..#..#..#.#',
+        '############',
+        '#....##....#',
+        '#....##....#',
+        '############',
+        '............',
+        '............',
+    ],
+    'iconWelcome': [
+        '.....##.....',
+        '.....##.....',
+        '..##.##.##..',
+        '...#####....',
+        '.##########.',
+        '...#####....',
+        '..##.#.##...',
+        '.....##.....',
+        '.....##.....',
+        '............',
+        '............',
+        '............',
+    ],
+    'iconBattery': [
+        '............',
+        '..########..',
+        '..##....###.',
+        '..##.....#..',
+        '..##.....#..',
+        '..##.....#..',
+        '..##.....#..',
+        '..##....###.',
+        '..########..',
+        '............',
+        '............',
+        '............',
+    ],
+    'iconDiag': [
+        '............',
+        '............',
+        '##..........',
+        '##...##.....',
+        '##...##..##.',
+        '##...##..##.',
+        '##...##..##.',
+        '.....##..##.',
+        '..........##',
+        '............',
+        '............',
+        '............',
+    ],
+    'iconSound': [
+        '..##........',
+        '..###.......',
+        '..####......',
+        '######......',
+        '######..##..',
+        '######..##..',
+        '..####......',
+        '..###...##..',
+        '..##........',
+        '............',
+        '............',
+        '............',
+    ],
+    'iconJoy': [
+        '....####....',
+        '..##....##..',
+        '.##......##.',
+        '.##......##.',
+        '..##....##..',
+        '....####....',
+        '.....##.....',
+        '.....##.....',
+        '...######...',
+        '............',
+        '............',
+        '............',
+    ],
+    'iconBright': [
+        '.....##.....',
+        '..#..#..#...',
+        '....###.....',
+        '.##.###.##..',
+        '...#####....',
+        '..#######...',
+        '...#####....',
+        '.##.###.##..',
+        '....###.....',
+        '..#..#..#...',
+        '.....##.....',
+        '............',
+    ],
+    'iconClock': [
+        '....####....',
+        '..##....##..',
+        '.##......##.',
+        '##...#....##',
+        '##...##...##',
+        '##.....#..##',
+        '.##......##.',
+        '..##....##..',
+        '....####....',
+        '............',
+        '............',
+        '............',
+    ],
+}
+
+
+def qr_mask():
+    code = segno.make('https://wanderlima.github.io/bitchat-stick/', error='m')
+    matrix = code.matrix
+    size = len(matrix)
+    border, scale = 4, 2
+    inner = (size + border * 2) * scale
+    image = Image.new('1', (84, 84), 0)
+    offset = (84 - inner) // 2
+    for y, row in enumerate(matrix):
+        for x, on in enumerate(row):
+            if not on:
+                continue
+            px = offset + (x + border) * scale
+            py = offset + (y + border) * scale
+            for dy in range(scale):
+                for dx in range(scale):
+                    image.putpixel((px + dx, py + dy), 1)
+    return from_image(image)
+
+
+def bolt_mask():
+    # Start frame 121:874, green pixels at x=25..49, y=24..91.
+    art = [
+        '.................####....',
+        '.................####....',
+        '.................####....',
+        '.................####....',
+        '.................####....',
+        '.................####....',
+        '.................####....',
+        '.................####....',
+        '.................####....',
+        '.............########....',
+        '.............########....',
+        '.............########....',
+        '.............########....',
+        '.............########....',
+        '.............########....',
+        '.............########....',
+        '.............########....',
+        '.........############....',
+        '.........############....',
+        '.........############....',
+        '.........############....',
+        '.........########........',
+        '.........########........',
+        '.........########........',
+        '.........########........',
+        '........#########........',
+        '.....############........',
+        '.....############........',
+        '.....############........',
+        '.....############........',
+        '.....####################',
+        '.....####################',
+        '.....####################',
+        '.....####################',
+        '#########################',
+        '#########################',
+        '#########################',
+        '#########################',
+        '.........############....',
+        '.........############....',
+        '.........############....',
+        '.........############....',
+        '.........########........',
+        '.........########........',
+        '.........########........',
+        '.........########........',
+        '.........########........',
+        '.....############........',
+        '.....############........',
+        '.....############........',
+        '.....############........',
+        '.....########............',
+        '.....########............',
+        '.....########............',
+        '.....########............',
+        '.....########............',
+        '.....########............',
+        '.....########............',
+        '.....########............',
+        '.....####................',
+        '.....###.................',
+        '.....###.................',
+        '.....###.................',
+        '.....###.................',
+        '.....###.................',
+        '.....###.................',
+        '.....###.................',
+        '.....###.................',
+    ]
+    return from_art(art)
+
+
+def emit(name, width, height, data):
+    lines = [f'// {name}: {width} x {height}, MSB first, row padded.', f'constexpr uint8_t {name}[] = {{']
+    lines += ['  ' + ', '.join(f'0x{b:02x}' for b in data[i:i + 16]) + ',' for i in range(0, len(data), 16)]
+    lines.append('};')
+    return lines
+
 
 if __name__ == '__main__':
-    output = ['#pragma once', '#include <cstdint>', '', '// Generated by tools/generate-ui-bitmaps.py from the checked-in Figma SVGs.',
-              '// QR destination: https://github.com/wanderlima/bitchat-stick', 'namespace stick { namespace assets {']
-    for name, source in [('repositoryQr', 'repository-qr.svg'), ('radioUnchecked', 'radio-unchecked.svg'), ('radioChecked', 'radio-checked.svg')]:
-        w, h, data = mask(source)
-        output.append(f'// {source}: {w} x {h}, MSB first, row padded.')
-        output.append(f'constexpr uint8_t {name}[] = {{')
-        output += ['  ' + ', '.join(f'0x{b:02x}' for b in data[i:i+16]) + ',' for i in range(0, len(data), 16)]
-        output.append('};')
+    output = [
+        '#pragma once', '#include <cstdint>', '',
+        '// Generated by tools/generate-ui-bitmaps.py.',
+        '// QR destination: https://wanderlima.github.io/bitchat-stick/',
+        'namespace stick { namespace assets {',
+    ]
+    output += emit('repositoryQr', *qr_mask())
+    output += emit('bolt', *bolt_mask())
+    for name, art in ICONS.items():
+        output += emit(name, *from_art(art, 16))
     output += ['} } // namespace stick::assets', '']
-    (ASSETS / 'UiBitmaps.h').write_text('\n'.join(output))
+    (ASSETS / 'UiBitmaps.h').write_text('\n'.join(output) + '\n')
+    print('bitmaps written')

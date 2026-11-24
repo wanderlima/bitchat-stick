@@ -65,9 +65,15 @@ JoycSample pollJoyc(uint32_t now, bool readButton) {
   }
   const int x = classic ? int(axes[0]) - 100 : signedAxis(axes[0]);
   const int y = classic ? int(axes[1]) - 100 : signedAxis(axes[1]);
-  // Physical Plus2 check: raw X increases right; raw Y increases upward.
-  sample.x = x < -127 ? -127 : (x > 127 ? 127 : x);
-  sample.y = -y;
+  // Portrait map, confirmed on the Plus2: raw X increases right and raw Y increases up.
+  // Rotation 3 turns that portrait 90° CCW, so landscape right is the old down
+  // and landscape down is the old left.
+  const int portraitX = x < -127 ? -127 : (x > 127 ? 127 : x);
+  int portraitY = -y;
+  if (portraitY > 127) portraitY = 127;
+  if (portraitY < -127) portraitY = -127;
+  sample.x = portraitY;
+  sample.y = -portraitX;
   if (sample.y > 127) sample.y = 127;
   if (sample.y < -127) sample.y = -127;
   sample.valid = true;

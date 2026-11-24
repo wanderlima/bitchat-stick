@@ -9,8 +9,8 @@ interface Props {
   labelAnchor?: string;
 }
 const { x, y, name, label, scale = 1, labelX = 46, labelAnchor = 'middle' } = Astro.props;
-const labelY = scale < 1 ? 132 + 20 / scale : 156;
-const labelStyle = scale < 1 ? `font-size: ${11 / scale}px` : undefined;
+const labelY = scale < 1 ? 132 + 18 / scale : 156;
+const labelStyle = scale < 1 ? `font-size: ${14 / scale}px` : undefined;
 ---
 
 <g transform={`translate(${x} ${y}) scale(${scale})`} class="peer" data-peer={name}>

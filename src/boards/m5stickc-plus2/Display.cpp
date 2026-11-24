@@ -12,12 +12,17 @@ uint16_t ink = 0xFFFF;
 
 const lgfx::IFont* fontFor(UiFont font) {
   switch (font) {
-    case UiFont::Compact14: return &assets::FreeMonoCompact14;
-    case UiFont::Bold9: return &fonts::FreeMonoBold9pt7b;
-    case UiFont::Bold12: return &fonts::FreeMonoBold12pt7b;
-    case UiFont::Body16: return &assets::FreeMonoBody16;
+    case UiFont::Vt16: return &assets::Vt32316;
+    case UiFont::Vt17: return &assets::Vt32317;
+    case UiFont::Vt18: return &assets::Vt32318;
+    case UiFont::Vt19: return &assets::Vt32319;
+    case UiFont::Vt20: return &assets::Vt32320;
+    case UiFont::Vt21: return &assets::Vt32321;
+    case UiFont::Vt22: return &assets::Vt32322;
+    case UiFont::Vt23: return &assets::Vt32323;
+    case UiFont::Vt31: return &assets::Vt32331;
   }
-  return &assets::FreeMonoBody16;
+  return &assets::Vt32316;
 }
 
 lgfx::LGFXBase& out() { return *target; }
@@ -31,7 +36,7 @@ bool surfaceBegin() {
   target = buffered ? static_cast<lgfx::LGFXBase*>(&canvas) : static_cast<lgfx::LGFXBase*>(&M5.Display);
   out().setTextSize(1);
   out().setTextWrap(false);
-  out().setFont(fontFor(UiFont::Body16));
+  out().setFont(fontFor(UiFont::Vt16));
   return buffered;
 }
 

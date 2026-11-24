@@ -20,53 +20,80 @@
 #include <cstdio>
 #include <cstring>
 
-static_assert(stick::kDisplayProfile.width == 135 && stick::kDisplayProfile.height == 240 && stick::kDisplayProfile.rotation == 0, "Plus2 layout is 135x240 portrait");
-static_assert(stick::sameText(stick::kDisplayProfile.layoutId, "135x240-portrait"), "layout id");
+static_assert(stick::kDisplayProfile.width == 240 && stick::kDisplayProfile.height == 135 && stick::kDisplayProfile.rotation == 1, "Plus2 layout is 240x135 landscape");
+static_assert(stick::sameText(stick::kDisplayProfile.layoutId, "240x135-landscape"), "layout id");
 
 namespace stick {
 namespace {
-// #EBDCBA warm cream, quantized to RGB565 for the display.
 constexpr uint16_t bg = 0, fg = 0xEEF7, muted = 0xDEFB;
 constexpr uint16_t green = 0x87F0, amber = 0xFFE0, colorRed = 0xF800;
-constexpr uint16_t headerBorder = 0x41C6;
+constexpr uint16_t panel = 0x10A3, line = 0x4A07, track = 0x73AE;
 constexpr uint32_t screenTimeout = 30000;
-enum class Screen { Splash, Dashboard, Peers, Channels, Messages, Bot, Settings, Brightness, Battery, About, Diagnostics, Sound, Joystick, Reply, ShortMessages, Keyboard, Confirm };
-constexpr Screen settingsPages[] = {Screen::Brightness, Screen::Battery, Screen::Diagnostics, Screen::Sound, Screen::Joystick, Screen::About};
-constexpr const char* settingsLabels[] = {"Brightness", "Battery", "Diagnostics", "Sound", "JoyC HAT", "About"};
+constexpr int kRowY = 40, kRowH = 24, kRowStep = 25;
+int rowTop(int index) { return kRowY + index * kRowStep; }
+enum class Screen {
+  Splash, Dashboard, Peers, Channels, Messages, Bot, Settings, Brightness, Battery, About,
+  Diagnostics, Sound, Joystick, Reply, ShortMessages, Keyboard, Confirm, DateTime, SetDate, SetTime
+};
+constexpr Screen settingsPages[] = {
+  Screen::Brightness, Screen::Battery, Screen::Diagnostics, Screen::Sound, Screen::Joystick, Screen::About, Screen::DateTime
+};
+constexpr const char* settingsLabels[] = {"Brightness", "Battery", "Diagnostics", "Sound", "JoyC HAT", "About", "Date & time"};
+constexpr const uint8_t* settingsIcons[] = {
+  assets::iconBright, assets::iconBattery, assets::iconDiag, assets::iconSound, assets::iconJoy, assets::iconRead, assets::iconClock
+};
 constexpr size_t settingsCount = sizeof(settingsPages) / sizeof(settingsPages[0]);
 Screen screen = Screen::Splash;
 uint8_t preferenceFlags = 0;
 size_t selection = 0;
 PeerSelection peerSelection;
-bool detail=false;
+bool detail = false;
 MessageComposer composer;
-Screen composeOrigin=Screen::Peers, editor=Screen::ShortMessages;
-size_t originSelection=0, editorSelection=0, reviewPage=0;
-bool originDetail=false, sendFailed=false;
-const char* sendFailure="Not sent";
-bool privateDraft=true;
-uint32_t queuedMessage=0;
-bool composing() {return screen==Screen::Reply||screen==Screen::ShortMessages||screen==Screen::Keyboard||screen==Screen::Confirm;}
-size_t reviewPages() {return (composer.length()+47)/48;}
-void openComposer(const uint8_t id[8],const char* name) {
-  composeOrigin=screen;originSelection=selection;originDetail=detail;
-  composer.open(id,name);privateDraft=true;queuedMessage=0;sendFailed=false;reviewPage=0;
-  screen=Screen::Reply;selection=0;
+Screen composeOrigin = Screen::Peers, editor = Screen::ShortMessages;
+size_t originSelection = 0, editorSelection = 0;
+bool originDetail = false, sendFailed = false;
+const char* sendFailure = "Not sent";
+bool privateDraft = true;
+uint32_t queuedMessage = 0;
+bool composing() {
+  return screen == Screen::Reply || screen == Screen::ShortMessages || screen == Screen::Keyboard || screen == Screen::Confirm;
 }
-void openPublicComposer(){const uint8_t id[8]{};openComposer(id,"#bluetooth");privateDraft=false;}
+void openComposer(const uint8_t id[8], const char* name) {
+  composeOrigin = screen;
+  originSelection = selection;
+  originDetail = detail;
+  composer.open(id, name);
+  privateDraft = true;
+  queuedMessage = 0;
+  sendFailed = false;
+  screen = Screen::Reply;
+  selection = 0;
+}
+void openPublicComposer() {
+  const uint8_t id[8]{};
+  openComposer(id, "#bluetooth");
+  privateDraft = false;
+}
 void closeComposer() {
-  composer.clear();screen=composeOrigin;selection=originSelection;detail=originDetail;queuedMessage=0;
+  composer.clear();
+  screen = composeOrigin;
+  selection = originSelection;
+  detail = originDetail;
+  queuedMessage = 0;
 }
 void confirmDraft() {
-  editor=screen;editorSelection=selection;screen=Screen::Confirm;
-  reviewPage=0;selection=reviewPages()+1;sendFailed=false; // Cancel focused initially.
+  editor = screen;
+  editorSelection = selection;
+  screen = Screen::Confirm;
+  selection = 1;
+  sendFailed = false;
 }
 
 constexpr uint8_t brightnessLevels[] = {13, 64, 128, 191, 255};
 constexpr unsigned brightnessPercent[] = {5, 25, 50, 75, 100};
 size_t brightnessIndex = 2;
 uint8_t brightness = brightnessLevels[brightnessIndex];
-bool sleeping = false, settingsSaved = true;
+bool sleeping = false, settingsSaved = true, clockSaved = true;
 size_t messageOffset = 0, textLine = 0;
 MessageScope messageScope = MessageScope::Public;
 uint32_t activeMessage = 0;
@@ -77,47 +104,56 @@ JoycNavigation joycInput;
 JoycClickInput joycClick;
 JoycSample joycAxes;
 bool buffered = false;
-struct Pen {
-  int cursorX = 0, cursorY = 0;
-  void setFont(UiFont font) { frameSetFont(font); }
-  void setTextSize(int) {}
-  void setTextWrap(bool) {}
-  int textWidth(const char* value) { return frameTextWidth(value); }
-  void setTextColor(uint16_t color) { frameSetColor(color); }
-  void setCursor(int x, int y) { cursorX = x; cursorY = y; }
-  void print(const char* value) { frameDrawText(cursorX, cursorY, value); }
-  void fillScreen(uint16_t color) { frameFill(color); }
-  void fillRect(int x, int y, int width, int height, uint16_t color) { frameFillRect(x, y, width, height, color); }
-  void drawRect(int x, int y, int width, int height, uint16_t color) { frameDrawRect(x, y, width, height, color); }
-  void drawFastHLine(int x, int y, int width, uint16_t color) { frameHLine(x, y, width, color); }
-  void startWrite() { frameStart(); }
-  void endWrite() { frameFinish(); }
-};
-Pen pen;
-Pen& surface() { return pen; }
+CivilTime edited{};
+int field = 0;
 
-void label(const char* value, int y, uint16_t color = fg, int x = 12,
-           int width = 111, UiFont font = UiFont::Body16) {
-  auto& d = surface();
-  d.setFont(font);
-  d.setTextSize(1);
-  char clipped[48]{};
-  std::snprintf(clipped, sizeof(clipped), "%s", value);
-  // All labels/radio names here are ASCII. Clip to the measured font width.
-  const int available = width < 131 - x ? width : 131 - x;
-  if (d.textWidth(clipped) > available) {
+void textAt(const char* value, int x, int y, uint16_t color, int width, UiFont font) {
+  frameSetFont(font);
+  char clipped[96]{};
+  std::snprintf(clipped, sizeof(clipped), "%s", value ? value : "");
+  if (frameTextWidth(clipped) > width) {
     size_t length = std::strlen(clipped);
-    while (length && (length > sizeof(clipped) - 4 ||
-                     d.textWidth(clipped) + d.textWidth("...") > available))
-      clipped[--length] = '\0';
+    while (length && frameTextWidth(clipped) + frameTextWidth("...") > width) clipped[--length] = '\0';
     std::strcat(clipped, "...");
   }
-  d.setTextColor(color); // transparent background preserves inverse selection.
-  d.setCursor(x, y);
-  d.print(clipped);
+  frameSetColor(color);
+  frameDrawText(x, y, clipped);
 }
-void divider(int y, int x = 13, int width = 109) {
-  surface().drawFastHLine(x, y, width, fg);
+void textRight(const char* value, int y, uint16_t color, int right, UiFont font) {
+  frameSetFont(font);
+  const int width = frameTextWidth(value);
+  textAt(value, right - width, y, color, width, font);
+}
+void textCenter(const char* value, int y, uint16_t color, int center, UiFont font) {
+  frameSetFont(font);
+  const int width = frameTextWidth(value);
+  textAt(value, center - width / 2, y, color, width, font);
+}
+int fontCap(UiFont font) {
+  switch (font) {
+    case UiFont::Vt16: return 10;
+    case UiFont::Vt17: return 10;
+    case UiFont::Vt18: return 12;
+    case UiFont::Vt19: return 12;
+    case UiFont::Vt20: return 12;
+    case UiFont::Vt21: return 13;
+    case UiFont::Vt22: return 13;
+    case UiFont::Vt23: return 15;
+    case UiFont::Vt31: return 19;
+  }
+  return 12;
+}
+int fontRise(UiFont font) { return font == UiFont::Vt31 ? 3 : 2; }
+int textTop(int y, int height, UiFont font) {
+  const int top = y + (height - fontCap(font)) / 2 - fontRise(font);
+  return top < 0 ? 0 : top;
+}
+void textBox(const char* value, int x, int y, int width, int height, uint16_t color, UiFont font) {
+  frameSetFont(font);
+  const int textWidth = frameTextWidth(value ? value : "");
+  int left = x + (width - textWidth) / 2;
+  if (left < x) left = x;
+  textAt(value, left, textTop(y, height, font), color, width, font);
 }
 void bitmap(const uint8_t* bits, int x, int y, int width, int height, uint16_t color) {
   const int stride = (width + 7) / 8;
@@ -127,371 +163,668 @@ void bitmap(const uint8_t* bits, int x, int y, int width, int height, uint16_t c
       const bool on = col < width && (bits[row * stride + col / 8] & (0x80 >> (col % 8)));
       if (on && start < 0) start = col;
       if (!on && start >= 0) {
-        surface().fillRect(x + start, y + row, col - start, 1, color);
+        frameFillRect(x + start, y + row, col - start, 1, color);
         start = -1;
       }
     }
   }
 }
-void item(const char* text, int top, bool selected, int height = 24, bool radio = false, bool checked = false) {
-  if (selected) surface().fillRect(5, top, 125, height, fg);
-  else if (radio) surface().fillRect(5, top, 125, height, bg);
-  if (radio) bitmap(checked ? assets::radioChecked : assets::radioUnchecked,
-                    13, top + (height - 10) / 2, 10, 10, selected ? bg : fg);
-  label(text, top + (height - 16) / 2, selected ? bg : fg, radio ? 29 : 13, radio ? 93 : 111);
+void roundedFill(int x, int y, int w, int h, uint16_t color) {
+  frameFillRect(x + 2, y, w - 4, h, color);
+  frameFillRect(x, y + 2, w, h - 4, color);
+  frameFillRect(x + 1, y + 1, 1, 1, color);
+  frameFillRect(x + w - 2, y + 1, 1, 1, color);
+  frameFillRect(x + 1, y + h - 2, 1, 1, color);
+  frameFillRect(x + w - 2, y + h - 2, 1, 1, color);
 }
-void checkbox(const char* text, int top, bool selected, bool checked) {
-  if (selected) surface().fillRect(5, top, 125, 30, fg);
+int windowOf(int index, int count) {
+  if (count <= 3) return 0;
+  int window = index > 2 ? index - 2 : 0;
+  if (window > count - 3) window = count - 3;
+  return window < 0 ? 0 : window;
+}
+void scrollbar(int window, int count) {
+  if (count <= 3) return;
+  const int trackH = kRowStep * 2 + kRowH;
+  const int thumb = trackH * 3 / count;
+  const int travel = trackH - thumb;
+  const int span = count - 3;
+  frameFillRect(228, kRowY, 4, trackH, track);
+  frameFillRect(228, kRowY + (span ? travel * window / span : 0), 4, thumb < 4 ? 4 : thumb, fg);
+}
+void row(int y, bool selected, const uint8_t* icon, const char* label, const char* value, int labelX = 0) {
   const uint16_t ink = selected ? bg : fg;
-  surface().drawRect(13, top + 9, 12, 12, ink);
-  if (checked) surface().fillRect(16, top + 12, 6, 6, ink);
-  label(text, top + 7, ink, 30, 92);
+  if (selected) roundedFill(8, y, 216, kRowH, fg);
+  const int x = labelX ? labelX : (icon ? 40 : 18);
+  if (icon) bitmap(icon, 16, y + (kRowH - 16) / 2, 16, 16, ink);
+  textAt(label, x, textTop(y, kRowH, UiFont::Vt20), ink, icon || labelX ? 112 : 160, UiFont::Vt20);
+  if (value && value[0]) textRight(value, textTop(y, kRowH, UiFont::Vt20), ink, 214, UiFont::Vt20);
+}
+void titleBar(const char* title, const char* extra = nullptr, uint16_t extraColor = muted) {
+  textAt(title, 8, 20, fg, extra ? 156 : 220, UiFont::Vt23);
+  if (extra && extra[0]) textRight(extra, 22, extraColor, 232, UiFont::Vt18);
+}
+void footer(const char* move, const char* back, const char* action) {
+  frameFillRect(8, 116, 224, 1, line);
+  if (move && move[0]) textAt(move, 8, 118, muted, 80, UiFont::Vt16);
+  if (back && back[0]) textCenter(back, 118, muted, 128, UiFont::Vt16);
+  if (action && action[0]) textRight(action, 118, fg, 232, UiFont::Vt16);
+}
+void statusBar() {
+  const bool ready = transportReady();
+  const bool fault = scannerFault();
+  const uint16_t radioColor = ready ? green : fault ? colorRed : amber;
+  frameFillRect(8, 8, 4, 4, radioColor);
+  textAt(ready ? "BLE scan" : fault ? "BLE err" : "BLE idle", 18, 2, radioColor, 78, UiFont::Vt17);
+  const CivilTime now = clockCivil();
+  char clock[8];
+  std::snprintf(clock, sizeof(clock), "%02d:%02d", now.hour, now.minute);
+  textCenter(clock, 1, muted, 120, UiFont::Vt19);
+  if (mesh().unreadCount()) {
+    static const uint8_t envelope[] = {0xff, 0xc0, 0xc0, 0xc0, 0xa1, 0x40, 0x92, 0x40, 0x8c, 0x40, 0x80, 0x40, 0xff, 0xc0};
+    bitmap(envelope, 78, 6, 10, 7, green);
+    frameFillRect(90, 5, 2, 2, green);
+  }
+  const bool known = battery >= 0 && battery <= 100;
+  char percent[8];
+  if (known) std::snprintf(percent, sizeof(percent), "%d%%", battery);
+  else std::snprintf(percent, sizeof(percent), "--%%");
+  const uint16_t batteryColor = known && battery < 20 ? amber : muted;
+  textRight(percent, 2, batteryColor, 212, UiFont::Vt17);
+  frameFillRect(215, 6, 14, 8, batteryColor);
+  frameFillRect(216, 7, 12, 6, bg);
+  frameFillRect(229, 8, 2, 4, batteryColor);
+  if (known && battery > 0) frameFillRect(217, 8, (10 * battery + 99) / 100, 4, battery < 20 ? amber : green);
+  frameFillRect(0, 19, 240, 1, line);
+}
+void checkbox(int y, bool selected, bool checked, const char* label) {
+  row(y, selected, nullptr, label, nullptr, 40);
+  const uint16_t ink = selected ? bg : fg;
+  const int boxY = y + (kRowH - 16) / 2;
+  frameDrawRect(16, boxY, 16, 16, ink);
+  if (checked) {
+    frameFillRect(19, boxY + 9, 3, 2, ink);
+    frameFillRect(21, boxY + 7, 3, 3, ink);
+    frameFillRect(24, boxY + 4, 3, 3, ink);
+  }
+}
+void radio(int y, bool selected, bool checked, const char* label) {
+  row(y, selected, nullptr, label, nullptr, 40);
+  const uint16_t ink = selected ? bg : fg;
+  const int boxY = y + (kRowH - 14) / 2;
+  frameDrawRect(16, boxY, 14, 14, ink);
+  if (checked) frameFillRect(19, boxY + 3, 8, 8, ink);
 }
 int settingsPageIndex(Screen page) {
   for (size_t i = 0; i < settingsCount; ++i) if (settingsPages[i] == page) return int(i);
   return -1;
 }
-void panel(int top, int height, bool peer = false) {
-  surface().fillRect(4, top, 127, height, peer ? 0x0964 : 0x10A3);
-  surface().drawRect(4, top, 127, height, peer ? green : fg);
-  if (peer) surface().fillRect(4, top, 3, height, green);
+int daysIn(int year, int month) {
+  const int days[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+  if (month == 2 && (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))) return 29;
+  return days[month];
 }
-void menu(const char* const* labels, size_t count, int top, int rowHeight) {
-  panel(top, int(count) * rowHeight + int(count) - 1 + 10);
-  for (size_t i = 0; i < count; ++i) {
-    const int y = top + 5 + int(i) * (rowHeight + 1);
-    item(labels[i], y, i == selection, rowHeight);
-    if (i + 1 < count) divider(y + rowHeight, 5, 125);
+void adjustClock(int direction) {
+  if (screen == Screen::SetDate) {
+    if (field == 0) {
+      const int limit = daysIn(edited.year, edited.month);
+      edited.day += direction;
+      if (edited.day < 1) edited.day = limit;
+      if (edited.day > limit) edited.day = 1;
+    } else if (field == 1) {
+      edited.month += direction;
+      if (edited.month < 1) edited.month = 12;
+      if (edited.month > 12) edited.month = 1;
+      const int limit = daysIn(edited.year, edited.month);
+      if (edited.day > limit) edited.day = limit;
+    } else {
+      edited.year += direction;
+      if (edited.year < 2000) edited.year = 2099;
+      if (edited.year > 2099) edited.year = 2000;
+      const int limit = daysIn(edited.year, edited.month);
+      if (edited.day > limit) edited.day = limit;
+    }
+  } else if (field == 0) {
+    edited.hour = (edited.hour + direction + 24) % 24;
+  } else {
+    edited.minute = (edited.minute + direction + 60) % 60;
   }
 }
-void drawSplash() {
-  label("BITCHAT", 36, green, 10, 121, UiFont::Bold12);
-  label("STICK", 63, fg, 10, 121, UiFont::Bold12);
-  label("A: confirm", 115, fg, 10, 121, UiFont::Compact14);
-  label("B: up", 135, fg, 10, 121, UiFont::Compact14);
-  label("C: down", 155, fg, 10, 121, UiFont::Compact14);
-  label("Hold B: back", 175, muted, 10, 121, UiFont::Compact14);
-  item("A: START", 210, true);
+size_t fitLine(const char* text, size_t at, int width, UiFont font) {
+  frameSetFont(font);
+  const size_t length = std::strlen(text);
+  size_t end = at;
+  size_t lastBreak = at;
+  while (end < length) {
+    char probe[96]{};
+    const size_t take = end + 1 - at;
+    if (take >= sizeof(probe)) break;
+    std::memcpy(probe, text + at, take);
+    if (frameTextWidth(probe) > width) break;
+    if (text[end] == ' ') lastBreak = end + 1;
+    ++end;
+  }
+  if (end < length && lastBreak > at) return lastBreak - at;
+  return end > at ? end - at : 1;
+}
+void wrapped(const char* text, int x, int y, int width, int lines, int step, UiFont font, uint16_t color, bool ellipsis) {
+  size_t at = 0;
+  const size_t length = std::strlen(text);
+  for (int line = 0; line < lines && at < length; ++line) {
+    size_t count = fitLine(text, at, width, font);
+    char part[96]{};
+    const bool more = at + count < length;
+    if (ellipsis && line + 1 == lines && more) {
+      std::memcpy(part, text + at, count < 90 ? count : 90);
+      size_t n = std::strlen(part);
+      while (n && frameTextWidth(part) + frameTextWidth("...") > width) part[--n] = '\0';
+      std::strcat(part, "...");
+    } else {
+      std::memcpy(part, text + at, count < sizeof(part) ? count : sizeof(part) - 1);
+    }
+    textAt(part, x, y + line * step, color, width, font);
+    at += count;
+  }
+}
+size_t lineCount(const char* text, int width, UiFont font) {
+  size_t at = 0, lines = 0;
+  const size_t length = std::strlen(text);
+  if (!length) return 0;
+  while (at < length && lines < 32) {
+    at += fitLine(text, at, width, font);
+    ++lines;
+  }
+  return lines;
 }
 void syncMessageFocus() {
-  if(screen!=Screen::Messages)return;
-  const size_t count=mesh().messageCount(messageScope);
-  if(activeMessage){for(size_t i=0;i<count;++i)if(mesh().message(i,messageScope)->sequence==activeMessage){messageOffset=i;return;}
-    activeMessage=0;detail=false;textLine=0;
+  if (screen != Screen::Messages) return;
+  const size_t count = mesh().messageCount(messageScope);
+  if (activeMessage) {
+    for (size_t i = 0; i < count; ++i) if (mesh().message(i, messageScope)->sequence == activeMessage) {
+      messageOffset = i;
+      return;
+    }
+    activeMessage = 0;
+    detail = false;
+    textLine = 0;
   }
-  if(messageOffset>=count)messageOffset=0;
+  if (count && messageOffset >= count) messageOffset = 0;
+}
+void drawSplash() {
+  bitmap(assets::bolt, 18, 24, 25, 68, green);
+  textAt("Bitchat Stick", 52, 38, fg, 186, UiFont::Vt31);
+  textAt("Local mesh chat", 52, 66, muted, 186, UiFont::Vt21);
+  footer("", "", "A Start");
+}
+void drawPeers(const PeerTable& peers, uint32_t now) {
+  if (mesh().peerCount()) {
+    selection %= mesh().peerCount();
+    const auto* peer = mesh().peer(selection);
+    char counter[16];
+    std::snprintf(counter, sizeof(counter), "%u / %u", unsigned(selection + 1), unsigned(mesh().peerCount()));
+    titleBar("Nearby", counter);
+    textAt(peer->name[0] ? peer->name : "Unnamed", 8, 48, fg, 224, UiFont::Vt31);
+    if (detail) {
+      char id[12];
+      std::snprintf(id, sizeof(id), "%02x%02x%02x%02x", peer->id[0], peer->id[1], peer->id[2], peer->id[3]);
+      textAt(id, 8, 82, fg, 220, UiFont::Vt18);
+      std::snprintf(id, sizeof(id), "%02x%02x%02x%02x", peer->id[4], peer->id[5], peer->id[6], peer->id[7]);
+      textAt(id, 8, 98, muted, 220, UiFont::Vt18);
+    } else {
+      const bool authed = peer->authenticated;
+      if (authed) frameFillRect(8, 83, 3, 16, green);
+      textAt(authed ? "Noise authenticated" : "Signed only", authed ? 16 : 8, 81, authed ? green : amber, 210, UiFont::Vt18);
+      char seen[24];
+      std::snprintf(seen, sizeof(seen), "Seen %lus ago", (unsigned long)((now - peer->seen) / 1000));
+      textAt(seen, 16, 99, muted, 200, UiFont::Vt16);
+    }
+    footer("B/C Move", "Hold B Back", "A Reply");
+    return;
+  }
+  if (peerSelection.sync(peers)) detail = false;
+  const auto n = peers.candidates();
+  if (!n) {
+    titleBar("Nearby");
+    textAt("No Bitchat peers", 8, 53, fg, 224, UiFont::Vt23);
+    textAt(scannerFault() ? "Scan error" : "Waiting for BLE devices", 8, 82, scannerFault() ? amber : muted, 224, UiFont::Vt19);
+    if (scannerFault()) textAt("Check BLE", 8, 100, muted, 224, UiFont::Vt16);
+    footer("B/C Move", "Hold B Back", "");
+    return;
+  }
+  char counter[24];
+  std::snprintf(counter, sizeof(counter), "Device %u / %u", unsigned(peerSelection.index() + 1), unsigned(n));
+  titleBar("Nearby", counter);
+  const auto& obs = peers.candidateAt(peerSelection.index())->observation;
+  if (detail) {
+    textAt(obs.name[0] ? obs.name : "Unnamed", 8, 46, fg, 224, UiFont::Vt20);
+    char half[9]{};
+    std::memcpy(half, obs.address, 8);
+    textAt(half, 8, 68, fg, 220, UiFont::Vt18);
+    textAt(obs.address + 9, 8, 84, fg, 220, UiFont::Vt18);
+    char meta[24];
+    std::snprintf(meta, sizeof(meta), "%d dBm", obs.rssi);
+    textAt(meta, 8, 100, muted, 100, UiFont::Vt16);
+  } else {
+    textAt("Bitchat?", 8, 48, fg, 224, UiFont::Vt31);
+    textAt("Not verified", 8, 81, amber, 220, UiFont::Vt18);
+    textAt("BLE advertisement", 8, 99, muted, 220, UiFont::Vt16);
+  }
+  footer("B/C Move", "Hold B Back", "A Details");
+}
+void drawMessages(uint32_t) {
+  const auto count = mesh().messageCount(messageScope);
+  const char* heading = messageScope == MessageScope::Direct ? "Direct DMs" : "#bluetooth";
+  if (!count) {
+    titleBar(heading);
+    textAt("No messages", 8, 53, fg, 224, UiFont::Vt23);
+    textAt(messageScope == MessageScope::Direct ? "Direct DMs" : "Public chat", 8, 82, muted, 224, UiFont::Vt19);
+    footer("B/C Move", "Hold B Back", "");
+    return;
+  }
+  if (messageOffset >= count) messageOffset = count - 1;
+  const auto* message = mesh().message(messageOffset, messageScope);
+  char counter[16];
+  std::snprintf(counter, sizeof(counter), "%u / %u", unsigned(messageOffset + 1), unsigned(count));
+  titleBar(heading, counter);
+  textAt(message->name, 8, 44, green, 180, UiFont::Vt18);
+  const size_t lines = lineCount(message->text, 210, UiFont::Vt19);
+  if (textLine >= lines) textLine = lines ? lines - 1 : 0;
+  size_t at = 0;
+  for (size_t line = 0; line < textLine; ++line) at += fitLine(message->text, at, 210, UiFont::Vt19);
+  char rest[193];
+  std::snprintf(rest, sizeof(rest), "%s", message->text + at);
+  wrapped(rest, 8, 61, 210, 3, 17, UiFont::Vt19, fg, false);
+  if (lines > 3) scrollbar(int(textLine), int(lines));
+  if (message->truncated) textRight("Truncated", 98, amber, 220, UiFont::Vt16);
+  footer(detail ? "B/C Scroll" : "B/C Move", "Hold B Back", detail ? "A Reply" : "A Read");
+}
+void drawKeyboard() {
+  // Keys and ABC/SP/DEL/OK sit together above the footer. The draft takes the room above them.
+  constexpr int textY = 3;
+  constexpr int textStep = 14;
+  constexpr int textLines = 3;
+  constexpr int keyY = 52;
+  constexpr int keyStep = 15;
+  constexpr int actionY = 98;
+  frameDrawRect(8, 1, 224, keyY - 3, line);
+  const size_t length = composer.length();
+  char counter[12];
+  std::snprintf(counter, sizeof(counter), "%u/192", unsigned(length));
+  textRight(counter, 3, length == 192 ? amber : muted, 220, UiFont::Vt16);
+  const int width = 160;
+  const size_t lines = lineCount(composer.draft, width, UiFont::Vt19);
+  size_t at = 0;
+  size_t skip = lines > textLines ? lines - textLines : 0;
+  for (size_t line = 0; line < skip; ++line) at += fitLine(composer.draft, at, width, UiFont::Vt19);
+  char rest[193];
+  std::snprintf(rest, sizeof(rest), "%s", composer.draft + at);
+  wrapped(rest, 12, textY, width, textLines, textStep, UiFont::Vt19, fg, false);
+  frameSetFont(UiFont::Vt19);
+  int caret = 12;
+  if (rest[0]) {
+    const size_t shown = lineCount(rest, width, UiFont::Vt19);
+    const int row = shown ? int(shown) - 1 : 0;
+    size_t rowAt = 0;
+    for (int line = 0; line < row; ++line) rowAt += fitLine(rest, rowAt, width, UiFont::Vt19);
+    char last[96]{};
+    std::snprintf(last, sizeof(last), "%s", rest + rowAt);
+    caret = 12 + frameTextWidth(last);
+    if (caret > 200) caret = 200;
+    frameFillRect(caret, textY + row * textStep, 1, 12, fg);
+  } else frameFillRect(12, textY, 1, 12, fg);
+  for (size_t key = 0; key < 30; ++key) {
+    const int x = 8 + int((key % 10) * 204) / 9;
+    const int y = keyY + int(key / 10) * keyStep;
+    const bool on = selection == key;
+    if (on) frameFillRect(x, y, 20, 14, fg);
+    else frameFillRect(x, y, 20, 14, panel);
+    char character[] = {composer.key(key), 0};
+    textBox(character, x, y, 20, 14, on ? bg : fg, UiFont::Vt18);
+  }
+  const char* controls[] = {composer.mode == 0 ? "ABC" : composer.mode == 1 ? "123" : "abc", "SP", "DEL", "OK"};
+  const int widths[] = {54, 55, 54, 55};
+  int x = 8;
+  for (size_t key = 0; key < 4; ++key) {
+    const bool on = selection == 30 + key;
+    const bool enabled = key != 3 || composer.ready();
+    if (on && enabled) frameFillRect(x, actionY, widths[key], 16, fg);
+    else frameFillRect(x, actionY, widths[key], 16, panel);
+    textBox(controls[key], x, actionY, widths[key], 16, on && enabled ? bg : enabled ? fg : muted, UiFont::Vt18);
+    x += widths[key] + 2;
+  }
+  footer("B/C Move", "Hold B Back", "A Select");
+}
+void drawConfirm() {
+  const ChatMessage* queued = nullptr;
+  if (queuedMessage) {
+    for (size_t i = 0; i < mesh().messageCount(); ++i) if (mesh().message(i)->sequence == queuedMessage) queued = mesh().message(i);
+  }
+  const char* state = "Queued";
+  if (queued && queued->delivery == DeliveryState::Read) state = "Read";
+  else if (queued && queued->delivery == DeliveryState::Delivered) state = "Delivered";
+  const char* heading = queuedMessage ? "Queued" : sendFailed ? "Not sent" : "Confirm";
+  const char* extra = sendFailed ? sendFailure : queuedMessage ? (privateDraft ? state : "Public chat") : privateDraft ? "Private DM" : "Public chat";
+  if (queuedMessage && privateDraft && state && std::strcmp(state, "Queued") != 0) extra = state;
+  titleBar(heading, extra, sendFailed ? amber : queuedMessage ? green : muted);
+  char who[40];
+  std::snprintf(who, sizeof(who), privateDraft ? "To %s / DM" : "#bluetooth", composer.recipientName);
+  textAt(who, 8, 44, muted, 224, UiFont::Vt18);
+  wrapped(composer.draft, 8, 60, 224, 2, 15, UiFont::Vt17, fg, true);
+  if (queuedMessage) {
+    roundedFill(8, 88, 224, 26, fg);
+    textBox("Done", 8, 88, 224, 26, bg, UiFont::Vt20);
+    footer("", "Hold B Back", "A Done");
+  } else {
+    const bool cancel = selection == 1;
+    if (cancel) roundedFill(8, 88, 108, 26, fg);
+    else frameDrawRect(8, 88, 108, 26, line);
+    textBox("Cancel", 8, 88, 108, 26, cancel ? bg : fg, UiFont::Vt20);
+    if (!cancel) roundedFill(124, 88, 108, 26, fg);
+    else frameDrawRect(124, 88, 108, 26, line);
+    textBox("Send", 124, 88, 108, 26, cancel ? fg : bg, UiFont::Vt20);
+    footer("B/C Move", "Hold B Back", cancel ? "A Cancel" : "A Send");
+  }
 }
 void draw(const PeerTable& peers, uint32_t now) {
   syncMessageFocus();
-  if(screen==Screen::Messages){const auto* message=mesh().message(messageOffset,messageScope);if(message){activeMessage=message->sequence;mesh().markRead(activeMessage);}}
-  auto& d = surface();
-  d.startWrite();
-  d.fillScreen(bg);
-  const uint16_t radioColor = transportReady() ? green : scannerFault() ? colorRed : amber;
-  d.fillRect(6, 7, 5, 5, radioColor);
-  label(transportReady() ? "BLE" : scannerFault() ? "ERR" : "IDLE", 2,
-        fg, 16, 59, UiFont::Compact14);
-  if(mesh().unreadCount()) {
-    static const uint8_t envelope[]={0xff,0xc0,0xc0,0xc0,0xa1,0x40,0x92,0x40,0x8c,0x40,0x80,0x40,0xff,0xc0};
-    bitmap(envelope,56,6,10,7,green);
-    d.fillRect(68,5,2,2,green);
+  if (screen == Screen::Messages) {
+    const auto* message = mesh().message(messageOffset, messageScope);
+    if (message) {
+      activeMessage = message->sequence;
+      mesh().markRead(activeMessage);
+    }
   }
+  frameStart();
+  frameFill(bg);
+  if (screen == Screen::Splash) {
+    drawSplash();
+    frameFinish();
+    return;
+  }
+  if (screen != Screen::Keyboard) statusBar();
   char value[48];
-  const bool batteryKnown = battery >= 0 && battery <= 100;
-  if (batteryKnown) std::snprintf(value, sizeof(value), "%d%%", battery);
-  else std::snprintf(value, sizeof(value), "--%%");
-  const uint16_t batteryColor = batteryKnown && battery < 20 ? amber : fg;
-  d.setFont(UiFont::Compact14);
-  label(value, 2, batteryColor, 115 - d.textWidth(value), d.textWidth(value), UiFont::Compact14);
-  d.drawRect(119, 5, 11, 9, batteryColor);
-  d.fillRect(130, 8, 2, 3, batteryColor);
-  if (batteryKnown && battery > 0) d.fillRect(121, 7, (7 * battery + 99) / 100, 5, batteryColor);
-  d.drawRect(0, 0, 135, 20, headerBorder);
-  if (screen == Screen::Splash) { drawSplash(); d.endWrite(); return; }
-  const char* title = "Home";
-  switch (screen) {
-    case Screen::Peers: title = "Nearby"; break;
-    case Screen::Channels: title = detail ? "#bluetooth" : "Channels"; break;
-    case Screen::Messages: title = "Messages"; break;
-    case Screen::Bot: title = "InfoBot"; break;
-    case Screen::Settings: title = "Settings"; break;
-    case Screen::Brightness: title = "Brightness"; break;
-    case Screen::Battery: title = "Battery"; break;
-    case Screen::About: title = "About"; break;
-    case Screen::Diagnostics: title = "Diagnostics"; break;
-    case Screen::Sound: title = "Sound"; break;
-    case Screen::Joystick: title = "JoyC HAT"; break;
-    case Screen::Reply: title = privateDraft?"Reply":"Write"; break;
-    case Screen::ShortMessages: title = "Short msgs"; break;
-    case Screen::Keyboard: title = "Keyboard"; break;
-    case Screen::Confirm: title = queuedMessage ? "Queued" : sendFailed ? "Not sent" : "Confirm"; break;
-    default: break;
-  }
-  label(title, 26, fg, 4, 127, UiFont::Bold9);
   switch (screen) {
     case Screen::Dashboard: {
-      panel(54, 69);
-      std::snprintf(value, sizeof(value), "Nearby: %u", unsigned(peers.candidates())); label(value, 57);
-      std::snprintf(value, sizeof(value), "P:%u New:%u", unsigned(mesh().peerCount()), unsigned(mesh().unreadCount())); label(value, 79, green);
-      label(transportReady() && mesh().ready() ? "Relay: ON" : "Relay: OFF", 101, transportReady() && mesh().ready() ? green : amber);
-      const char* options[] = {"Nearby", "Channels", "InfoBot", "Settings"};
-      menu(options, 4, 129, 24);
+      const char* labels[] = {"Nearby", "Channels", "InfoBot", "Settings"};
+      const uint8_t* icons[] = {assets::iconPeer, assets::iconChannels, assets::iconBot, assets::iconSettings};
+      char nearby[8], channel[16], bot[8];
+      const unsigned near = mesh().peerCount() ? unsigned(mesh().peerCount()) : unsigned(peers.candidates());
+      std::snprintf(nearby, sizeof(nearby), "%u", near);
+      std::snprintf(channel, sizeof(channel), "%u new", unsigned(mesh().unreadCount()));
+      std::snprintf(bot, sizeof(bot), "%s", mesh().botEnabled() ? "ON" : "OFF");
+      const char* values[] = {nearby, channel, bot, ""};
+      char counter[16];
+      std::snprintf(counter, sizeof(counter), "%u / %u", unsigned(selection + 1), 4u);
+      titleBar("Home", counter);
+      const int window = windowOf(int(selection), 4);
+      for (int i = 0; i < 3; ++i) row(rowTop(i), window + i == int(selection), icons[window + i], labels[window + i], values[window + i]);
+      scrollbar(window, 4);
+      footer("B/C Move", "Hold B Back", "A Open");
       break;
     }
-    case Screen::Peers: {
-      if (mesh().peerCount()) {
-        selection %= mesh().peerCount();
-        const auto* peer = mesh().peer(selection);
-        std::snprintf(value, sizeof(value), "Peer %u/%u", unsigned(selection+1), unsigned(mesh().peerCount()));
-        label(value, 56, fg, 4, 127);
-        panel(80, 147, true);
-        label(peer->name[0] ? peer->name : "Unnamed", 89, fg, 15, 111);
-        if (detail) {
-          std::snprintf(value, sizeof(value), "%02x%02x%02x%02x",peer->id[0],peer->id[1],peer->id[2],peer->id[3]); label(value, 115, fg, 15, 111);
-          std::snprintf(value, sizeof(value), "%02x%02x%02x%02x",peer->id[4],peer->id[5],peer->id[6],peer->id[7]); label(value, 141, fg, 15, 111);
-        } else {
-          label("Signed peer", 115, fg, 15, 111, UiFont::Compact14);
-          std::snprintf(value, sizeof(value), "Seen %lus", (unsigned long)((now-peer->seen)/1000));label(value, 141, muted, 15, 111, UiFont::Compact14);
-        }
-        divider(162,15,111);
-        label(peer->authenticated ? "Noise auth" : "Signed only", 173, peer->authenticated ? green : amber,15,111, UiFont::Compact14);
-        label("Send DM",199,green,15,111, UiFont::Compact14);
-        break;
-      }
-      if (peerSelection.sync(peers)) detail = false;
-      const auto peerIndex = peerSelection.index();
-      const auto n = peers.candidates();
-      if (!n) {
-        panel(54, 110);
-        label("No Bitchat", 63);
-        divider(92);
-        label(scannerFault() ? "Scan error" : "Waiting for", 103, muted, 13, 109, UiFont::Compact14);
-        label(scannerFault() ? "Check BLE" : "BLE adverts", 125, muted, 13, 109, UiFont::Compact14);
-      } else {
-        const auto& obs = peers.candidateAt(peerIndex)->observation;
-        std::snprintf(value, sizeof(value), "Device %u/%u", unsigned(peerIndex + 1), unsigned(n));
-        label(value, 56, fg, 4, 127);
-        panel(80, 147, true);
-        if (detail) {
-          char half[9]{};
-          std::memcpy(half, obs.address, 8); label(half, 89);
-          label(obs.address + 9, 111);
-          std::snprintf(value, sizeof(value), "Type %u", unsigned(obs.addressType)); label(value, 137, muted, 13, 109, UiFont::Compact14);
-        } else {
-          label(obs.name[0] ? obs.name : "Unnamed", 89, fg, 15, 111);
-          std::snprintf(value, sizeof(value), "%d dBm", obs.rssi); label(value, 115, fg, 15, 111);
-          std::snprintf(value, sizeof(value), "Seen %lus ago", (unsigned long)((now - obs.seenAt) / 1000));
-          label(value, 141, muted, 15, 111, UiFont::Compact14);
-        }
-        divider(162, 15, 111);
-        label(obs.network == Network::Other ? "Other BLE" : "Bitchat?", 173,
-              obs.network == Network::Other ? fg : amber, 15, 111);
-        label("Not verified", 199, amber, 15, 111, UiFont::Compact14);
-      }
-      break;
-    }
+    case Screen::Peers: drawPeers(peers, now); break;
     case Screen::Channels:
-      if(detail){
-        panel(54,50);label("Public chat",61,fg,13,109, UiFont::Compact14);
-        std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,83,green,13,109, UiFont::Compact14);
-        const char* actions[]={"Read chat","Write msg"};menu(actions,2,117,32);break;
-      }
-      panel(54,76);item("#bluetooth",60,selection==0,26);
-      label("Public chat",94,fg,13,109, UiFont::Compact14);
-      std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Public)));label(value,112,green,13,109, UiFont::Compact14);
-      panel(140,76);item("Direct DMs",146,selection==1,26);
-      label("Private text",180,fg,13,109, UiFont::Compact14);
-      std::snprintf(value,sizeof(value),"New: %u",unsigned(mesh().unreadCount(MessageScope::Direct)));label(value,198,green,13,109, UiFont::Compact14);
-      label(transportStatus(),220,transportReady()?green:amber,7,123, UiFont::Compact14);
-      break;
-    case Screen::Messages: {
-      const auto count = mesh().messageCount(messageScope);
-      if (!count) {
-        panel(54, 117); label("No messages", 64); divider(92);
-        label(messageScope==MessageScope::Direct?"Direct DMs":"#bluetooth",103,green,13,109, UiFont::Compact14);
-        label(transportStatus(),127,muted,13,109, UiFont::Compact14);
-        label("Waiting...",149,muted,13,109, UiFont::Compact14);
+      if (detail) {
+        titleBar("#bluetooth");
+        const char* actions[] = {"Read chat", "Write msg"};
+        const uint8_t* icons[] = {assets::iconRead, assets::iconWrite};
+        for (int i = 0; i < 2; ++i) row(rowTop(i), int(selection) == i, icons[i], actions[i], nullptr);
+        textAt("Public chat over BLE", 8, 96, muted, 220, UiFont::Vt18);
+        footer("B/C Move", "Hold B Back", "A Open");
       } else {
-        if(messageOffset>=count) messageOffset=count-1;
-        const auto* message=mesh().message(messageOffset,messageScope);
-        std::snprintf(value,sizeof(value),"%u/%u %s",unsigned(messageOffset+1),unsigned(count),message->outgoing?"You":message->privateMessage?"DM":"BLE");label(value,55,muted,4,127, UiFont::Compact14);
-        panel(77, 159);label(message->name,84,green,13,109, UiFont::Compact14);divider(106);
-        const size_t length=std::strlen(message->text), lines=(length+11)/12;
-        if(textLine>=lines) textLine=lines?lines-1:0;
-        for(size_t line=0;line<5;++line){const size_t start=(textLine+line)*12;if(start>=length)break;char part[13]{};std::memcpy(part,message->text+start,length-start>12?12:length-start);label(part,115+int(line)*20,fg,13,109, UiFont::Compact14);}
-        if(detail)label("Reply",218,green,13,109, UiFont::Compact14);
-        else if(message->truncated)label("Truncated",218,amber,13,109, UiFont::Compact14);
+        titleBar("Channels");
+        char pub[16], dm[16];
+        std::snprintf(pub, sizeof(pub), "%u new", unsigned(mesh().unreadCount(MessageScope::Public)));
+        std::snprintf(dm, sizeof(dm), "%u new", unsigned(mesh().unreadCount(MessageScope::Direct)));
+        row(rowTop(0), selection == 0, assets::iconHash, "#bluetooth", pub);
+        row(rowTop(1), selection == 1, assets::iconDm, "Direct DMs", dm);
+        textAt(selection == 0 ? "Public chat over BLE" : "Private text", 8, 96, muted, 220, UiFont::Vt18);
+        footer("B/C Move", "Hold B Back", "A Open");
       }
       break;
-    }
+    case Screen::Messages: drawMessages(now); break;
     case Screen::Reply: {
-      panel(54,68,true);label(composer.recipientName,60,fg,13,109, UiFont::Compact14);
-      std::snprintf(value,sizeof(value),"%02x%02x%02x%02x",composer.recipient[0],composer.recipient[1],composer.recipient[2],composer.recipient[3]);
-      label(privateDraft?value:"Public chat",84,muted,13,109, UiFont::Compact14);label(privateDraft?"Private DM":"Everyone",103,green,13,109, UiFont::Compact14);
-      const char* options[]={"Short msg", "Keyboard", "Welcome msg"};menu(options,3,125,30);
+      titleBar(privateDraft ? "Reply" : "Write", privateDraft ? composer.recipientName : "#bluetooth");
+      const char* options[] = {"Short msg", "Keyboard", "Welcome msg"};
+      const uint8_t* icons[] = {assets::iconShort, assets::iconKeyboard, assets::iconWelcome};
+      for (int i = 0; i < 3; ++i) row(rowTop(i), int(selection) == i, icons[i], options[i], nullptr);
+      footer("B/C Move", "Hold B Back", "A Open");
       break;
     }
     case Screen::ShortMessages: {
-      label(composer.recipientName,55,green,4,127, UiFont::Compact14);
-      std::snprintf(value,sizeof(value),"%u/%u",unsigned(selection+1),unsigned(MessageComposer::presetCount));label(value,76,muted,4,127, UiFont::Compact14);
-      const size_t first=selection<5?0:selection-4;
-      const int thumb=123*5/int(MessageComposer::presetCount);
-      surface().fillRect(132,101,2,123,headerBorder);
-      surface().fillRect(132,101+int(first)*(123-thumb)/int(MessageComposer::presetCount-5),2,thumb,fg);
-      panel(96,133);
-      for(size_t row=0;row<5 && first+row<MessageComposer::presetCount;++row) {
-        const int top=101+int(row)*25;
-        item(MessageComposer::presets[first+row],top,selection==first+row,24);
-        if(row<4 && first+row+1<MessageComposer::presetCount)divider(top+24,5,125);
-      }
+      char counter[16];
+      std::snprintf(counter, sizeof(counter), "%u / %u", unsigned(selection + 1), unsigned(MessageComposer::presetCount));
+      titleBar("Short messages", counter);
+      const int window = windowOf(int(selection), int(MessageComposer::presetCount));
+      for (int i = 0; i < 3 && window + i < int(MessageComposer::presetCount); ++i)
+        row(rowTop(i), window + i == int(selection), assets::iconShort, MessageComposer::presets[window + i], nullptr);
+      scrollbar(window, int(MessageComposer::presetCount));
+      footer("B/C Move", "Hold B Back", "A Select");
       break;
     }
-    case Screen::Keyboard: {
-      panel(54,70);label(composer.recipientName,57,green,9,117, UiFont::Compact14);
-      const size_t length=composer.length(),start=length>36?length-36:0;
-      for(size_t row=0;row<3;++row){const size_t at=start+row*12;if(at>=length)break;char part[13]{};std::memcpy(part,composer.draft+at,length-at>12?12:length-at);label(part,76+int(row)*15,fg,9,117, UiFont::Compact14);}
-      std::snprintf(value,sizeof(value),"%u/192",unsigned(length));label(value,126,length==192?amber:muted,7,121, UiFont::Compact14);
-      for(size_t key=0;key<30;++key) {
-        const int x=7+int(key%10)*12,y=146+int(key/10)*19;
-        d.drawRect(x,y,12,19,headerBorder);if(selection==key)d.fillRect(x,y,12,19,fg);
-        char character[]={composer.key(key),0};label(character,y+2,selection==key?bg:fg,x+2,10, UiFont::Compact14);
-      }
-      const char* controls[]={composer.mode==0?"ABC":composer.mode==1?"123":"abc","SP","DEL","OK"};
-      for(size_t key=0;key<4;++key){const int x=5+int(key)*31;d.drawRect(x,210,31,25,fg);if(selection==30+key)d.fillRect(x,210,31,25,fg);label(controls[key],215,selection==30+key?bg:fg,x+3,27, UiFont::Compact14);}
-      break;
-    }
-    case Screen::Confirm: {
-      panel(54,44,true);label(composer.recipientName,58,fg,13,109, UiFont::Compact14);
-      std::snprintf(value,sizeof(value),"%02x%02x%02x%02x",composer.recipient[0],composer.recipient[1],composer.recipient[2],composer.recipient[3]);label(privateDraft?value:"Public chat",79,muted,13,109, UiFont::Compact14);
-      if(selection<reviewPages()&&!queuedMessage)reviewPage=selection;
-      panel(104,80);if(selection<reviewPages()&&!queuedMessage)d.drawRect(4,104,127,80,green);
-      for(size_t row=0;row<4;++row){const size_t at=reviewPage*48+row*12,length=composer.length();if(at>=length)break;char part[13]{};std::memcpy(part,composer.draft+at,length-at>12?12:length-at);label(part,109+int(row)*18,fg,13,109, UiFont::Compact14);}
-      if(queuedMessage) {
-        const ChatMessage* queued=nullptr;
-        for(size_t i=0;i<mesh().messageCount();++i)if(mesh().message(i)->sequence==queuedMessage)queued=mesh().message(i);
-        const char* state=queued&&queued->delivery==DeliveryState::Read?"Read":queued&&queued->delivery==DeliveryState::Delivered?"Delivered":"Queued";
-        label(state,185,green,13,109, UiFont::Compact14);item("Done",213,true,22);
-      }else{
-        if(sendFailed)label(sendFailure,185,amber,13,109, UiFont::Compact14);
-        else {std::snprintf(value,sizeof(value),"Text %u/%u",unsigned(reviewPage+1),unsigned(reviewPages()));label(value,185,muted,13,109, UiFont::Compact14);}
-        item("Send",201,selection==reviewPages(),18);item("Cancel",220,selection==reviewPages()+1,18);
-      }
-      break;
-    }
+    case Screen::Keyboard: drawKeyboard(); break;
+    case Screen::Confirm: drawConfirm(); break;
     case Screen::Bot: {
-      panel(54,31);
-      label(mesh().botStatus(),61,mesh().botEnabled()?green:amber,13,109, UiFont::Compact14);
-      if(detail) {
-        panel(93,139);label(kBotCommands[selection],102,green);divider(129);
-        label("Public + DM",140,fg,13,109, UiFont::Compact14);
-        const char* lines[][3]={{"Stick info","BLE relay","Private text"},
-          {"Respect all","No spam","Public chat"},
-          {"Send command","in chat / DM","Wait 3s"},
-          {"Open-source","Wander Lima","Project link"}};
-        for(int i=0;i<3;++i)label(lines[selection][i],166+i*20,fg,13,109, UiFont::Compact14);
-      }else{
-        panel(93,139);
-        for(size_t i=0;i<kBotCommandCount;++i)item(kBotCommands[i],98+int(i)*26,selection==i,22);
-        item(mesh().botEnabled()?"Bot: ON":"Bot: OFF",202,selection==kBotCommandCount,22);
+      char counter[16];
+      const size_t count = kBotCommandCount + 1;
+      std::snprintf(counter, sizeof(counter), "%u / %u", unsigned(selection + 1), unsigned(count));
+      titleBar("InfoBot", detail ? mesh().botStatus() : counter, mesh().botEnabled() ? green : amber);
+      if (detail && selection < kBotCommandCount) {
+        textAt(kBotCommands[selection], 8, 48, green, 220, UiFont::Vt20);
+        textAt("Public + DM", 8, 70, fg, 220, UiFont::Vt18);
+        const char* lines[][3] = {{"Stick info", "BLE relay", "Private text"},
+                                   {"Respect all", "No spam", "Public chat"},
+                                   {"Send command", "in chat / DM", "Wait 3s"},
+                                   {"Open-source", "Wander Lima", "Project link"}};
+        for (int i = 0; i < 3; ++i) textAt(lines[selection][i], 8, 80 + i * 11, muted, 220, UiFont::Vt16);
+        footer("B/C Move", "Hold B Back", "");
+      } else {
+        const int window = windowOf(int(selection), int(count));
+        const uint8_t* icons[] = {assets::iconRead, assets::iconRead, assets::iconRead, assets::iconRead, assets::iconBot};
+        const char* toggle = mesh().botEnabled() ? "Bot: ON" : "Bot: OFF";
+        for (int i = 0; i < 3 && window + i < int(count); ++i) {
+          const bool last = window + i == int(kBotCommandCount);
+          row(rowTop(i), window + i == int(selection), icons[window + i], last ? toggle : kBotCommands[window + i], nullptr);
+        }
+        scrollbar(window, int(count));
+        footer("B/C Move", "Hold B Back", selection == kBotCommandCount ? "A Toggle" : "A Open");
       }
       break;
     }
-    case Screen::Settings:
-      menu(settingsLabels, settingsCount, 54, 24);
-      if (!settingsSaved) label("Not saved", 219, amber, 13,109, UiFont::Compact14);
+    case Screen::Settings: {
+      char counter[16];
+      std::snprintf(counter, sizeof(counter), "%u / %u", unsigned(selection + 1), unsigned(settingsCount));
+      titleBar("Settings", settingsSaved ? counter : "Not saved", settingsSaved ? muted : amber);
+      const int window = windowOf(int(selection), int(settingsCount));
+      for (int i = 0; i < 3 && window + i < int(settingsCount); ++i)
+        row(rowTop(i), window + i == int(selection), settingsIcons[window + i], settingsLabels[window + i], nullptr);
+      scrollbar(window, int(settingsCount));
+      footer("B/C Move", "Hold B Back", "A Open");
       break;
+    }
     case Screen::Sound: {
+      titleBar("Sound", settingsSaved ? nullptr : "Not saved", amber);
       const char* options[] = {"Interact", "DM alert", "Channel"};
       const uint8_t flags[] = {SoundUi, SoundDm, SoundMesh};
-      panel(54,105);
-      for (size_t i=0; i<3; ++i) {
-        checkbox(options[i],59+int(i)*32,selection==i,preferenceFlags & flags[i]);
-        if (i<2) divider(90+int(i)*32,5,125);
-      }
-      if (!settingsSaved) label("Not saved",219,amber,13,109, UiFont::Compact14);
+      for (int i = 0; i < 3; ++i) checkbox(rowTop(i), int(selection) == i, preferenceFlags & flags[i], options[i]);
+      footer("B/C Move", "Hold B Back", "A Toggle");
       break;
     }
     case Screen::Joystick:
-      panel(54,73);
-      checkbox("Click",59,selection==0,preferenceFlags & JoycClick);
-      divider(90,5,125);
-      checkbox("LED pulse",91,selection==1,preferenceFlags & JoycLed);
-      panel(140,68);
-      label(joycAxes.valid ? "Hat ready" : "No HAT",150,joycAxes.valid?green:amber);
-      if (preferenceFlags & JoycClick) label(!joycAxes.buttonValid ? "Click error" : joycAxes.pressed ? "Pressed" : "Released",180,muted,13,109, UiFont::Compact14);
-      else label("Click off",180,muted,13,109, UiFont::Compact14);
-      if (!settingsSaved) label("Not saved",219,amber,13,109, UiFont::Compact14);
+      titleBar("JoyC HAT", settingsSaved ? nullptr : "Not saved", amber);
+      checkbox(rowTop(0), selection == 0, preferenceFlags & JoycClick, "Click");
+      checkbox(rowTop(1), selection == 1, preferenceFlags & JoycLed, "LED pulse");
+      textAt(joycAxes.valid ? "Hat ready" : "No HAT", 8, 98, joycAxes.valid ? green : amber, 120, UiFont::Vt18);
+      if (preferenceFlags & JoycClick)
+        textRight(!joycAxes.buttonValid ? "Click error" : joycAxes.pressed ? "Pressed" : "Released", 98, muted, 232, UiFont::Vt18);
+      else textRight("Click off", 98, muted, 232, UiFont::Vt18);
+      footer("B/C Move", "Hold B Back", "A Toggle");
       break;
     case Screen::Brightness:
-      panel(54, 164);
-      for (size_t i = 0; i < 5; ++i) {
-        std::snprintf(value, sizeof(value), "%u%%", brightnessPercent[i]);
-        const int top = 59 + int(i) * 31;
-        item(value, top, i == selection, 30, true, i == brightnessIndex);
-        if (i < 4) divider(top + 30, 5, 125);
+      titleBar("Brightness");
+      {
+        const int window = windowOf(int(selection), 5);
+        for (int i = 0; i < 3; ++i) {
+          std::snprintf(value, sizeof(value), "%u%%", brightnessPercent[window + i]);
+          radio(rowTop(i), window + i == int(selection), window + i == int(brightnessIndex), value);
+        }
+        scrollbar(window, 5);
       }
+      footer("B/C Move", "Hold B Back", "A Apply");
       break;
-    case Screen::Battery:
-      panel(54, 144);
+    case Screen::Battery: {
+      titleBar("Battery");
+      const bool known = battery >= 0 && battery <= 100;
+      if (known) std::snprintf(value, sizeof(value), "%d%%", battery);
+      else std::snprintf(value, sizeof(value), "--%%");
+      textAt(value, 8, 46, fg, 120, UiFont::Vt31);
       if (voltage > 0) std::snprintf(value, sizeof(value), "%d mV", voltage);
       else std::snprintf(value, sizeof(value), "Unknown");
-      label(value, 65);
-      if (batteryKnown) std::snprintf(value, sizeof(value), "~%d%%", battery);
-      else std::snprintf(value, sizeof(value), "--%%");
-      label(value, 95, green, 13, 109, UiFont::Bold12);
-      divider(126);
-      label("Estimate", 137, muted, 13, 109, UiFont::Compact14);
-      label("No runtime", 163, muted, 13, 109, UiFont::Compact14);
-      label("test yet", 181, muted, 13, 109, UiFont::Compact14);
+      textRight(value, 66, muted, 232, UiFont::Vt19);
+      textAt(known ? "Estimated charge" : "Estimated charge", 8, 84, muted, 220, UiFont::Vt18);
+      textAt(known ? "Approximate only" : "No reading available", 8, 100, muted, 220, UiFont::Vt16);
+      footer("", "Hold B Back", "");
       break;
+    }
     case Screen::About:
-      surface().fillRect(4, 54, 127, 74, 0x0964);
-      surface().fillRect(4, 54, 3, 74, green);
-      label("Wander Lima", 60, fg, 13, 112);
-      label("Open-source", 86, muted, 13, 112, UiFont::Compact14);
-      label("Bitchat app", 108, muted, 13, 112, UiFont::Compact14);
-      d.fillRect(20, 136, 95, 95, fg);
-      bitmap(assets::repositoryQr, 20, 136, 95, 95, bg);
+      titleBar("About");
+      textAt("Bitchat Stick", 8, 46, fg, 130, UiFont::Vt22);
+      textAt("Wander Lima", 8, 68, muted, 130, UiFont::Vt19);
+      textAt("Project website", 8, 90, green, 130, UiFont::Vt18);
+      frameFillRect(148, 26, 84, 84, 0xFFFF);
+      bitmap(assets::repositoryQr, 148, 26, 84, 84, bg);
+      footer("", "Hold B Back", "");
       break;
     case Screen::Diagnostics:
-      panel(54, 158);
-      std::snprintf(value, sizeof(value), "BLE %lu", (unsigned long)scannerReports()); label(value, 65, fg, 13, 109, UiFont::Compact14);
-      std::snprintf(value, sizeof(value), "Drop %lu", (unsigned long)scannerDrops()); label(value, 91, fg, 13, 109, UiFont::Compact14);
-      divider(115);
-      std::snprintf(value, sizeof(value), "RAM %u", unsigned(boardFreeHeap())); label(value, 126, fg, 13, 109, UiFont::Compact14);
-      std::snprintf(value, sizeof(value), "Up %lus", (unsigned long)(now / 1000)); label(value, 152, fg, 13, 109, UiFont::Compact14);
-      divider(176);
-      std::snprintf(value, sizeof(value), "OK %lu Err%lu", (unsigned long)mesh().stats().accepted, (unsigned long)mesh().stats().rejected); label(value, 187, green, 13, 109, UiFont::Compact14);
+      titleBar("Diagnostics");
+      std::snprintf(value, sizeof(value), "BLE %lu", (unsigned long)scannerReports());
+      textAt(value, 8, 46, fg, 220, UiFont::Vt18);
+      std::snprintf(value, sizeof(value), "Drop %lu", (unsigned long)scannerDrops());
+      textAt(value, 8, 62, fg, 220, UiFont::Vt18);
+      std::snprintf(value, sizeof(value), "RAM %u", unsigned(boardFreeHeap()));
+      textAt(value, 8, 78, fg, 220, UiFont::Vt18);
+      std::snprintf(value, sizeof(value), "Up %lus", (unsigned long)(now / 1000));
+      textAt(value, 120, 78, muted, 110, UiFont::Vt18);
+      std::snprintf(value, sizeof(value), "OK %lu Err%lu", (unsigned long)mesh().stats().accepted, (unsigned long)mesh().stats().rejected);
+      textAt(value, 8, 96, green, 220, UiFont::Vt16);
       if (joycAxes.valid) {
         std::snprintf(value, sizeof(value), "J:%d,%d", int(joycAxes.x), int(joycAxes.y));
-        label(value, 216, green, 13,109, UiFont::Compact14);
-      } else label(clockRtc() ? "v" STICK_VERSION " RTC" : "Build clock", 216, clockRtc() ? muted : amber, 13,109, UiFont::Compact14);
+        textRight(value, 96, green, 232, UiFont::Vt16);
+      } else textRight(clockRtc() ? "v" STICK_VERSION " RTC" : "Build clock", 96, clockRtc() ? muted : amber, 232, UiFont::Vt16);
+      footer("", "Hold B Back", "");
       break;
+    case Screen::DateTime: {
+      titleBar("Date & time");
+      const CivilTime current = clockCivil();
+      char date[16], hm[8];
+      std::snprintf(date, sizeof(date), "%02d/%02d/%04d", current.day, current.month, current.year);
+      std::snprintf(hm, sizeof(hm), "%02d:%02d", current.hour, current.minute);
+      row(rowTop(0), selection == 0, assets::iconClock, "Date", date);
+      row(rowTop(1), selection == 1, assets::iconClock, "Time", hm);
+      textAt(clockSaved ? "Local device clock / 24h" : "Not saved", 8, 98, clockSaved ? muted : amber, 220, UiFont::Vt16);
+      footer("B/C Move", "Hold B Back", "A Edit");
+      break;
+    }
+    case Screen::SetDate:
+    case Screen::SetTime: {
+      char counter[8];
+      const int total = screen == Screen::SetDate ? 3 : 2;
+      std::snprintf(counter, sizeof(counter), "%d / %d", field + 1, total);
+      titleBar(screen == Screen::SetDate ? "Set date" : "Set time", counter);
+      auto box = [&](int x, int w, bool on, const char* caption, const char* number) {
+        textAt(caption, x, 45, muted, w, UiFont::Vt18);
+        if (on) frameFillRect(x, 65, w, 33, fg);
+        else frameFillRect(x, 65, w, 33, panel);
+        textBox(number, x, 65, w, 33, on ? bg : fg, UiFont::Vt31);
+      };
+      char a[8], b[8], c[8];
+      if (screen == Screen::SetDate) {
+        std::snprintf(a, sizeof(a), "%02d", edited.day);
+        std::snprintf(b, sizeof(b), "%02d", edited.month);
+        std::snprintf(c, sizeof(c), "%04d", edited.year);
+        box(8, 48, field == 0, "DD", a);
+        box(64, 48, field == 1, "MM", b);
+        box(120, 112, field == 2, "YYYY", c);
+        textAt(clockSaved ? "Day / Month / Year" : "Not saved", 8, 101, clockSaved ? muted : amber, 220, UiFont::Vt16);
+      } else {
+        std::snprintf(a, sizeof(a), "%02d", edited.hour);
+        std::snprintf(b, sizeof(b), "%02d", edited.minute);
+        box(8, 100, field == 0, "HH", a);
+        box(132, 100, field == 1, "MM", b);
+        textBox(":", 112, 65, 16, 33, fg, UiFont::Vt31);
+        textAt(clockSaved ? "24-hour format" : "Not saved", 8, 101, clockSaved ? muted : amber, 220, UiFont::Vt16);
+      }
+      const bool last = field + 1 == total;
+      footer("B/C Change", "Hold B Back", last ? "A Save" : "A Next");
+      break;
+    }
     default: break;
   }
-  d.endWrite();
+  frameFinish();
+}
+void moveKeyboard(int dx, int dy) {
+  constexpr int columns = 10;
+  constexpr int actionOfColumn[] = {30, 30, 30, 31, 31, 32, 32, 32, 33, 33};
+  constexpr int columnOfAction[] = {1, 3, 6, 8};
+  const int index = int(selection);
+  if (dx) {
+    if (index < 30) {
+      const int column = index % columns + dx;
+      if (column >= 0 && column < columns) selection = size_t(index - index % columns + column);
+    } else {
+      const int next = index + dx;
+      if (next >= 30 && next < 34) selection = size_t(next);
+    }
+    return;
+  }
+  if (!dy || index < 0) return;
+  if (index < 30) {
+    const int row = index / columns + dy;
+    const int column = index % columns;
+    if (row >= 0 && row < 3) selection = size_t(row * columns + column);
+    else if (row == 3) selection = size_t(actionOfColumn[column]);
+  } else if (dy < 0 && index < 34) {
+    selection = size_t(20 + columnOfAction[index - 30]);
+  }
 }
 void move(int direction, const PeerTable& peers) {
-  if(screen==Screen::Channels&&detail){selection=(selection+2+direction)%2;return;}
-  if(composing()) {
-    const size_t count=screen==Screen::Reply?3:screen==Screen::ShortMessages?MessageComposer::presetCount:screen==Screen::Keyboard?MessageComposer::keyCount:queuedMessage?1:reviewPages()+2;
-    selection=(selection+count+direction)%count;return;
+  if (screen == Screen::SetDate || screen == Screen::SetTime) {
+    adjustClock(direction);
+    return;
+  }
+  if (screen == Screen::Channels && detail) {
+    selection = (selection + 2 + direction) % 2;
+    return;
+  }
+  if (composing()) {
+    const size_t count = screen == Screen::Reply ? 3 : screen == Screen::ShortMessages ? MessageComposer::presetCount
+                         : screen == Screen::Keyboard ? MessageComposer::keyCount : queuedMessage ? 1 : 2;
+    selection = (selection + count + direction) % count;
+    return;
   }
   if (screen == Screen::Messages) {
-    if(detail) { const auto* message=mesh().message(messageOffset,messageScope);const size_t lines=message?(std::strlen(message->text)+11)/12:0;
-      if(direction<0 && textLine) --textLine; else if(direction>0 && textLine+5<lines) ++textLine;
-    } else if(mesh().messageCount(messageScope)){messageOffset=(messageOffset+mesh().messageCount(messageScope)+direction)%mesh().messageCount(messageScope);textLine=0;activeMessage=0;}
+    if (detail) {
+      const auto* message = mesh().message(messageOffset, messageScope);
+      const size_t lines = message ? lineCount(message->text, 210, UiFont::Vt19) : 0;
+      if (direction < 0 && textLine) --textLine;
+      else if (direction > 0 && textLine + 3 < lines) ++textLine;
+    } else if (mesh().messageCount(messageScope)) {
+      messageOffset = (messageOffset + mesh().messageCount(messageScope) + direction) % mesh().messageCount(messageScope);
+      textLine = 0;
+      activeMessage = 0;
+    }
     return;
   }
   if (screen == Screen::Peers) {
-    if(mesh().peerCount()) selection=(selection+mesh().peerCount()+direction)%mesh().peerCount();
+    if (mesh().peerCount()) selection = (selection + mesh().peerCount() + direction) % mesh().peerCount();
     else peerSelection.move(direction, peers);
     detail = false;
     return;
   }
-  const size_t count = screen == Screen::Dashboard ? 4 : screen == Screen::Settings ? settingsCount :
-                       screen == Screen::Sound ? 3 : screen == Screen::Joystick ? 2 :
-                       screen == Screen::Channels ? 2 : screen == Screen::Bot ? kBotCommandCount+1 : screen == Screen::Brightness ? 5 : 0;
+  const size_t count = screen == Screen::Dashboard ? 4 : screen == Screen::Settings ? settingsCount
+                       : screen == Screen::Sound ? 3 : screen == Screen::Joystick ? 2
+                       : screen == Screen::Channels ? 2 : screen == Screen::Bot ? kBotCommandCount + 1
+                       : screen == Screen::Brightness ? 5 : screen == Screen::DateTime ? 2 : 0;
   if (count) selection = (selection + count + direction) % count;
   detail = false;
 }
@@ -502,9 +835,7 @@ void beginUi() {
   brightness = brightnessLevels[brightnessIndex];
   buffered = surfaceBegin();
   displaySetBrightness(brightness);
-  surface().setFont(UiFont::Body16);
-  surface().setTextSize(1);
-  surface().setTextWrap(false);
+  frameSetFont(UiFont::Vt18);
   lastInput = millis();
   draw(PeerTable{}, lastInput);
 }
@@ -519,8 +850,9 @@ void updateUi(const PeerTable& peers, uint32_t now) {
   joycAxes = pollJoyc(now, preferenceFlags & JoycClick);
   const auto click = joycClick.update(joycAxes.pressed, joycAxes.valid && joycAxes.buttonValid,
                                      preferenceFlags & JoycClick, now, sleeping, buttonsBusy);
+  const bool keyboard = screen == Screen::Keyboard;
   const auto joystick = joycInput.update(joycAxes.x, joycAxes.y, joycAxes.valid, now, sleeping,
-                                        buttonsBusy || click != NavigationAction::None);
+                                        buttonsBusy || click != NavigationAction::None, keyboard);
   auto action = joystick;
   if (click != NavigationAction::None) action = click;
   if (buttons != NavigationAction::None) action = buttons;
@@ -529,60 +861,112 @@ void updateUi(const PeerTable& peers, uint32_t now) {
     sleeping = false;
     displaySetBrightness(brightness);
     lastDraw = 0;
+  } else if (keyboard && (action == NavigationAction::Left || action == NavigationAction::Right ||
+                          action == NavigationAction::Up || action == NavigationAction::Down)) {
+    const size_t before = selection;
+    moveKeyboard(action == NavigationAction::Left ? -1 : action == NavigationAction::Right ? 1 : 0,
+                 action == NavigationAction::Up ? -1 : action == NavigationAction::Down ? 1 : 0);
+    if (selection == before) action = NavigationAction::None;
   } else if (action == NavigationAction::Up) move(-1, peers);
   else if (action == NavigationAction::Down) move(1, peers);
   else if (action == NavigationAction::Back) {
-    if(composing()) {
-      if(screen==Screen::Reply || (screen==Screen::Confirm&&queuedMessage))closeComposer();
-      else if(screen==Screen::Confirm){screen=editor;selection=editorSelection;sendFailed=false;}
-      else {selection=screen==Screen::Keyboard?1:0;screen=Screen::Reply;}
-    }
-    else if(screen==Screen::Channels&&detail){detail=false;selection=0;}
-    else if (detail && (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages)) detail = false;
+    if (composing()) {
+      if (screen == Screen::Reply || (screen == Screen::Confirm && queuedMessage)) closeComposer();
+      else if (screen == Screen::Confirm) {
+        screen = editor;
+        selection = editorSelection;
+        sendFailed = false;
+      } else {
+        selection = screen == Screen::Keyboard ? 1 : 0;
+        screen = Screen::Reply;
+      }
+    } else if (screen == Screen::SetDate || screen == Screen::SetTime) {
+      selection = screen == Screen::SetDate ? 0 : 1;
+      screen = Screen::DateTime;
+      clockSaved = true;
+    } else if (screen == Screen::Channels && detail) {
+      detail = false;
+      selection = 0;
+    } else if (detail && (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages)) detail = false;
     else if (settingsPageIndex(screen) >= 0) {
       selection = size_t(settingsPageIndex(screen));
       screen = Screen::Settings;
     } else if (screen != Screen::Splash) {
-      const bool directInbox=screen==Screen::Messages && messageScope==MessageScope::Direct;
-      screen = screen == Screen::Dashboard ? Screen::Splash :
-               screen == Screen::Messages ? Screen::Channels : Screen::Dashboard;
+      const bool directInbox = screen == Screen::Messages && messageScope == MessageScope::Direct;
+      screen = screen == Screen::Dashboard ? Screen::Splash : screen == Screen::Messages ? Screen::Channels : Screen::Dashboard;
       selection = directInbox ? 1 : 0;
-      if(screen==Screen::Channels)detail=!directInbox;
+      if (screen == Screen::Channels) detail = !directInbox;
     }
   } else if (action == NavigationAction::Select) {
-    if(screen==Screen::Reply){
-      if(selection==2){std::snprintf(composer.draft,sizeof(composer.draft),"%s",kBotIntroduction);confirmDraft();}
-      else {screen=selection==0?Screen::ShortMessages:Screen::Keyboard;selection=0;}
-    }
-    else if(screen==Screen::ShortMessages){composer.preset(selection);confirmDraft();}
-    else if(screen==Screen::Keyboard){if(composer.selectKey(selection))confirmDraft();}
-    else if(screen==Screen::Confirm){
-      if(queuedMessage)closeComposer();
-      else if(selection==reviewPages()+1)closeComposer();
-      else if(selection==reviewPages()) {
-        if(privateDraft?mesh().sendDirect(composer.recipient,composer.draft):mesh().sendText(composer.draft)){queuedMessage=mesh().message(0)->sequence;selection=0;sendFailed=false;}
-        else {sendFailed=true;sendFailure=privateDraft?mesh().sendStatus():"Link / queue";}
+    if (screen == Screen::Reply) {
+      if (selection == 2) {
+        std::snprintf(composer.draft, sizeof(composer.draft), "%s", kBotIntroduction);
+        confirmDraft();
+      } else {
+        screen = selection == 0 ? Screen::ShortMessages : Screen::Keyboard;
+        selection = 0;
       }
-    }
-    else if(screen==Screen::Peers&&mesh().peerCount()) {
-      const auto* peer=mesh().peer(selection%mesh().peerCount());openComposer(peer->id,peer->name);
-    }
-    else if(screen==Screen::Messages&&detail) {
-      const auto* message=mesh().message(messageOffset,messageScope);
-      if(message){bool known=false;for(auto id:message->senderId)known|=id!=0;if(known)openComposer(message->senderId,message->name);}
-    }
-    else if (screen == Screen::Splash) screen = Screen::Dashboard;
+    } else if (screen == Screen::ShortMessages) {
+      composer.preset(selection);
+      confirmDraft();
+    } else if (screen == Screen::Keyboard) {
+      if (composer.selectKey(selection)) confirmDraft();
+    } else if (screen == Screen::Confirm) {
+      if (queuedMessage || selection == 1) closeComposer();
+      else if (privateDraft ? mesh().sendDirect(composer.recipient, composer.draft) : mesh().sendText(composer.draft)) {
+        queuedMessage = mesh().message(0)->sequence;
+        selection = 0;
+        sendFailed = false;
+      } else {
+        sendFailed = true;
+        sendFailure = mesh().sendStatus();
+        if (!privateDraft && transportLinks() && std::strcmp(sendFailure, "No phone") == 0) sendFailure = "Busy";
+      }
+    } else if (screen == Screen::SetDate || screen == Screen::SetTime) {
+      const int total = screen == Screen::SetDate ? 3 : 2;
+      if (field + 1 < total) ++field;
+      else if (clockSetCivil(edited)) {
+        clockSaved = true;
+        selection = screen == Screen::SetDate ? 0 : 1;
+        screen = Screen::DateTime;
+      } else clockSaved = false;
+    } else if (screen == Screen::DateTime) {
+      edited = clockCivil();
+      field = 0;
+      clockSaved = true;
+      screen = selection == 0 ? Screen::SetDate : Screen::SetTime;
+    } else if (screen == Screen::Peers && mesh().peerCount()) {
+      const auto* peer = mesh().peer(selection % mesh().peerCount());
+      openComposer(peer->id, peer->name);
+    } else if (screen == Screen::Messages && detail) {
+      const auto* message = mesh().message(messageOffset, messageScope);
+      if (message) {
+        bool known = false;
+        for (auto id : message->senderId) known |= id != 0;
+        if (known) openComposer(message->senderId, message->name);
+      }
+    } else if (screen == Screen::Splash) screen = Screen::Dashboard;
     else if (screen == Screen::Dashboard) {
       const Screen destinations[] = {Screen::Peers, Screen::Channels, Screen::Bot, Screen::Settings};
-      screen = destinations[selection]; selection = 0;
-    } else if(screen==Screen::Channels){
-      if(!detail&&selection==0){detail=true;selection=0;}
-      else if(detail&&selection==1)openPublicComposer();
-      else {messageScope=detail?MessageScope::Public:MessageScope::Direct;screen=Screen::Messages;messageOffset=textLine=0;activeMessage=0;detail=false;}
-    }
-    else if (screen == Screen::Bot && selection==kBotCommandCount) mesh().setBotEnabled(!mesh().botEnabled());
-    else if (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages) { detail = !detail; textLine=0; }
-    else if (screen == Screen::Settings) {
+      screen = destinations[selection];
+      selection = 0;
+    } else if (screen == Screen::Channels) {
+      if (!detail && selection == 0) {
+        detail = true;
+        selection = 0;
+      } else if (detail && selection == 1) openPublicComposer();
+      else {
+        messageScope = detail ? MessageScope::Public : MessageScope::Direct;
+        screen = Screen::Messages;
+        messageOffset = textLine = 0;
+        activeMessage = 0;
+        detail = false;
+      }
+    } else if (screen == Screen::Bot && selection == kBotCommandCount) mesh().setBotEnabled(!mesh().botEnabled());
+    else if (screen == Screen::Peers || screen == Screen::Bot || screen == Screen::Messages) {
+      detail = !detail;
+      textLine = 0;
+    } else if (screen == Screen::Settings) {
       screen = settingsPages[selection];
       selection = screen == Screen::Brightness ? brightnessIndex : 0;
     } else if (screen == Screen::Sound || screen == Screen::Joystick) {

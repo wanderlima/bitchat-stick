@@ -13,7 +13,7 @@ Versions below are the ones declared or recorded in this repository. Host-tool v
 | Board base | `m5stick-c` | Overridden for 8 MB flash, PSRAM, and `partitions.csv` |
 | Xtensa GCC | `8.4.0+2021r2-patch5` | Recorded compiler for the validated firmware build |
 | M5Unified | 0.2.8 | Plus2 power, buttons, RTC, speaker, and external I2C |
-| M5GFX | 0.2.36 | 135 × 240 panel |
+| M5GFX | 0.2.36 | 240 × 135 landscape UI on the Plus2 panel |
 | NimBLE-Arduino | 2.5.0 | BLE scanning, advertising, and GATT |
 | Monocypher | commit `0d85f98c9d9b0227e42cf795cb527dff372b40a4` | Ed25519, Noise primitives, and hashing |
 
@@ -25,7 +25,7 @@ Crypto and protocol code in the shared core does not include `M5Unified.h` and d
 
 | Component | Declared version | Role |
 | --- | --- | --- |
-| Node.js | `>=22.23.4`; `.node-version` is `24` | Astro supports even-numbered Node releases. The current documented minimum is 22.23.4. CI uses Node 24 |
+| Node.js | `>=22.23.4`; `.node-version` is `24` | Astro's current install guide requires Node `v22.23.4` or higher and does not support odd-numbered releases such as 23. CI uses Node 24 |
 | npm | lockfile in `website/package-lock.json` | `npm ci` is the install used by CI |
 | Astro | `~7.4.11` | Static site. `output: 'static'` prerenders pages |
 | Tailwind CSS | `^4.3.5` | Utility CSS through the Vite plugin |

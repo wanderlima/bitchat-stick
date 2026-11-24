@@ -39,8 +39,10 @@ Replace `STICK_PORT` with the port that appears when the Plus2 is connected. mac
 The boot line is:
 
 ```text
-Bitchat Stick 1.0.00 | signed BLE mesh | authenticated InfoBot
+Bitchat Stick 1.1.00 | signed BLE mesh | authenticated InfoBot
 ```
+
+The banner prints `STICK_VERSION` from `include/Version.h`. `1.1.00` is the current source label. The annotated tag remains `v1.0.00`.
 
 There is no OTA path. After the temporary `settings-selftest` environment, flash `m5stickc-plus2` again before normal use.
 

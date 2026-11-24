@@ -48,7 +48,7 @@ export function initControls() {
         return {
           screen: 'received',
           status: 'Message received from Test phone.',
-          hint: '“Hello from a phone.” Push right to reply; left returns to Channels.',
+          hint: '“Hey, are you nearby?” Push right to reply; left returns to Channels.',
         };
       case 'reply':
         return {
@@ -65,7 +65,7 @@ export function initControls() {
       case 'keyboard':
         return {
           screen: 'keyboard-sample',
-          status: 'Keyboard preview. Sample draft: Hello!',
+          status: 'Keyboard preview. Sample draft: Hi! You there?',
           hint: 'This keyboard screen shows a sample draft. Right reviews it; left chooses another method.',
         };
       case 'review':

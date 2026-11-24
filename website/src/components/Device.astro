@@ -1,4 +1,5 @@
 ---
+import { deviceSlot } from '../data/mesh';
 interface Props {
   x?: number;
   y?: number;
@@ -9,36 +10,54 @@ interface Props {
 }
 const { x = 0, y = 0, scale = 1, screens, initial = 'received', controls = false } = Astro.props;
 const base = import.meta.env.BASE_URL;
-const shell = 'M8 0h196v8h8v340h-8v8H8v-8H0V8h8z M8 8v340h196V8z';
+const shell = 'M8 0h340v8h8v196h-8v8H8v-8H0V8h8z M8 8v196h340V8z';
+const stickLabelY = scale < 0.95 ? 212 + 16 / scale : 223;
+const stickLabelStyle = scale < 0.95 ? `font-size: ${14 / scale}px` : undefined;
 ---
 
 <g transform={`translate(${x} ${y}) scale(${scale})`} data-peer={controls ? undefined : 'stick'}>
-  {!controls && <rect data-device-slot width="212" height="356" fill="none" />}
+  {!controls && (
+    <rect
+      data-device-slot
+      x={deviceSlot.x}
+      y={deviceSlot.y}
+      width={deviceSlot.width}
+      height={deviceSlot.height}
+      fill="none"
+    />
+  )}
   <path d={shell} fill="#ebdcba" fill-rule="evenodd" />
-  <rect x="8" y="8" width="196" height="340" fill="black" />
-  <rect x="21" y="20" width="170" height="296" fill="#84ff84" />
+  <rect x="8" y="8" width="340" height="196" fill="black" />
+  <rect x="20" y="21" width="296" height="170" fill="#84ff84" />
   {screens.map((screen) => (
     <image
       href={`${base}screens/${screen}.png`}
-      x="25"
-      y="24"
-      width="162"
-      height="288"
+      x="24"
+      y="25"
+      width="288"
+      height="162"
       data-screen={screen}
       data-preview-screen={controls ? screen : undefined}
       opacity={screen === initial ? 1 : 0}
       class="firmware-screen"
     />
   ))}
-  <rect x="90" y="326" width="32" height="12" fill="#ebdcba" />
-  <text x="106" y="384" text-anchor="middle" class="stick-label" fill="#ebdcba">
+  <rect x="326" y="90" width="12" height="32" fill="#ebdcba" />
+  <text
+    x="178"
+    y={stickLabelY}
+    text-anchor="middle"
+    class="stick-label"
+    fill="#ebdcba"
+    style={stickLabelStyle}
+  >
     BITCHAT STICK
   </text>
   {!controls && (
     <g class="device-accent" opacity="0" fill="#84ff84">
       <path d={shell} fill-rule="evenodd" />
-      <rect x="90" y="326" width="32" height="12" />
-      <text x="106" y="384" text-anchor="middle" class="stick-label">
+      <rect x="326" y="90" width="12" height="32" />
+      <text x="178" y={stickLabelY} text-anchor="middle" class="stick-label" style={stickLabelStyle}>
         BITCHAT STICK
       </text>
     </g>
