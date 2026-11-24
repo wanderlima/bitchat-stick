@@ -5,15 +5,20 @@ const enabled = import.meta.env.PROD;
 
 {enabled && <script is:inline>
   (() => {
-    if (['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)) return;
+    if (['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)) {
+      return;
+    }
     window.dataLayer = window.dataLayer || [];
     window.gtag =
       window.gtag ||
-      function (...args) {
-        window.dataLayer.push(args);
+      function gtag() {
+        // gtag.js drops a real Array. The queued command has to be this Arguments object.
+        // eslint-disable-next-line prefer-rest-params
+        window.dataLayer.push(arguments);
       };
     window.gtag('js', new Date());
     window.gtag('config', 'G-VHFJLDXMVC');
+    window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
     for (const src of [
       'https://www.googletagmanager.com/gtag/js?id=G-VHFJLDXMVC',
       'https://www.googletagmanager.com/gtm.js?id=GTM-K58ZNCMN',

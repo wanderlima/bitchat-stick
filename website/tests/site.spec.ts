@@ -342,12 +342,36 @@ test('GA4 and GTM initialize once on the production host without sending real an
   await expect.poll(() => loads.length).toBe(2);
   expect(loads).toContain('https://www.googletagmanager.com/gtag/js?id=G-VHFJLDXMVC');
   expect(loads).toContain('https://www.googletagmanager.com/gtm.js?id=GTM-K58ZNCMN');
-  const events = await page.evaluate(() =>
-    (window as unknown as { dataLayer: IArguments[] }).dataLayer.map((event) => Array.from(event)),
+  const queue = await page.evaluate(() =>
+    (window as unknown as { dataLayer: unknown[] }).dataLayer.map((entry) => {
+      const type = Object.prototype.toString.call(entry);
+      if (type === '[object Arguments]') {
+        return {
+          type,
+          command: Array.from(entry as ArrayLike<unknown>),
+          event: null,
+        };
+      }
+      if (entry && typeof entry === 'object' && 'event' in entry) {
+        return {
+          type,
+          command: null,
+          event: (entry as { event: unknown }).event,
+        };
+      }
+      return { type, command: null, event: null };
+    }),
   );
   expect(
-    events.filter((event) => event[0] === 'config' && event[1] === 'G-VHFJLDXMVC'),
+    queue.filter(
+      (entry) =>
+        entry.type === '[object Arguments]' &&
+        entry.command?.[0] === 'config' &&
+        entry.command?.[1] === 'G-VHFJLDXMVC',
+    ),
   ).toHaveLength(1);
+  expect(queue.some((entry) => entry.type === '[object Array]')).toBe(false);
+  expect(queue.filter((entry) => entry.event === 'gtm.js')).toHaveLength(1);
   await page.goto('http://127.0.0.1:4322/bitchat-stick/');
   expect(await page.locator('script[src*="googletagmanager.com"]').count()).toBe(0);
 });
