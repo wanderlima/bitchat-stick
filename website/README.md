@@ -130,7 +130,7 @@ The initialization is browser-tested on a mocked production origin, with both Go
 - Keyboard focus, mobile touch targets, a skip link, native disclosures, live control feedback and a site-wide reduced-motion control supplement the OS preference. The hero is decorative to assistive technology; its conceptual/software-render disclosure stays readable.
 - Final browser checks include 320px/375px mobile, 768px tablet, 1440px desktop and long/unbreakable content. Automated axe results do not establish complete WCAG conformance or physical-phone performance.
 
-To regenerate the share image, run the production preview on port 4322, then `npm run render:social`, followed by `npm run build`. The export preserves the conceptual-network and simulated-UI disclosures.
+To regenerate the share image, run the production preview on port 4322, then `npm run render:social`, followed by `npm run build`. The export shows the hero copy beside the device and one software-rendered screen, without the network connections, and keeps the simulated-UI disclosure.
 
 ## Refinement validation — 2026-11-11
 

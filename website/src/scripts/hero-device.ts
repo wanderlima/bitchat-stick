@@ -19,6 +19,9 @@ export async function mountHeroDevice() {
       alpha: true,
       antialias: true,
       powerPreference: 'low-power',
+      // The share-card export screenshots this canvas. The default buffer is cleared
+      // after present, so that capture would miss the device.
+      preserveDrawingBuffer: document.documentElement.dataset.socialCard === 'true',
     });
   } catch {
     hero.dataset.device = 'fallback';
