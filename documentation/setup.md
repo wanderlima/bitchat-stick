@@ -4,6 +4,14 @@ Two independent setups exist: the Plus2 firmware at the repository root, and the
 
 ## Firmware
 
+### M5Burner
+
+The current Plus2 firmware is ready to burn through M5Burner. Connect an M5StickC Plus2 with a USB data cable and open:
+
+<https://burner.m5stack.com/Z64CT2>
+
+Burning replaces the firmware currently on the device. The sections below are for building that profile from source.
+
 Requirements:
 
 - An M5StickC Plus2 and a USB-C data cable.

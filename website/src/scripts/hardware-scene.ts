@@ -170,8 +170,11 @@ export async function mountHardwareScene(root: HTMLElement) {
     pulse?.kill();
     clearTimeout(resetTimer);
     const direction = state.direction;
-    const x = direction === 'up' ? -0.32 : direction === 'down' ? 0.32 : 0;
-    const y = direction === 'left' ? -0.32 : direction === 'right' ? 0.32 : 0;
+    // The body is turned 90° so the 240×135 UI sits horizontal. Hat local
+    // axes still match the original vertical model, so tilt is remapped
+    // into screen space: up is +Y and right is +X.
+    const x = direction === 'left' ? -0.32 : direction === 'right' ? 0.32 : 0;
+    const y = direction === 'up' ? 0.32 : direction === 'down' ? -0.32 : 0;
     const pressed = direction === 'confirm';
     // Publish the commanded deflection immediately. A slow frame can finish the
     // whole pulse before the canvas samples it, which would leave the peak at 0.

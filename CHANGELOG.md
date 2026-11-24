@@ -6,6 +6,10 @@ User-visible changes and validation evidence are recorded here in English (en-US
 
 Current firmware. The previous release is 1.0.00.
 
+### Distribution
+
+- 2026-11-24: The M5StickC Plus2 firmware is available to burn in M5Burner at <https://burner.m5stack.com/Z64CT2>.
+
 ### Pocket UI
 
 - Replaced the portrait 135×240 FreeMono layout with the 240×135 landscape Pocket UI on the M5StickC Plus2. Rotation is 1 (+90°). Version label is `1.1.00`.

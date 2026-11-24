@@ -4,6 +4,14 @@ Firmware **1.1.00** · Default language: **English (en-US)**.
 
 Website: <https://wanderlima.github.io/bitchat-stick/>.
 
+## Flash the M5StickC Plus2
+
+The current firmware is ready to burn on an **M5StickC Plus2** through M5Burner:
+
+**<https://burner.m5stack.com/Z64CT2>**
+
+Connect the Plus2 with a USB data cable and burn from that page. Burning replaces the firmware currently on the device. To build the same profile from source, use [Build and upload](#build-and-upload).
+
 **1.1.00** is the current firmware. It draws the Pocket UI at 240 × 135 in landscape, rotation 1, and keeps a civil clock that Date & time can store on the RTC. The previous release is **1.0.00** (2026-11-11).
 
 Modular BLE Bitchat firmware for ESP32. The initial supported profile is the M5StickC Plus2, with the Mini JoyC HAT as an optional peripheral of that profile. The firmware implements signed discovery and public chat, automatic identity-bound Noise sessions, bounded public-packet relay, and signed-public/private InfoBot commands. Other Bitchat users see the device as **Bitchat Stick** in the local `#bluetooth` context. Other ESP32 boards are not supported yet, and the Plus2 binary is not a universal image.
@@ -11,6 +19,8 @@ Modular BLE Bitchat firmware for ESP32. The initial supported profile is the M5S
 Android 2.2.0 has verified the Stick's announcement and completed a real Noise handshake. The owner also confirmed network visibility, corrected JoyC navigation and successful use of the installed message-sending flow on 2026-11-11, and later confirmed that Bitchat Stick works with the iPhone app. On 2026-11-17 the owner confirmed InfoBot replies and correct delivered/read checks on Android and iPhone. Indirect two-phone relay, background behavior and battery endurance still require the [device acceptance checklist](documentation/device-checklist.md). Compilation and native tests alone do not establish interoperability.
 
 ## Build and upload
+
+This path builds the Plus2 profile from source. The ready-to-burn image is in [Flash the M5StickC Plus2](#flash-the-m5stickc-plus2).
 
 From the project root, with PlatformIO Core on your PATH:
 
